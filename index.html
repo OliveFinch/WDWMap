@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WDW Map - Disney and Satellite Toggle</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes, viewport-fit=cover">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; }
+    #map { width: 100vw; height: 100vh; }
+    #toggle-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 1000;
+      padding: 16px 26px;
+      font-size: 20px;
+      background: white;
+      border: 2px solid #0074d9;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.25);
+      outline: none;
+      touch-action: manipulation;
+      user-select: none;
+    }
+    .ol-rotate {
+      top: 70px !important;
+      left: 10px !important;
+      right: auto !important;
+    }
+    @media (max-width: 600px) {
+      #toggle-btn {
+        padding: 18px 10px;
+        font-size: 18px;
+        top: 10px;
+        right: 10px;
+        border-radius: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <button id="toggle-btn">Satellite View</button>
+  <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
+  <script>
+    var disneyLayer = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        url: 'https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/722864629/{z}/{x}/{y}.jpg',
+        minZoom: 13,
+        maxZoom: 20
+      }),
+      visible: true
+    });
+
+    var googleLayer = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+        minZoom: 0,
+        maxZoom: 20
+      }),
+      visible: false
+    });
+
+    var map = new ol.Map({
+      target: 'map',
+      layers: [disneyLayer, googleLayer],
+      view: new ol.View({
+        center: ol.proj.fromLonLat([-81.5639, 28.3852]),
+        zoom: 16,
+        minZoom: 13,
+        maxZoom: 20
+      })
+      // Default interactions include double tap and pinch on mobile
+    });
+
+    var toggleBtn = document.getElementById('toggle-btn');
+    var showingDisney = true;
+
+    toggleBtn.onclick = function() {
+      showingDisney = !showingDisney;
+      disneyLayer.setVisible(showingDisney);
+      googleLayer.setVisible(!showingDisney);
+      toggleBtn.textContent = showingDisney ? 'Satellite View' : 'Disney Map';
+    };
+  </script>
+</body>
+</html>
