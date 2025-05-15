@@ -8,41 +8,66 @@
   <style>
     html, body { margin: 0; padding: 0; height: 100%; }
     #map { width: 100vw; height: 100vh; }
-    #toggle-btn {
+
+    /* Toggle button as a map control */
+    #toggle-btn.ol-control {
       position: absolute;
       top: 16px;
       right: 16px;
       z-index: 1000;
-      padding: 16px 26px;
-      font-size: 20px;
-      background: white;
-      border: 2px solid #0074d9;
-      border-radius: 8px;
-      cursor: pointer;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.25);
+      padding: 0;
+      border: none;
+      background: none;
+      box-shadow: none;
       outline: none;
-      touch-action: manipulation;
+    }
+    #toggle-btn .ol-control-inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      min-width: 32px;
+      padding: 0 12px;
+      background: rgba(255,255,255,0.8);
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 15px;
+      color: #222;
+      cursor: pointer;
+      transition: background 0.2s, border 0.2s;
       user-select: none;
     }
+    #toggle-btn .ol-control-inner:active,
+    #toggle-btn .ol-control-inner:focus,
+    #toggle-btn .ol-control-inner:hover {
+      background: #f8f8f8;
+      border-color: #999;
+    }
+
     .ol-rotate {
       top: 80px !important;
       left: 8px !important;
       right: auto !important;
     }
     @media (max-width: 600px) {
-      #toggle-btn {
-        padding: 18px 10px;
-        font-size: 18px;
+      #toggle-btn.ol-control {
         top: 10px;
         right: 10px;
-        border-radius: 20px;
+      }
+      #toggle-btn .ol-control-inner {
+        font-size: 13px;
+        min-width: 26px;
+        height: 28px;
+        padding: 0 8px;
       }
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
-  <button id="toggle-btn">Satellite View</button>
+  <button id="toggle-btn" class="ol-control">
+    <span class="ol-control-inner">Satellite View</span>
+  </button>
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
   <script>
     var disneyLayer = new ol.layer.Tile({
@@ -72,17 +97,17 @@
         minZoom: 13,
         maxZoom: 20
       })
-      // Default interactions include double tap and pinch on mobile
     });
 
     var toggleBtn = document.getElementById('toggle-btn');
+    var toggleInner = toggleBtn.querySelector('.ol-control-inner');
     var showingDisney = true;
 
     toggleBtn.onclick = function() {
       showingDisney = !showingDisney;
       disneyLayer.setVisible(showingDisney);
       googleLayer.setVisible(!showingDisney);
-      toggleBtn.textContent = showingDisney ? 'Satellite View' : 'Disney Map';
+      toggleInner.textContent = showingDisney ? 'Satellite View' : 'Disney Map';
     };
   </script>
 </body>
