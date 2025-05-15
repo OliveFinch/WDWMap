@@ -63,6 +63,7 @@
       visible: false
     });
 
+    // Only add keyboard zoom and zoom control, disable touch/pan gestures
     var map = new ol.Map({
       target: 'map',
       layers: [disneyLayer, googleLayer],
@@ -71,8 +72,13 @@
         zoom: 16,
         minZoom: 13,
         maxZoom: 20
-      })
-      // Default interactions include double tap and pinch on mobile
+      }),
+      interactions: ol.collection([
+        new ol.interaction.KeyboardZoom(),
+        new ol.interaction.KeyboardPan()
+        // No MouseWheelZoom, DoubleClickZoom, PinchZoom, DragPan, etc.
+      ]),
+      controls: ol.control.defaults()
     });
 
     var toggleBtn = document.getElementById('toggle-btn');
