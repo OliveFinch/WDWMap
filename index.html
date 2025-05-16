@@ -288,53 +288,57 @@
     var findmeMessage = document.getElementById('findme-message');
     var userLocationLayer = null;
 
-    findmeBtn.onclick = function() {
-      if (!navigator.geolocation) {
-        showFindMeMessage('Geolocation not supported');
-        return;
-      }
+findmeBtn.onclick = function() {
+  if (!navigator.geolocation) {
+    showFindMeMessage('Geolocation not supported');
+    return;
+  }
 
-      navigator.geolocation.getCurrentPosition(function(pos) {
-        var coords = [pos.coords.longitude, pos.coords.latitude];
-        var projected = ol.proj.fromLonLat(coords);
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    var coords = [pos.coords.longitude, pos.coords.latitude];
+    var projected = ol.proj.fromLonLat(coords);
 
-        // Check if user is within the Disney World extent
-        var extent = disneyWorldExtent;
-        if (!ol.extent.containsCoordinate(extent, projected)) {
-          showFindMeMessage('Outside of WDW Map');
-          removeUserLocation();
-          return;
-        }
+    // Debug: Log location and extent if you wish
+    // console.log('User location (lon,lat):', coords);
+    // console.log('Projected:', projected);
+    // console.log('Extent:', disneyWorldExtent);
 
-        // Remove previous marker if any
-        removeUserLocation();
+    // Check if user is within the Disney World extent
+    var within = ol.extent.containsCoordinate(disneyWorldExtent, projected);
 
-        // Add a new marker
-        userLocationLayer = new ol.layer.Vector({
-          source: new ol.source.Vector({
-            features: [
-              new ol.Feature({
-                geometry: new ol.geom.Point(projected)
-              })
-            ]
-          }),
-          style: new ol.style.Style({
-            image: new ol.style.Circle({
-              radius: 10,
-              fill: new ol.style.Fill({color: 'rgba(0,116,217,0.35)'}),
-              stroke: new ol.style.Stroke({color: '#0074d9', width: 3})
-            })
-          }),
-          zIndex: 99
-        });
-        map.addLayer(userLocationLayer);
-        // Pan and zoom to the user location
-        map.getView().animate({center: projected, zoom: 17, duration: 800});
-      }, function() {
-        showFindMeMessage('Unable to get location');
-      }, { enableHighAccuracy: true });
-    };
+    if (!within) {
+      showFindMeMessage('Outside of WDW Map');
+      removeUserLocation();
+      // Optionally pan to user's location for visual feedback:
+      // map.getView().animate({center: projected, zoom: 14, duration: 1200});
+      return;
+    }
 
+    removeUserLocation();
+
+    userLocationLayer = new ol.layer.Vector({
+      source: new ol.source.Vector({
+        features: [
+          new ol.Feature({
+            geometry: new ol.geom.Point(projected)
+          })
+        ]
+      }),
+      style: new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 10,
+          fill: new ol.style.Fill({color: 'rgba(0,116,217,0.35)'}),
+          stroke: new ol.style.Stroke({color: '#0074d9', width: 3})
+        })
+      }),
+      zIndex: 99
+    });
+    map.addLayer(userLocationLayer);
+    map.getView().animate({center: projected, zoom: 17, duration: 800});
+  }, function(error) {
+    showFindMeMessage('Unable to get location');
+  }, { enableHighAccuracy: true });
+};
     function showFindMeMessage(msg) {
       findmeMessage.textContent = msg;
       findmeMessage.style.display = '';
