@@ -6,8 +6,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes, viewport-fit=cover">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
   <style>
-    html, body { margin: 0; padding: 0; height: 100%; }
-    #map { width: 100vw; height: 100vh; }
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overscroll-behavior: none;
+  overflow: hidden;
+}
+#map {
+  width: 100vw;
+  height: 100vh;
+  touch-action: none;         /* disables double-tap zoom and other gestures */
+  -webkit-user-select: none;
+  user-select: none;
+}
     .ol-control.custom-btn {
       position: absolute;
       right: 16px;
