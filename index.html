@@ -325,7 +325,7 @@ findmeBtn.onclick = function() {
     var within = ol.extent.containsCoordinate(disneyWorldExtent, projected);
 
     if (!within) {
-      showFindMeMessage('Outside of WDW Map');
+      showFindMeMessage('Outside of WDW');
       removeUserLocation();
       // Optionally pan to user's location for visual feedback:
       // map.getView().animate({center: projected, zoom: 14, duration: 1200});
