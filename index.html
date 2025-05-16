@@ -183,5 +183,60 @@
       roadsIcon.innerHTML = roadsOn ? noRoadsSVG : roadsSVG;
     };
   </script>
+  <script>
+  // ... (keep your existing code above here)
+
+  // ---- Double-tap-and-hold to zoom like Google Maps ----
+  (function() {
+    var lastTap = 0;
+    var isHoldZoom = false;
+    var startY = 0;
+    var startZoom = 0;
+    var mapDiv = document.getElementById('map');
+    var holdTimeout = null;
+
+    mapDiv.addEventListener('touchstart', function(e) {
+      if (e.touches.length !== 1) return;
+      var now = Date.now();
+      if (now - lastTap < 350) { // detect double-tap
+        // Prevent normal double-tap zoom
+        e.preventDefault();
+        startY = e.touches[0].clientY;
+        startZoom = map.getView().getZoom();
+        isHoldZoom = true;
+
+        // After a short pause, start listening for move
+        holdTimeout = setTimeout(function() {
+          mapDiv.addEventListener('touchmove', moveHandler, { passive: false });
+        }, 100);
+
+      } else {
+        lastTap = now;
+        isHoldZoom = false;
+        if (holdTimeout) clearTimeout(holdTimeout);
+      }
+    });
+
+    mapDiv.addEventListener('touchend', function(e) {
+      if (isHoldZoom) {
+        isHoldZoom = false;
+        mapDiv.removeEventListener('touchmove', moveHandler, { passive: false });
+      }
+      if (holdTimeout) clearTimeout(holdTimeout);
+    });
+
+    function moveHandler(e) {
+      if (!isHoldZoom || e.touches.length !== 1) return;
+      e.preventDefault();
+      var dy = e.touches[0].clientY - startY;
+      // Each 80 pixels up = zoom in 1, down = zoom out 1
+      var newZoom = startZoom - dy / 80;
+      var view = map.getView();
+      // Clamp zoom level
+      newZoom = Math.max(view.getMinZoom(), Math.min(view.getMaxZoom(), newZoom));
+      view.setZoom(newZoom);
+    }
+  })();
+</script>
 </body>
 </html>
