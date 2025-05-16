@@ -229,7 +229,7 @@ html, body {
     var disneyLayer = new ol.layer.Tile({
       source: new ol.source.XYZ({
         url: 'https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/722864629/{z}/{x}/{y}.jpg',
-        minZoom: 13,
+        minZoom: 0,
         maxZoom: 20
       }),
       visible: true
@@ -265,7 +265,7 @@ html, body {
       view: new ol.View({
         center: ol.proj.fromLonLat([-81.5494, 28.3747]),
         zoom: 16,
-        minZoom: 13,
+        minZoom: 0,
         maxZoom: 20,
         extent: disneyWorldExtent
       })
