@@ -20,6 +20,7 @@
     }
     #toggle-btn { top: 16px; }
     #roads-btn { top: 64px; }
+    #findme-btn { top: 112px; }
     .ol-control-inner {
       display: flex;
       align-items: center;
@@ -48,7 +49,7 @@
       border-color: #999;
     }
     .ol-rotate {
-      top: 112px !important;
+      top: 160px !important;
       left: 8px !important;
       right: auto !important;
     }
@@ -62,13 +63,28 @@
     }
     #logo svg {
       display: block;
-      width: 120px;
-      height: 22px;
-      max-width: 80vw;
+      width: 160px;
+      height: 29px;
+      max-width: 90vw;
+    }
+    #findme-message {
+      display:none;
+      position:absolute;
+      top:16px;
+      left:50%;
+      transform:translateX(-50%);
+      z-index:2000;
+      background:rgba(255,255,255,0.97);
+      color:#d62525;
+      font-size:17px;
+      padding:7px 20px;
+      border-radius:16px;
+      box-shadow:0 2px 8px #0001;
     }
     @media (max-width: 600px) {
       #toggle-btn { top: 10px; }
       #roads-btn { top: 54px; }
+      #findme-btn { top: 98px; }
       .ol-control-inner {
         width: 32px;
         height: 32px;
@@ -84,16 +100,16 @@
         bottom: 8px;
       }
       #logo svg {
-        width: 80px !important;
-        height: 15px !important;
+        width: 105px !important;
+        height: 19px !important;
       }
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
-  <!-- Satellite/Disney toggle -->
-  <button id="toggle-btn" class="ol-control custom-btn">
+  <!-- Toggle View Button -->
+  <button id="toggle-btn" class="ol-control custom-btn" style="top:16px;">
     <span class="ol-control-inner" id="toggle-icon">
       <!-- Default: Satellite icon -->
       <svg fill="#000" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 203.556 203.556">
@@ -115,10 +131,9 @@
       </svg>
     </span>
   </button>
-  <!-- Roads overlay toggle -->
-  <button id="roads-btn" class="ol-control custom-btn">
+  <!-- Roads Button -->
+  <button id="roads-btn" class="ol-control custom-btn" style="top:64px;">
     <span class="ol-control-inner" id="roads-icon">
-      <!-- Default: Roads icon -->
       <svg fill="#000" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 217.205 217.205">
         <g>
           <path d="M167.631,101.102H49.574c-16.216,0-29.408-13.199-29.408-29.422c0-16.211,13.192-29.399,29.408-29.399h73.789
@@ -138,9 +153,19 @@
       </svg>
     </span>
   </button>
+  <!-- Find Me Button -->
+  <button id="findme-btn" class="ol-control custom-btn" style="top:112px;">
+    <span class="ol-control-inner" id="findme-icon">
+      <!-- Your provided SVG -->
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M13 3C13 2.44772 12.5523 2 12 2C11.4477 2 11 2.44772 11 3V3.5582C7.10482 4.01469 4.01469 7.10482 3.5582 11H3C2.44772 11 2 11.4477 2 12C2 12.5523 2.44772 13 3 13H3.5582C4.01469 16.8952 7.10482 19.9853 11 20.4418V21C11 21.5523 11.4477 22 12 22C12.5523 22 13 21.5523 13 21V20.4418C16.8952 19.9853 19.9853 16.8952 20.4418 13H21C21.5523 13 22 12.5523 22 12C22 11.4477 21.5523 11 21 11H20.4418C19.9853 7.10482 16.8952 4.01469 13 3.5582V3ZM11 5.57645V7C11 7.55228 11.4477 8 12 8C12.5523 8 13 7.55228 13 7V5.57645C15.7891 6.00712 17.9929 8.21088 18.4236 11H17C16.4477 11 16 11.4477 16 12C16 12.5523 16.4477 13 17 13H18.4236C17.9929 15.7891 15.7891 17.9929 13 18.4236V17C13 16.4477 12.5523 16 12 16C11.4477 16 11 16.4477 11 17V18.4236C8.21088 17.9929 6.00712 15.7891 5.57645 13H7C7.55228 13 8 12.5523 8 12C8 11.4477 7.55228 11 7 11H5.57645C6.00712 8.21088 8.21088 6.00712 11 5.57645Z" fill="#000000"/>
+      </svg>
+    </span>
+  </button>
+  <div id="findme-message"></div>
   <!-- Logo -->
   <div id="logo">
-    <svg width="120" height="22" viewBox="0 0 350 60" xmlns="http://www.w3.org/2000/svg">
+    <svg width="160" height="29" viewBox="0 0 350 60" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <filter id="floatingShadow" x="-20%" y="-20%" width="140%" height="140%">
           <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000" flood-opacity="0.22"/>
@@ -179,6 +204,13 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
   <script>
+    // Set Disney World bounding box (wide version, your custom values)
+    var disneyWorldExtent = ol.proj.transformExtent(
+      [-81.9200, 28.1772, -81.2244, 28.6390], // [minLon, minLat, maxLon, maxLat]
+      'EPSG:4326',
+      'EPSG:3857'
+    );
+
     var disneyLayer = new ol.layer.Tile({
       source: new ol.source.XYZ({
         url: 'https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/722864629/{z}/{x}/{y}.jpg',
@@ -207,14 +239,20 @@
       opacity: 0.85
     });
 
+    // Optionally restrict layers to extent (tiles outside won't load)
+    disneyLayer.getSource().set('extent', disneyWorldExtent);
+    googleLayer.getSource().set('extent', disneyWorldExtent);
+    googleRoadsLayer.getSource().set('extent', disneyWorldExtent);
+
     var map = new ol.Map({
       target: 'map',
       layers: [disneyLayer, googleLayer, googleRoadsLayer],
       view: new ol.View({
-        center: ol.proj.fromLonLat([-81.5494, 28.3747]), // EPCOT center
+        center: ol.proj.fromLonLat([-81.5494, 28.3747]),
         zoom: 16,
         minZoom: 13,
-        maxZoom: 20
+        maxZoom: 20,
+        extent: disneyWorldExtent
       })
     });
 
@@ -244,6 +282,73 @@
       googleRoadsLayer.setVisible(roadsOn);
       roadsIcon.innerHTML = roadsOn ? noRoadsSVG : roadsSVG;
     };
+
+    // ---- FIND ME button functionality ----
+    var findmeBtn = document.getElementById('findme-btn');
+    var findmeMessage = document.getElementById('findme-message');
+    var userLocationLayer = null;
+
+    findmeBtn.onclick = function() {
+      if (!navigator.geolocation) {
+        showFindMeMessage('Geolocation not supported');
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        var coords = [pos.coords.longitude, pos.coords.latitude];
+        var projected = ol.proj.fromLonLat(coords);
+
+        // Check if user is within the Disney World extent
+        var extent = disneyWorldExtent;
+        if (!ol.extent.containsCoordinate(extent, projected)) {
+          showFindMeMessage('Outside of WDW Map');
+          removeUserLocation();
+          return;
+        }
+
+        // Remove previous marker if any
+        removeUserLocation();
+
+        // Add a new marker
+        userLocationLayer = new ol.layer.Vector({
+          source: new ol.source.Vector({
+            features: [
+              new ol.Feature({
+                geometry: new ol.geom.Point(projected)
+              })
+            ]
+          }),
+          style: new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: 10,
+              fill: new ol.style.Fill({color: 'rgba(0,116,217,0.35)'}),
+              stroke: new ol.style.Stroke({color: '#0074d9', width: 3})
+            })
+          }),
+          zIndex: 99
+        });
+        map.addLayer(userLocationLayer);
+        // Pan and zoom to the user location
+        map.getView().animate({center: projected, zoom: 17, duration: 800});
+      }, function() {
+        showFindMeMessage('Unable to get location');
+      }, { enableHighAccuracy: true });
+    };
+
+    function showFindMeMessage(msg) {
+      findmeMessage.textContent = msg;
+      findmeMessage.style.display = '';
+      setTimeout(function() {
+        findmeMessage.style.display = 'none';
+      }, 2200);
+    }
+
+    function removeUserLocation() {
+      if (userLocationLayer) {
+        map.removeLayer(userLocationLayer);
+        userLocationLayer = null;
+      }
+    }
 
     // Double-tap and hold to zoom, Google Maps style
     (function() {
