@@ -6,33 +6,82 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes, viewport-fit=cover">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
   <style>
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  overscroll-behavior: none;
-  overflow: hidden;
-}
-#map {
-  width: 100vw;
-  height: 100vh;
-  touch-action: none;         /* disables double-tap zoom and other gestures */
-  -webkit-user-select: none;
-  user-select: none;
-}
-    .ol-control.custom-btn {
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overscroll-behavior: none;
+      overflow: hidden;
+    }
+    #map {
+      width: 100vw;
+      height: 100vh;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .control-row {
       position: absolute;
+      top: 8px;
       right: 8px;
-      z-index: 1000;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      z-index: 1100;
+    }
+    #date-selector-container {
+      opacity: 1;
+      transition: opacity 0.35s;
+      margin-right: 7px;
+      display: flex;
+      align-items: center;
+      height: 40px;
+    }
+    #date-selector-container.hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #date-selector {
+      height: 40px;
+      min-width: 130px;
+      border-radius: 8px;
+      border: 1.5px solid #ccc;
+      background: rgba(255,255,255,0.85);
+      color: #222;
+      font-size: 15px;
+      padding: 0 9px;
+      margin: 0;
+      appearance: none;
+      cursor: pointer;
+      box-sizing: border-box;
+      outline: none;
+      transition: border .2s;
+    }
+    #date-selector:focus {
+      border-color: #999;
+    }
+    .ol-control.custom-btn {
+      position: static;
       padding: 0;
       border: none;
       background: none;
       box-shadow: none;
       outline: none;
+      margin-bottom: 0;
     }
-#toggle-btn { top: 8px; }
-#roads-btn { top: 56px; }
-#findme-btn { top: 104px; }
+    #toggle-btn { margin: 0; }
+    #roads-btn {
+      position: absolute;
+      right: 8px;
+      top: 56px;
+      z-index: 1000;
+    }
+    #findme-btn {
+      position: absolute;
+      right: 8px;
+      top: 104px;
+      z-index: 1000;
+    }
     .ol-control-inner {
       display: flex;
       align-items: center;
@@ -79,102 +128,61 @@ html, body {
       height: 29px;
       max-width: 90vw;
     }
-#findme-message {
-  display: none;
-  position: absolute;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2000;
-  background: rgba(255,255,255,0.92);
-  color: #d62525;
-  font-size: 17px;
-  font-family: Arial, Helvetica, sans-serif;
-  font-weight: bold;
-  text-align: center;
-  opacity: 0;             /* <--- Changed to 0 */
-  padding: 7px 20px;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px #0001;
-  transition: opacity 0.4s;    /* <--- Add this line */
-  pointer-events: none;        /* <--- Add this line (optional, usability) */
-}
+    #findme-message {
+      display: none;
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2000;
+      background: rgba(255,255,255,0.92);
+      color: #d62525;
+      font-size: 17px;
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: bold;
+      text-align: center;
+      opacity: 0;
+      padding: 7px 20px;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px #0001;
+      transition: opacity 0.4s;
+      pointer-events: none;
+    }
     @media (max-width: 600px) {
-#toggle-btn { top: 8px; }
-#roads-btn { top: 48px; }
-#findme-btn { top: 88px; }
-      .ol-control-inner {
-        width: 32px;
-        height: 32px;
-        border-radius: 6px;
-      }
-      .ol-control-inner svg {
-        width: 18px;
-        height: 18px;
-      }
-      #logo {
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: 8px;
-      }
-      #logo svg {
-        width: 105px !important;
-        height: 19px !important;
-      }
+      .control-row { right: 4px; top: 4px; }
+      #roads-btn { top: 48px; }
+      #findme-btn { top: 88px; }
+      .ol-control-inner, #date-selector { width: 32px; height: 32px; border-radius: 6px; font-size: 13px;}
+      .ol-control-inner svg { width: 18px; height: 18px; }
+      #logo { left: 50%; transform: translateX(-50%); bottom: 8px;}
+      #logo svg { width: 105px !important; height: 19px !important; }
+      #date-selector { min-width: 75px; font-size: 12px;}
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
-  <!-- Toggle View Button -->
-<button id="toggle-btn" class="ol-control custom-btn">
-    <span class="ol-control-inner" id="toggle-icon">
-      <!-- Default: Satellite icon -->
-      <svg fill="#000" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 203.556 203.556">
-        <g>
-          <path d="M201.359,137.3l-43.831-43.831l11.453-11.452c1.407-1.407,2.197-3.314,2.197-5.304c0-1.989-0.79-3.896-2.197-5.304
-            l-36.835-36.834c-2.929-2.928-7.677-2.928-10.606,0l-11.452,11.452L66.253,2.196c-2.93-2.928-7.678-2.928-10.606,0L18.813,39.03
-            c-2.929,2.93-2.929,7.678,0,10.607l43.831,43.831l-11.453,11.452c-1.407,1.407-2.197,3.314-2.197,5.304s0.79,3.896,2.197,5.304
-            l36.837,36.836c1.464,1.464,3.384,2.196,5.303,2.196c1.919,0,3.839-0.732,5.303-2.196l11.453-11.453l43.83,43.83
-            c1.465,1.464,3.384,2.196,5.303,2.196c1.919,0,3.839-0.732,5.303-2.196l36.835-36.834c1.407-1.407,2.197-3.314,2.197-5.304
-            C203.556,140.614,202.766,138.707,201.359,137.3z"/>
-          <path d="M72.344,188.555c-15.317,0.001-29.717-5.964-40.548-16.795C20.965,160.929,15,146.528,15,131.211
-            c0-4.143-3.358-7.5-7.5-7.5c-4.143,0-7.5,3.358-7.5,7.5c0,19.324,7.526,37.491,21.189,51.155
-            c13.663,13.664,31.829,21.189,51.152,21.189c0.001,0,0.002,0,0.004,0c4.142,0,7.499-3.358,7.499-7.5
-            C79.845,191.912,76.486,188.555,72.344,188.555z"/>
-          <path d="M69.346,174.133c4.142,0,7.5-3.357,7.5-7.5c0-4.143-3.358-7.5-7.5-7.5c-6.658,0-12.916-2.593-17.624-7.3
-            c-4.707-4.707-7.299-10.965-7.299-17.622c0-4.142-3.357-7.5-7.5-7.5h0c-4.142,0-7.5,3.358-7.5,7.5
-            c-0.001,10.663,4.152,20.688,11.693,28.229C48.656,169.981,58.682,174.133,69.346,174.133z"/>
-        </g>
-      </svg>
-    </span>
-  </button>
+  <div class="control-row">
+    <div id="date-selector-container">
+      <select id="date-selector"></select>
+    </div>
+    <!-- Toggle View Button -->
+    <button id="toggle-btn" class="ol-control custom-btn">
+      <span class="ol-control-inner" id="toggle-icon">
+        <!-- Satellite icon -->
+        <svg fill="#000" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 203.556 203.556"><g><path d="M201.359,137.3l-43.831-43.831l11.453-11.452c1.407-1.407,2.197-3.314,2.197-5.304c0-1.989-0.79-3.896-2.197-5.304l-36.835-36.834c-2.929-2.928-7.677-2.928-10.606,0l-11.452,11.452L66.253,2.196c-2.93-2.928-7.678-2.928-10.606,0L18.813,39.03c-2.929,2.93-2.929,7.678,0,10.607l43.831,43.831l-11.453,11.452c-1.407,1.407-2.197,3.314-2.197,5.304s0.79,3.896,2.197,5.304l36.837,36.836c1.464,1.464,3.384,2.196,5.303,2.196c1.919,0,3.839-0.732,5.303-2.196l11.453-11.453l43.83,43.83c1.465,1.464,3.384,2.196,5.303,2.196c1.919,0,3.839-0.732,5.303-2.196l36.835-36.834c1.407-1.407,2.197-3.314,2.197-5.304C203.556,140.614,202.766,138.707,201.359,137.3z"/><path d="M72.344,188.555c-15.317,0.001-29.717-5.964-40.548-16.795C20.965,160.929,15,146.528,15,131.211c0-4.143-3.358-7.5-7.5-7.5c-4.143,0-7.5,3.358-7.5,7.5c0,19.324,7.526,37.491,21.189,51.155c13.663,13.664,31.829,21.189,51.152,21.189c0.001,0,0.002,0,0.004,0c4.142,0,7.499-3.358,7.499-7.5C79.845,191.912,76.486,188.555,72.344,188.555z"/><path d="M69.346,174.133c4.142,0,7.5-3.357,7.5-7.5c0-4.143-3.358-7.5-7.5-7.5c-6.658,0-12.916-2.593-17.624-7.3c-4.707-4.707-7.299-10.965-7.299-17.622c0-4.142-3.357-7.5-7.5-7.5h0c-4.142,0-7.5,3.358-7.5,7.5c-0.001,10.663,4.152,20.688,11.693,28.229C48.656,169.981,58.682,174.133,69.346,174.133z"/></g></svg>
+      </span>
+    </button>
+  </div>
   <!-- Roads Button -->
-<button id="roads-btn" class="ol-control custom-btn">
+  <button id="roads-btn" class="ol-control custom-btn">
     <span class="ol-control-inner" id="roads-icon">
-      <svg fill="#000" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 217.205 217.205">
-        <g>
-          <path d="M167.631,101.102H49.574c-16.216,0-29.408-13.199-29.408-29.422c0-16.211,13.192-29.399,29.408-29.399h73.789
-            c4.143,0,7.5-3.358,7.5-7.5c0-4.142-3.357-7.5-7.5-7.5H49.574c-24.486,0-44.408,19.917-44.408,44.399
-            c0,24.494,19.922,44.422,44.408,44.422h118.057c16.216,0,29.408,13.199,29.408,29.423c0,16.211-13.192,29.399-29.408,29.399H93.205
-            c-4.142,0-7.5,3.358-7.5,7.5s3.358,7.5,7.5,7.5h74.426c24.486,0,44.408-19.917,44.408-44.399
-            C212.039,121.03,192.117,101.102,167.631,101.102z"/>
-          <path d="M48.516,130.001c-17.407,0-31.568,14.162-31.568,31.568c0,26.865,25.192,52.367,26.265,53.439
-            c1.407,1.407,3.314,2.197,5.304,2.197c1.989,0,3.897-0.79,5.304-2.197c1.072-1.073,26.263-26.574,26.263-53.439
-            C80.082,144.163,65.922,130.001,48.516,130.001z M48.516,198.357c-6.477-7.995-16.568-22.713-16.568-36.788
-            c0-9.136,7.433-16.568,16.568-16.568c9.135,0,16.566,7.433,16.566,16.568C65.082,175.644,54.991,190.362,48.516,198.357z"/>
-          <path d="M168.053,87.202c1.919,0,3.838-0.732,5.302-2.195c1.073-1.072,26.278-26.573,26.278-53.44
-            C199.633,14.161,185.466,0,168.053,0c-17.407,0-31.568,14.161-31.568,31.566c0,26.866,25.192,52.367,26.266,53.439
-            C164.214,86.47,166.133,87.202,168.053,87.202z M168.053,15c9.143,0,16.58,7.432,16.58,16.566c0,14.076-10.1,28.796-16.579,36.79
-            c-6.476-7.994-16.569-22.713-16.569-36.79C151.484,22.432,158.917,15,168.053,15z"/>
-        </g>
-      </svg>
+      <svg fill="#000" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 217.205 217.205"><g><path d="M167.631,101.102H49.574c-16.216,0-29.408-13.199-29.408-29.422c0-16.211,13.192-29.399,29.408-29.399h73.789c4.143,0,7.5-3.358,7.5-7.5c0-4.142-3.357-7.5-7.5-7.5H49.574c-24.486,0-44.408,19.917-44.408,44.399c0,24.494,19.922,44.422,44.408,44.422h118.057c16.216,0,29.408,13.199,29.408,29.423c0,16.211-13.192,29.399-29.408,29.399H93.205c-4.142,0-7.5,3.358-7.5,7.5s3.358,7.5,7.5,7.5h74.426c24.486,0,44.408-19.917,44.408-44.399C212.039,121.03,192.117,101.102,167.631,101.102z"/><path d="M48.516,130.001c-17.407,0-31.568,14.162-31.568,31.568c0,26.865,25.192,52.367,26.265,53.439c1.407,1.407,3.314,2.197,5.304,2.197c1.989,0,3.897-0.79,5.304-2.197c1.072-1.073,26.263-26.574,26.263-53.439C80.082,144.163,65.922,130.001,48.516,130.001z M48.516,198.357c-6.477-7.995-16.568-22.713-16.568-36.788c0-9.136,7.433-16.568,16.568-16.568c9.135,0,16.566,7.433,16.566,16.568C65.082,175.644,54.991,190.362,48.516,198.357z"/><path d="M168.053,87.202c1.919,0,3.838-0.732,5.302-2.195c1.073-1.072,26.278-26.573,26.278-53.44C199.633,14.161,185.466,0,168.053,0c-17.407,0-31.568,14.161-31.568,31.566c0,26.866,25.192,52.367,26.266,53.439C164.214,86.47,166.133,87.202,168.053,87.202z M168.053,15c9.143,0,16.58,7.432,16.58,16.566c0,14.076-10.1,28.796-16.579,36.79c-6.476-7.994-16.569-22.713-16.569-36.79C151.484,22.432,158.917,15,168.053,15z"/></g></svg>
     </span>
   </button>
   <!-- Find Me Button -->
-<button id="findme-btn" class="ol-control custom-btn">
+  <button id="findme-btn" class="ol-control custom-btn">
     <span class="ol-control-inner" id="findme-icon">
-      <!-- Your provided SVG -->
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path fill-rule="evenodd" clip-rule="evenodd" d="M13 3C13 2.44772 12.5523 2 12 2C11.4477 2 11 2.44772 11 3V3.5582C7.10482 4.01469 4.01469 7.10482 3.5582 11H3C2.44772 11 2 11.4477 2 12C2 12.5523 2.44772 13 3 13H3.5582C4.01469 16.8952 7.10482 19.9853 11 20.4418V21C11 21.5523 11.4477 22 12 22C12.5523 22 13 21.5523 13 21V20.4418C16.8952 19.9853 19.9853 16.8952 20.4418 13H21C21.5523 13 22 12.5523 22 12C22 11.4477 21.5523 11 21 11H20.4418C19.9853 7.10482 16.8952 4.01469 13 3.5582V3ZM11 5.57645V7C11 7.55228 11.4477 8 12 8C12.5523 8 13 7.55228 13 7V5.57645C15.7891 6.00712 17.9929 8.21088 18.4236 11H17C16.4477 11 16 11.4477 16 12C16 12.5523 16.4477 13 17 13H18.4236C17.9929 15.7891 15.7891 17.9929 13 18.4236V17C13 16.4477 12.5523 16 12 16C11.4477 16 11 16.4477 11 17V18.4236C8.21088 17.9929 6.00712 15.7891 5.57645 13H7C7.55228 13 8 12.5523 8 12C8 11.4477 7.55228 11 7 11H5.57645C6.00712 8.21088 8.21088 6.00712 11 5.57645Z" fill="#000000"/>
       </svg>
@@ -190,7 +198,6 @@ html, body {
         </filter>
       </defs>
       <g filter="url(#floatingShadow)">
-        <!-- Castle icon (geometric) -->
         <g>
           <rect x="26" y="25" width="8" height="15" fill="#4461a9"/>
           <rect x="31" y="17" width="6" height="23" fill="#577cd7"/>
@@ -200,7 +207,6 @@ html, body {
           <rect x="22" y="32" width="4" height="7" fill="#89aef4"/>
           <polygon points="24,28 22,32 26,32" fill="#577cd7"/>
         </g>
-        <!-- Sparkle Arc -->
         <g>
           <path d="M 10 40 Q 28 10 54 16 Q 60 18 68 35" fill="none" stroke="#ffd700" stroke-width="1.5" stroke-dasharray="4,3"/>
           <circle cx="15" cy="35" r="1.1" fill="#ffd700"/>
@@ -212,7 +218,6 @@ html, body {
           <circle cx="56" cy="19" r="1.2" fill="#ffd700"/>
           <polygon points="65,29 65.7,30.3 67,30.6 65.7,31 65,32.3 64.3,31 63,30.6 64.3,30.3" fill="#fff"/>
         </g>
-        <!-- Text: Arial, compacted -->
         <text x="70" y="40" font-family="Arial, Helvetica, sans-serif" font-size="23" fill="#23287b" letter-spacing="0"
           style="text-shadow: 0 2px 6px #fff, 0 1px 0 #ccc;">
           WDW Magic Explorer
@@ -222,27 +227,35 @@ html, body {
   </div>
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
   <script>
-    // Set Disney World bounding box (wide version, your custom values)
+    // Server/date options
+    const serverOptions = [
+      { code: "47", label: "27 May 2017" },{ code: "105", label: "15 Jun 2018" },{ code: "106", label: "12 Jul 2018" },{ code: "107", label: "08 Aug 2018" },{ code: "108", label: "04 Sep 2018" },{ code: "109", label: "01 Oct 2018" },{ code: "110", label: "17 Oct 2018" },{ code: "111", label: "02 Nov 2018" },{ code: "112", label: "18 Nov 2018" },{ code: "113", label: "04 Dec 2018" },{ code: "114", label: "20 Dec 2018" },{ code: "115", label: "05 Jan 2019" },{ code: "116", label: "21 Jan 2019" },{ code: "117", label: "06 Feb 2019" },{ code: "118", label: "22 Feb 2019" },{ code: "119", label: "10 Mar 2019" },{ code: "120", label: "26 Mar 2019" },{ code: "121", label: "11 Apr 2019" },{ code: "122", label: "27 Apr 2019" },{ code: "123", label: "13 May 2019" },{ code: "124", label: "29 May 2019" },{ code: "125", label: "14 Jun 2019" },{ code: "126", label: "09 Jul 2019" },{ code: "127", label: "18 Jul 2019" },{ code: "128", label: "05 Aug 2019" },{ code: "129", label: "12 Aug 2019" },{ code: "130", label: "20 Aug 2019" },{ code: "131", label: "30 Aug 2019" },{ code: "132", label: "10 Sep 2019" },{ code: "133", label: "20 Sep 2019" },{ code: "134", label: "01 Oct 2019" },{ code: "135", label: "12 Oct 2019" },{ code: "136", label: "22 Oct 2019" },{ code: "137", label: "02 Nov 2019" },{ code: "138", label: "13 Nov 2019" },{ code: "139", label: "23 Nov 2019" },{ code: "140", label: "04 Dec 2019" },{ code: "141", label: "15 Dec 2019" },{ code: "142", label: "03 Jan 2020" },{ code: "143", label: "23 Jan 2020" },{ code: "144", label: "12 Feb 2020" },{ code: "145", label: "03 Mar 2020" },{ code: "146", label: "22 Mar 2020" },{ code: "147", label: "11 Apr 2020" },{ code: "148", label: "01 May 2020" },{ code: "149", label: "21 May 2020" },{ code: "150", label: "09 Jun 2020" },{ code: "151", label: "29 Jun 2020" },{ code: "152", label: "19 Jul 2020" },{ code: "153", label: "08 Aug 2020" },{ code: "154", label: "27 Aug 2020" },{ code: "155", label: "16 Sep 2020" },{ code: "156", label: "06 Oct 2020" },{ code: "157", label: "06 Nov 2020" },{ code: "158", label: "20 Nov 2020" },{ code: "159", label: "09 Dec 2020" },{ code: "160", label: "30 Dec 2020" },{ code: "161", label: "18 Jan 2021" },{ code: "162", label: "08 Feb 2021" },{ code: "163", label: "21 Feb 2021" },{ code: "164", label: "13 Mar 2021" },{ code: "165", label: "02 Apr 2021" },{ code: "166", label: "22 Apr 2021" },{ code: "192428169", label: "Oct 2021" },{ code: "150629184", label: "Sep 2022" },{ code: "148156448", label: "Oct 2022" },{ code: "148786919", label: "Aug 2023" },{ code: "136252875", label: "Oct 2023" },{ code: "179053222", label: "Mar 2024" },{ code: "170579610", label: "Dec 2024" },{ code: "722864629", label: "May 2025 (UK)" },{ code: "961604122", label: "May 2025" }
+    ];
+
+    // Disney bounding box
     var disneyWorldExtent = ol.proj.transformExtent(
-      [-81.9200, 28.1772, -81.2244, 28.6390], // [minLon, minLat, maxLon, maxLat]
-      'EPSG:4326',
-      'EPSG:3857'
+      [-81.9200, 28.1772, -81.2244, 28.6390],
+      'EPSG:4326', 'EPSG:3857'
     );
 
-    var disneyLayer = new ol.layer.Tile({
-      source: new ol.source.XYZ({
-        url: 'https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/722864629/{z}/{x}/{y}.jpg',
-        minZoom: 0,
-        maxZoom: 20
-      }),
-      visible: true
-    });
+    var disneyServer = serverOptions[serverOptions.length - 1].code; // Default to most recent
+
+    function makeDisneyLayer(server) {
+      return new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${server}/{z}/{x}/{y}.jpg`,
+          minZoom: 0, maxZoom: 20
+        }),
+        visible: true
+      });
+    }
+
+    var disneyLayer = makeDisneyLayer(disneyServer);
 
     var googleLayer = new ol.layer.Tile({
       source: new ol.source.XYZ({
         url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-        minZoom: 0,
-        maxZoom: 20
+        minZoom: 0, maxZoom: 20
       }),
       visible: false
     });
@@ -250,14 +263,11 @@ html, body {
     var googleRoadsLayer = new ol.layer.Tile({
       source: new ol.source.XYZ({
         url: 'https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}',
-        minZoom: 0,
-        maxZoom: 20
+        minZoom: 0, maxZoom: 20
       }),
-      visible: false,
-      opacity: 0.85
+      visible: false, opacity: 0.85
     });
 
-    // Optionally restrict layers to extent (tiles outside won't load)
     disneyLayer.getSource().set('extent', disneyWorldExtent);
     googleLayer.getSource().set('extent', disneyWorldExtent);
     googleRoadsLayer.getSource().set('extent', disneyWorldExtent);
@@ -268,13 +278,12 @@ html, body {
       view: new ol.View({
         center: ol.proj.fromLonLat([-81.5494, 28.3747]),
         zoom: 16,
-        minZoom: 0,
-        maxZoom: 20,
+        minZoom: 0, maxZoom: 20,
         extent: disneyWorldExtent
       })
     });
 
-    // SVG icon HTML as variables
+    // Icons as variables
     var satelliteSVG = `<svg fill="#000" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 203.556 203.556"><g><path d="M201.359,137.3l-43.831-43.831l11.453-11.452c1.407-1.407,2.197-3.314,2.197-5.304c0-1.989-0.79-3.896-2.197-5.304l-36.835-36.834c-2.929-2.928-7.677-2.928-10.606,0l-11.452,11.452L66.253,2.196c-2.93-2.928-7.678-2.928-10.606,0L18.813,39.03c-2.929,2.93-2.929,7.678,0,10.607l43.831,43.831l-11.453,11.452c-1.407,1.407-2.197,3.314-2.197,5.304s0.79,3.896,2.197,5.304l36.837,36.836c1.464,1.464,3.384,2.196,5.303,2.196c1.919,0,3.839-0.732,5.303-2.196l11.453-11.453l43.83,43.83c1.465,1.464,3.384,2.196,5.303,2.196c1.919,0,3.839-0.732,5.303-2.196l36.835-36.834c1.407-1.407,2.197-3.314,2.197-5.304C203.556,140.614,202.766,138.707,201.359,137.3z"/><path d="M72.344,188.555c-15.317,0.001-29.717-5.964-40.548-16.795C20.965,160.929,15,146.528,15,131.211c0-4.143-3.358-7.5-7.5-7.5c-4.143,0-7.5,3.358-7.5,7.5c0,19.324,7.526,37.491,21.189,51.155c13.663,13.664,31.829,21.189,51.152,21.189c0.001,0,0.002,0,0.004,0c4.142,0,7.499-3.358,7.499-7.5C79.845,191.912,76.486,188.555,72.344,188.555z"/><path d="M69.346,174.133c4.142,0,7.5-3.357,7.5-7.5c0-4.143-3.358-7.5-7.5-7.5c-6.658,0-12.916-2.593-17.624-7.3c-4.707-4.707-7.299-10.965-7.299-17.622c0-4.142-3.357-7.5-7.5-7.5h0c-4.142,0-7.5,3.358-7.5,7.5c-0.001,10.663,4.152,20.688,11.693,28.229C48.656,169.981,58.682,174.133,69.346,174.133z"/></g></svg>`;
     var mouseSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-92 -92 512 422"><circle r="92"/><circle cx="328" r="92"/><circle cx="164" cy="172" r="158"/></svg>`;
     var roadsSVG = `<svg fill="#000" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 217.205 217.205"><g><path d="M167.631,101.102H49.574c-16.216,0-29.408-13.199-29.408-29.422c0-16.211,13.192-29.399,29.408-29.399h73.789c4.143,0,7.5-3.358,7.5-7.5c0-4.142-3.357-7.5-7.5-7.5H49.574c-24.486,0-44.408,19.917-44.408,44.399c0,24.494,19.922,44.422,44.408,44.422h118.057c16.216,0,29.408,13.199,29.408,29.423c0,16.211-13.192,29.399-29.408,29.399H93.205c-4.142,0-7.5,3.358-7.5,7.5s3.358,7.5,7.5,7.5h74.426c24.486,0,44.408-19.917,44.408-44.399C212.039,121.03,192.117,101.102,167.631,101.102z"/><path d="M48.516,130.001c-17.407,0-31.568,14.162-31.568,31.568c0,26.865,25.192,52.367,26.265,53.439c1.407,1.407,3.314,2.197,5.304,2.197c1.989,0,3.897-0.79,5.304-2.197c1.072-1.073,26.263-26.574,26.263-53.439C80.082,144.163,65.922,130.001,48.516,130.001z M48.516,198.357c-6.477-7.995-16.568-22.713-16.568-36.788c0-9.136,7.433-16.568,16.568-16.568c9.135,0,16.566,7.433,16.566,16.568C65.082,175.644,54.991,190.362,48.516,198.357z"/><path d="M168.053,87.202c1.919,0,3.838-0.732,5.302-2.195c1.073-1.072,26.278-26.573,26.278-53.44C199.633,14.161,185.466,0,168.053,0c-17.407,0-31.568,14.161-31.568,31.566c0,26.866,25.192,52.367,26.266,53.439C164.214,86.47,166.133,87.202,168.053,87.202z M168.053,15c9.143,0,16.58,7.432,16.58,16.566c0,14.076-10.1,28.796-16.579,36.79c-6.476-7.994-16.569-22.713-16.569-36.79C151.484,22.432,158.917,15,168.053,15z"/></g></svg>`;
@@ -284,11 +293,42 @@ html, body {
     var toggleIcon = document.getElementById('toggle-icon');
     var showingDisney = true;
 
+    var dateSelectorContainer = document.getElementById('date-selector-container');
+    var dateSelector = document.getElementById('date-selector');
+
+    // Fill dropdown
+    serverOptions.forEach(opt => {
+      var o = document.createElement('option');
+      o.value = opt.code;
+      o.textContent = opt.label;
+      dateSelector.appendChild(o);
+    });
+    dateSelector.value = disneyServer;
+
+    // Switch Disney layer server
+    dateSelector.addEventListener('change', function() {
+      var newCode = dateSelector.value;
+      disneyServer = newCode;
+      var vis = disneyLayer.getVisible();
+      map.removeLayer(disneyLayer);
+      disneyLayer = makeDisneyLayer(newCode);
+      disneyLayer.setVisible(vis);
+      disneyLayer.getSource().set('extent', disneyWorldExtent);
+      map.getLayers().insertAt(0, disneyLayer);
+    });
+
     toggleBtn.onclick = function() {
       showingDisney = !showingDisney;
       disneyLayer.setVisible(showingDisney);
       googleLayer.setVisible(!showingDisney);
-      toggleIcon.innerHTML = showingDisney ? satelliteSVG : mouseSVG;
+      // Date selector fade logic
+      if (showingDisney) {
+        dateSelectorContainer.classList.remove("hide");
+        toggleIcon.innerHTML = satelliteSVG;
+      } else {
+        dateSelectorContainer.classList.add("hide");
+        toggleIcon.innerHTML = mouseSVG;
+      }
     };
 
     var roadsBtn = document.getElementById('roads-btn');
@@ -301,76 +341,48 @@ html, body {
       roadsIcon.innerHTML = roadsOn ? noRoadsSVG : roadsSVG;
     };
 
-    // ---- FIND ME button functionality ----
+    // FIND ME button
     var findmeBtn = document.getElementById('findme-btn');
     var findmeMessage = document.getElementById('findme-message');
     var userLocationLayer = null;
 
-findmeBtn.onclick = function() {
-  if (!navigator.geolocation) {
-    showFindMeMessage('Geolocation not supported');
-    return;
-  }
+    findmeBtn.onclick = function() {
+      if (!navigator.geolocation) { showFindMeMessage('Geolocation not supported'); return; }
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        var coords = [pos.coords.longitude, pos.coords.latitude];
+        var projected = ol.proj.fromLonLat(coords);
+        var within = ol.extent.containsCoordinate(disneyWorldExtent, projected);
+        if (!within) { showFindMeMessage('Outside of WDW'); removeUserLocation(); return; }
+        removeUserLocation();
+        userLocationLayer = new ol.layer.Vector({
+          source: new ol.source.Vector({
+            features: [new ol.Feature({geometry: new ol.geom.Point(projected)})]
+          }),
+          style: new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: 10, fill: new ol.style.Fill({color: 'rgba(0,116,217,0.35)'}),
+              stroke: new ol.style.Stroke({color: '#0074d9', width: 3})
+            })
+          }),
+          zIndex: 99
+        });
+        map.addLayer(userLocationLayer);
+        map.getView().animate({center: projected, zoom: 17, duration: 800});
+      }, function(error) {
+        showFindMeMessage('Unable to get location');
+      }, { enableHighAccuracy: true });
+    };
 
-  navigator.geolocation.getCurrentPosition(function(pos) {
-    var coords = [pos.coords.longitude, pos.coords.latitude];
-    var projected = ol.proj.fromLonLat(coords);
-
-    // Debug: Log location and extent if you wish
-    // console.log('User location (lon,lat):', coords);
-    // console.log('Projected:', projected);
-    // console.log('Extent:', disneyWorldExtent);
-
-    // Check if user is within the Disney World extent
-    var within = ol.extent.containsCoordinate(disneyWorldExtent, projected);
-
-    if (!within) {
-      showFindMeMessage('Outside of WDW');
-      removeUserLocation();
-      // Optionally pan to user's location for visual feedback:
-      // map.getView().animate({center: projected, zoom: 14, duration: 1200});
-      return;
+    function showFindMeMessage(msg) {
+      findmeMessage.textContent = msg;
+      findmeMessage.style.display = 'block';
+      setTimeout(function() { findmeMessage.style.opacity = '1'; }, 10);
+      setTimeout(function() {
+        findmeMessage.style.opacity = '0';
+        setTimeout(function() { findmeMessage.style.display = 'none'; }, 400);
+      }, 2200);
     }
-
-    removeUserLocation();
-
-    userLocationLayer = new ol.layer.Vector({
-      source: new ol.source.Vector({
-        features: [
-          new ol.Feature({
-            geometry: new ol.geom.Point(projected)
-          })
-        ]
-      }),
-      style: new ol.style.Style({
-        image: new ol.style.Circle({
-          radius: 10,
-          fill: new ol.style.Fill({color: 'rgba(0,116,217,0.35)'}),
-          stroke: new ol.style.Stroke({color: '#0074d9', width: 3})
-        })
-      }),
-      zIndex: 99
-    });
-    map.addLayer(userLocationLayer);
-    map.getView().animate({center: projected, zoom: 17, duration: 800});
-  }, function(error) {
-    showFindMeMessage('Unable to get location');
-  }, { enableHighAccuracy: true });
-};
-function showFindMeMessage(msg) {
-  findmeMessage.textContent = msg;
-  findmeMessage.style.display = 'block';
-  setTimeout(function() {
-    findmeMessage.style.opacity = '1';
-  }, 10);
-  setTimeout(function() {
-    findmeMessage.style.opacity = '0';
-    setTimeout(function() {
-      findmeMessage.style.display = 'none';
-    }, 400); // Match transition duration
-  }, 2200);
-}
-window.showFindMeMessage = showFindMeMessage;
+    window.showFindMeMessage = showFindMeMessage;
 
     function removeUserLocation() {
       if (userLocationLayer) {
@@ -391,8 +403,7 @@ window.showFindMeMessage = showFindMeMessage;
       mapDiv.addEventListener('touchstart', function(e) {
         if (e.touches.length !== 1) return;
         var now = Date.now();
-        if (now - lastTap < 350) { // detect double-tap
-          // Prevent normal double-tap zoom
+        if (now - lastTap < 350) {
           e.preventDefault();
           startY = e.touches[0].clientY;
           startZoom = map.getView().getZoom();
@@ -406,7 +417,6 @@ window.showFindMeMessage = showFindMeMessage;
           if (holdTimeout) clearTimeout(holdTimeout);
         }
       });
-
       mapDiv.addEventListener('touchend', function(e) {
         if (isHoldZoom) {
           isHoldZoom = false;
@@ -414,19 +424,19 @@ window.showFindMeMessage = showFindMeMessage;
         }
         if (holdTimeout) clearTimeout(holdTimeout);
       });
-
       function moveHandler(e) {
         if (!isHoldZoom || e.touches.length !== 1) return;
         e.preventDefault();
         var dy = e.touches[0].clientY - startY;
-        // Each 80 pixels up = zoom in 1, down = zoom out 1
         var newZoom = startZoom - dy / 80;
         var view = map.getView();
-        // Clamp zoom level
         newZoom = Math.max(view.getMinZoom(), Math.min(view.getMaxZoom(), newZoom));
         view.setZoom(newZoom);
       }
     })();
+
+    // Show date selector only when Disney map is active
+    dateSelectorContainer.classList.remove("hide");
   </script>
 </body>
 </html>
