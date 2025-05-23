@@ -29,6 +29,7 @@
       flex-direction: row;
       align-items: center;
       z-index: 1100;
+      gap: 0px; 
     }
     .ol-control.custom-btn {
       position: static;
@@ -241,10 +242,10 @@
       height: 24px;
     }
     @media (max-width: 600px) {
-      .control-row { right: 4px; top: 4px; }
+  .control-row { right: 8px; top: 4px; gap: 6px; }
       #date-btn { margin-right: 0; }
-      #roads-btn { top: 48px; }
-      #findme-btn { top: 88px; }
+      #roads-btn { top: 44px; }
+      #findme-btn { top: 84px; }
       .ol-control-inner, #date-btn-inner, #quick-switch-btn {
         width: 32px; height: 32px; border-radius: 6px; font-size: 13px;
       }
