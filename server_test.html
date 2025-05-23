@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WDW Disney Tile Map Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
+  <style>
+    html, body, #map { height: 100%; margin: 0; padding: 0; }
+    #tilebox {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 10;
+      background: rgba(255,255,255,0.94);
+      padding: 10px 18px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px #0001;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    #tilebox input {
+      width: 100px;
+      font-size: 1em;
+      padding: 3px 6px;
+      margin-left: 4px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+    #tilebox button {
+      font-size: 1em;
+      margin-left: 6px;
+      padding: 3px 10px;
+      border-radius: 4px;
+      border: none;
+      background: #0074d9;
+      color: #fff;
+      cursor: pointer;
+    }
+    #tilebox label { font-size: 1em; }
+  </style>
+</head>
+<body>
+  <div id="tilebox">
+    <label>Disney Map Server ID:</label>
+    <input id="tileId" type="text" value="722864629">
+    <button id="updateBtn">Update</button>
+  </div>
+  <div id="map"></div>
+  <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
+  <script>
+    var tileIdInput = document.getElementById('tileId');
+    var updateBtn = document.getElementById('updateBtn');
+    var disneyLayer;
+
+    function createDisneyLayer(tileId) {
+      return new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${tileId}/{z}/{x}/{y}.jpg`,
+          minZoom: 0,
+          maxZoom: 20
+        })
+      });
+    }
+
+    var map = new ol.Map({
+      target: 'map',
+      layers: [],
+      view: new ol.View({
+        center: ol.proj.fromLonLat([-81.5494, 28.3747]), // Epcot
+        zoom: 16,
+        minZoom: 0,
+        maxZoom: 20
+      })
+    });
+
+    function setDisneyLayer(tileId) {
+      if (disneyLayer) {
+        map.removeLayer(disneyLayer);
+      }
+      disneyLayer = createDisneyLayer(tileId);
+      map.getLayers().insertAt(0, disneyLayer);
+    }
+
+    // Initial layer
+    setDisneyLayer(tileIdInput.value);
+
+    // Change map tiles on update
+    function updateTiles() {
+      var newTileId = tileIdInput.value.trim();
+      setDisneyLayer(newTileId);
+    }
+
+    updateBtn.onclick = updateTiles;
+    tileIdInput.addEventListener('keyup', function(e) {
+      if (e.key === 'Enter') updateTiles();
+    });
+  </script>
+</body>
+</html>
