@@ -232,7 +232,7 @@
     }
     #quick-switch-btn {
       position: absolute;
-      bottom: 18px;
+      bottom: calc(18px + env(safe-area-inset-bottom, 0));
       right: 16px;
       z-index: 1300;
       display: none;
@@ -322,7 +322,7 @@
       #logo { left: 50%; transform: translateX(-50%); bottom: 8px;}
       #logo img { width: 180px !important; height: 32px !important; }
       #current-date-display { font-size: 16px; padding: 0 10px; top: 10px; }
-      #quick-switch-btn { bottom: 8px; right: 8px; }
+      #quick-switch-btn { bottom: calc(8px + env(safe-area-inset-bottom, 0)); right: 8px; }
       #date-popup { min-width: 140px; max-height: 50vh; top: 40px; }
     }
   </style>
