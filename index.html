@@ -262,313 +262,295 @@
 <body>
   <div id="map"></div>
   <div class="control-row">
-    <!-- Date Selector Button -->
     <button id="date-btn" type="button">
       <span id="date-btn-inner" class="ol-control-inner">
         <img src="icons/calendar.svg" alt="Date Selector">
       </span>
     </button>
     <div id="date-popup"></div>
-    <!-- Toggle View Button -->
     <button id="toggle-btn" class="ol-control custom-btn">
       <span class="ol-control-inner" id="toggle-icon">
         <img src="icons/satellite.svg" alt="Satellite">
       </span>
     </button>
   </div>
-  <!-- Roads Button -->
   <button id="roads-btn" class="ol-control custom-btn">
     <span class="ol-control-inner" id="roads-icon">
       <img src="icons/roads.svg" alt="Roads">
     </span>
   </button>
-  <!-- Find Me Button -->
   <button id="findme-btn" class="ol-control custom-btn">
     <span class="ol-control-inner" id="findme-icon">
       <img src="icons/locateme.svg" alt="Locate Me">
     </span>
   </button>
   <div id="findme-message"></div>
-  <!-- Quick Switch Button -->
   <button id="quick-switch-btn" title="Quick Switch Dates" class="ol-control-inner">
     <img src="icons/switch.svg" alt="Switch">
   </button>
-  <!-- Logo -->
   <div id="logo">
     <svg width="160" height="29" viewBox="0 0 350 60"><defs><filter id="floatingShadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000" flood-opacity="0.22"/></filter></defs><g filter="url(#floatingShadow)"><g><rect x="26" y="25" width="8" height="15" fill="#4461a9"/><rect x="31" y="17" width="6" height="23" fill="#577cd7"/><polygon points="34,9 29,25 39,25" fill="#4461a9"/><rect x="39" y="28" width="6" height="10" fill="#89aef4"/><polygon points="42,21 39,28 45,28" fill="#577cd7"/><rect x="22" y="32" width="4" height="7" fill="#89aef4"/><polygon points="24,28 22,32 26,32" fill="#577cd7"/></g><g><path d="M 10 40 Q 28 10 54 16 Q 60 18 68 35" fill="none" stroke="#ffd700" stroke-width="1.5" stroke-dasharray="4,3"/><circle cx="15" cy="35" r="1.1" fill="#ffd700"/><polygon points="19,28 19.7,29.3 21,29.6 19.7,30 19,31.3 18.3,30 17,29.6 18.3,29.3" fill="#fff"/><circle cx="26" cy="22" r="1.3" fill="#ffd700"/><polygon points="32,15 32.7,16.3 34,16.6 32.7,17 32,18.3 31.3,17 30,16.6 31.3,16.3" fill="#fff"/><circle cx="43" cy="17" r="1.1" fill="#ffd700"/><polygon points="50,18 50.7,19.3 52,19.6 50.7,20 50,21.3 49.3,20 48,19.6 49.3,19.3" fill="#fff"/><circle cx="56" cy="19" r="1.2" fill="#ffd700"/><polygon points="65,29 65.7,30.3 67,30.6 65.7,31 65,32.3 64.3,31 63,30.6 64.3,30.3" fill="#fff"/></g><text x="70" y="40" font-family="Arial, Helvetica, sans-serif" font-size="23" fill="#23287b" letter-spacing="0" style="text-shadow: 0 2px 6px #fff, 0 1px 0 #ccc;">WDW Magic Explorer</text></g></svg>
   </div>
   <div id="current-date-display"></div>
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
   <script>
-    // Server/date options
-    const serverOptions = [
-      { code: "47", label: "27 May 2017" },{ code: "105", label: "15 Jun 2018" },{ code: "106", label: "12 Jul 2018" },{ code: "107", label: "08 Aug 2018" },{ code: "108", label: "04 Sep 2018" },{ code: "109", label: "01 Oct 2018" },{ code: "110", label: "17 Oct 2018" },{ code: "111", label: "02 Nov 2018" },{ code: "112", label: "18 Nov 2018" },{ code: "113", label: "04 Dec 2018" },{ code: "114", label: "20 Dec 2018" },{ code: "115", label: "05 Jan 2019" },{ code: "116", label: "21 Jan 2019" },{ code: "117", label: "06 Feb 2019" },{ code: "118", label: "22 Feb 2019" },{ code: "119", label: "10 Mar 2019" },{ code: "120", label: "26 Mar 2019" },{ code: "121", label: "11 Apr 2019" },{ code: "122", label: "27 Apr 2019" },{ code: "123", label: "13 May 2019" },{ code: "124", label: "29 May 2019" },{ code: "125", label: "14 Jun 2019" },{ code: "126", label: "09 Jul 2019" },{ code: "127", label: "18 Jul 2019" },{ code: "128", label: "05 Aug 2019" },{ code: "129", label: "12 Aug 2019" },{ code: "130", label: "20 Aug 2019" },{ code: "131", label: "30 Aug 2019" },{ code: "132", label: "10 Sep 2019" },{ code: "133", label: "20 Sep 2019" },{ code: "134", label: "01 Oct 2019" },{ code: "135", label: "12 Oct 2019" },{ code: "136", label: "22 Oct 2019" },{ code: "137", label: "02 Nov 2019" },{ code: "138", label: "13 Nov 2019" },{ code: "139", label: "23 Nov 2019" },{ code: "140", label: "04 Dec 2019" },{ code: "141", label: "15 Dec 2019" },{ code: "142", label: "03 Jan 2020" },{ code: "143", label: "23 Jan 2020" },{ code: "144", label: "12 Feb 2020" },{ code: "145", label: "03 Mar 2020" },{ code: "146", label: "22 Mar 2020" },{ code: "147", label: "11 Apr 2020" },{ code: "148", label: "01 May 2020" },{ code: "149", label: "21 May 2020" },{ code: "150", label: "09 Jun 2020" },{ code: "151", label: "29 Jun 2020" },{ code: "152", label: "19 Jul 2020" },{ code: "153", label: "08 Aug 2020" },{ code: "154", label: "27 Aug 2020" },{ code: "155", label: "16 Sep 2020" },{ code: "156", label: "06 Oct 2020" },{ code: "157", label: "06 Nov 2020" },{ code: "158", label: "20 Nov 2020" },{ code: "159", label: "09 Dec 2020" },{ code: "160", label: "30 Dec 2020" },{ code: "161", label: "18 Jan 2021" },{ code: "162", label: "08 Feb 2021" },{ code: "163", label: "21 Feb 2021" },{ code: "164", label: "13 Mar 2021" },{ code: "165", label: "02 Apr 2021" },{ code: "166", label: "22 Apr 2021" },{ code: "192428169", label: "Oct 2021" },{ code: "150629184", label: "Sep 2022" },{ code: "148156448", label: "Oct 2022" },{ code: "148786919", label: "Aug 2023" },{ code: "136252875", label: "Oct 2023" },{ code: "179053222", label: "Mar 2024" },{ code: "170579610", label: "Dec 2024" },{ code: "722864629", label: "May 2025 (UK)" },{ code: "961604122", label: "May 2025" }
-    ];
+    // Load serverOptions from external servers.json before running app logic
+    fetch('servers.json')
+      .then(res => res.json())
+      .then(serverOptions => {
+        function getLabelForCode(code) {
+          let found = serverOptions.find(opt => opt.code === code);
+          return found ? found.label : '';
+        }
 
-    function getLabelForCode(code) {
-      let found = serverOptions.find(opt => opt.code === code);
-      return found ? found.label : '';
-    }
+        // Disney bounding box
+        var disneyWorldExtent = ol.proj.transformExtent(
+          [-81.9200, 28.1772, -81.2244, 28.6390],
+          'EPSG:4326', 'EPSG:3857'
+        );
 
-    // Disney bounding box
-    var disneyWorldExtent = ol.proj.transformExtent(
-      [-81.9200, 28.1772, -81.2244, 28.6390],
-      'EPSG:4326', 'EPSG:3857'
-    );
+        // Initial Disney Map Server (most recent)
+        var disneyServer = serverOptions[serverOptions.length - 1].code;
 
-    // Initial Disney Map Server (most recent)
-    var disneyServer = serverOptions[serverOptions.length - 1].code;
+        function makeDisneyLayer(server) {
+          return new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${server}/{z}/{x}/{y}.jpg`,
+              minZoom: 0, maxZoom: 20
+            }),
+            visible: true
+          });
+        }
 
-    function makeDisneyLayer(server) {
-      return new ol.layer.Tile({
-        source: new ol.source.XYZ({
-          url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${server}/{z}/{x}/{y}.jpg`,
-          minZoom: 0, maxZoom: 20
-        }),
-        visible: true
-      });
-    }
+        var disneyLayer = makeDisneyLayer(disneyServer);
 
-    var disneyLayer = makeDisneyLayer(disneyServer);
-
-    var googleLayer = new ol.layer.Tile({
-      source: new ol.source.XYZ({
-        url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-        minZoom: 0, maxZoom: 20
-      }),
-      visible: false
-    });
-
-    var googleRoadsLayer = new ol.layer.Tile({
-      source: new ol.source.XYZ({
-        url: 'https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}',
-        minZoom: 0, maxZoom: 20
-      }),
-      visible: false, opacity: 0.85
-    });
-
-    disneyLayer.getSource().set('extent', disneyWorldExtent);
-    googleLayer.getSource().set('extent', disneyWorldExtent);
-    googleRoadsLayer.getSource().set('extent', disneyWorldExtent);
-
-    var map = new ol.Map({
-      target: 'map',
-      layers: [disneyLayer, googleLayer, googleRoadsLayer],
-      view: new ol.View({
-        center: ol.proj.fromLonLat([-81.5494, 28.3747]),
-        zoom: 16,
-        minZoom: 0, maxZoom: 20,
-        extent: disneyWorldExtent
-      })
-    });
-
-    // Date selector popup logic
-    var dateBtn = document.getElementById('date-btn');
-    var dateBtnInner = document.getElementById('date-btn-inner');
-    var datePopup = document.getElementById('date-popup');
-    var currentDateDisplay = document.getElementById('current-date-display');
-    var quickSwitchBtn = document.getElementById('quick-switch-btn');
-
-    // Tracks last two unique Disney map date codes (most recent at index 0)
-    var lastTwoDates = [disneyServer, null];
-
-    // Fill date popup
-    function fillDatePopup(selectedCode) {
-      datePopup.innerHTML = '';
-      serverOptions.slice().reverse().forEach(opt => {
-        var btn = document.createElement('button');
-        btn.className = 'date-popup-item' + (opt.code === selectedCode ? ' selected' : '');
-        btn.textContent = opt.label;
-        btn.onclick = function() {
-          setDisneyDate(opt.code);
-          hideDatePopup();
-        };
-        datePopup.appendChild(btn);
-      });
-    }
-    function showDatePopup() {
-      fillDatePopup(disneyServer);
-      datePopup.style.display = 'block';
-      setTimeout(() => { datePopup.style.opacity = '1'; }, 10);
-      // Dismiss on click outside
-      setTimeout(() => {
-        document.addEventListener('mousedown', hideOnOutside, { once: true });
-        document.addEventListener('touchstart', hideOnOutside, { once: true });
-      }, 0);
-    }
-    function hideOnOutside(e) {
-      if (!datePopup.contains(e.target) && !dateBtn.contains(e.target)) hideDatePopup();
-    }
-    function hideDatePopup() {
-      datePopup.style.opacity = '0';
-      setTimeout(() => { datePopup.style.display = 'none'; }, 180);
-    }
-    dateBtn.onclick = function() {
-      if (datePopup.style.display === 'block') {
-        hideDatePopup();
-      } else {
-        showDatePopup();
-      }
-    };
-
-    function setDisneyDate(newCode) {
-      if (disneyServer === newCode) return;
-      // Track last two unique selections
-      if (lastTwoDates[0] !== newCode) {
-        lastTwoDates = [newCode, lastTwoDates[0]];
-      }
-      disneyServer = newCode;
-      var vis = disneyLayer.getVisible();
-      map.removeLayer(disneyLayer);
-      disneyLayer = makeDisneyLayer(newCode);
-      disneyLayer.setVisible(vis);
-      disneyLayer.getSource().set('extent', disneyWorldExtent);
-      map.getLayers().insertAt(0, disneyLayer);
-      updateDateUI();
-    }
-
-    function updateDateUI() {
-      // Only show when Disney Map is active
-      var isDisney = showingDisney;
-      dateBtn.style.display = isDisney ? 'inline-flex' : 'none';
-      datePopup.style.display = 'none';
-      quickSwitchBtn.style.display = (isDisney && lastTwoDates[1]) ? 'flex' : 'none';
-      // Show current date display
-      if (isDisney) {
-        currentDateDisplay.textContent = getLabelForCode(disneyServer);
-        currentDateDisplay.style.display = 'block';
-      } else {
-        currentDateDisplay.textContent = '';
-        currentDateDisplay.style.display = 'none';
-      }
-    }
-
-    // Toggle between Disney map and Satellite
-    var showingDisney = true;
-    document.getElementById('toggle-btn').onclick = function() {
-      showingDisney = !showingDisney;
-      disneyLayer.setVisible(showingDisney);
-      googleLayer.setVisible(!showingDisney);
-      updateDateUI();
-      // Switch icon
-      document.getElementById('toggle-icon').querySelector('img').src =
-        showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
-      document.getElementById('toggle-icon').querySelector('img').alt =
-        showingDisney ? 'Satellite' : 'Disney Map';
-    };
-
-    // Quick Switch button logic
-    quickSwitchBtn.onclick = function() {
-      if (lastTwoDates[1]) {
-        setDisneyDate(lastTwoDates[1]);
-      }
-    };
-
-    // Roads button logic
-    var roadsOn = false;
-    document.getElementById('roads-btn').onclick = function() {
-      roadsOn = !roadsOn;
-      document.getElementById('roads-icon').querySelector('img').src =
-        roadsOn ? 'icons/no_roads.svg' : 'icons/roads.svg';
-      document.getElementById('roads-icon').querySelector('img').alt =
-        roadsOn ? 'No Roads' : 'Roads';
-      googleRoadsLayer.setVisible(roadsOn);
-    };
-
-    // FIND ME button
-    var findmeBtn = document.getElementById('findme-btn');
-    var findmeMessage = document.getElementById('findme-message');
-    var userLocationLayer = null;
-
-    findmeBtn.onclick = function() {
-      if (!navigator.geolocation) { showFindMeMessage('Geolocation not supported'); return; }
-      navigator.geolocation.getCurrentPosition(function(pos) {
-        var coords = [pos.coords.longitude, pos.coords.latitude];
-        var projected = ol.proj.fromLonLat(coords);
-        var within = ol.extent.containsCoordinate(disneyWorldExtent, projected);
-        if (!within) { showFindMeMessage('Outside of WDW'); removeUserLocation(); return; }
-        removeUserLocation();
-        userLocationLayer = new ol.layer.Vector({
-          source: new ol.source.Vector({
-            features: [new ol.Feature({geometry: new ol.geom.Point(projected)})]
+        var googleLayer = new ol.layer.Tile({
+          source: new ol.source.XYZ({
+            url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+            minZoom: 0, maxZoom: 20
           }),
-          style: new ol.style.Style({
-            image: new ol.style.Circle({
-              radius: 10, fill: new ol.style.Fill({color: 'rgba(0,116,217,0.35)'}),
-              stroke: new ol.style.Stroke({color: '#0074d9', width: 3})
-            })
-          }),
-          zIndex: 99
+          visible: false
         });
-        map.addLayer(userLocationLayer);
-        map.getView().animate({center: projected, zoom: 17, duration: 800});
-      }, function(error) {
-        showFindMeMessage('Unable to get location');
-      }, { enableHighAccuracy: true });
-    };
 
-    function showFindMeMessage(msg) {
-      findmeMessage.textContent = msg;
-      findmeMessage.style.display = 'block';
-      setTimeout(function() { findmeMessage.style.opacity = '1'; }, 10);
-      setTimeout(function() {
-        findmeMessage.style.opacity = '0';
-        setTimeout(function() { findmeMessage.style.display = 'none'; }, 400);
-      }, 2200);
-    }
-    function removeUserLocation() {
-      if (userLocationLayer) {
-        map.removeLayer(userLocationLayer);
-        userLocationLayer = null;
-      }
-    }
+        var googleRoadsLayer = new ol.layer.Tile({
+          source: new ol.source.XYZ({
+            url: 'https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}',
+            minZoom: 0, maxZoom: 20
+          }),
+          visible: false, opacity: 0.85
+        });
 
-    // Double-tap and hold to zoom, Google Maps style
-    (function() {
-      var lastTap = 0;
-      var isHoldZoom = false;
-      var startY = 0;
-      var startZoom = 0;
-      var mapDiv = document.getElementById('map');
-      var holdTimeout = null;
+        disneyLayer.getSource().set('extent', disneyWorldExtent);
+        googleLayer.getSource().set('extent', disneyWorldExtent);
+        googleRoadsLayer.getSource().set('extent', disneyWorldExtent);
 
-      mapDiv.addEventListener('touchstart', function(e) {
-        if (e.touches.length !== 1) return;
-        var now = Date.now();
-        if (now - lastTap < 350) {
-          e.preventDefault();
-          startY = e.touches[0].clientY;
-          startZoom = map.getView().getZoom();
-          isHoldZoom = true;
-          holdTimeout = setTimeout(function() {
-            mapDiv.addEventListener('touchmove', moveHandler, { passive: false });
-          }, 100);
-        } else {
-          lastTap = now;
-          isHoldZoom = false;
-          if (holdTimeout) clearTimeout(holdTimeout);
+        var map = new ol.Map({
+          target: 'map',
+          layers: [disneyLayer, googleLayer, googleRoadsLayer],
+          view: new ol.View({
+            center: ol.proj.fromLonLat([-81.5494, 28.3747]),
+            zoom: 16,
+            minZoom: 0, maxZoom: 20,
+            extent: disneyWorldExtent
+          })
+        });
+
+        // Date selector popup logic
+        var dateBtn = document.getElementById('date-btn');
+        var dateBtnInner = document.getElementById('date-btn-inner');
+        var datePopup = document.getElementById('date-popup');
+        var currentDateDisplay = document.getElementById('current-date-display');
+        var quickSwitchBtn = document.getElementById('quick-switch-btn');
+
+        // Tracks last two unique Disney map date codes (most recent at index 0)
+        var lastTwoDates = [disneyServer, null];
+
+        function fillDatePopup(selectedCode) {
+          datePopup.innerHTML = '';
+          serverOptions.slice().reverse().forEach(opt => {
+            var btn = document.createElement('button');
+            btn.className = 'date-popup-item' + (opt.code === selectedCode ? ' selected' : '');
+            btn.textContent = opt.label;
+            btn.onclick = function() {
+              setDisneyDate(opt.code);
+              hideDatePopup();
+            };
+            datePopup.appendChild(btn);
+          });
         }
-      });
-      mapDiv.addEventListener('touchend', function(e) {
-        if (isHoldZoom) {
-          isHoldZoom = false;
-          mapDiv.removeEventListener('touchmove', moveHandler, { passive: false });
+        function showDatePopup() {
+          fillDatePopup(disneyServer);
+          datePopup.style.display = 'block';
+          setTimeout(() => { datePopup.style.opacity = '1'; }, 10);
+          setTimeout(() => {
+            document.addEventListener('mousedown', hideOnOutside, { once: true });
+            document.addEventListener('touchstart', hideOnOutside, { once: true });
+          }, 0);
         }
-        if (holdTimeout) clearTimeout(holdTimeout);
-      });
-      function moveHandler(e) {
-        if (!isHoldZoom || e.touches.length !== 1) return;
-        e.preventDefault();
-        var dy = e.touches[0].clientY - startY;
-        var newZoom = startZoom - dy / 80;
-        var view = map.getView();
-        newZoom = Math.max(view.getMinZoom(), Math.min(view.getMaxZoom(), newZoom));
-        view.setZoom(newZoom);
-      }
-    })();
+        function hideOnOutside(e) {
+          if (!datePopup.contains(e.target) && !dateBtn.contains(e.target)) hideDatePopup();
+        }
+        function hideDatePopup() {
+          datePopup.style.opacity = '0';
+          setTimeout(() => { datePopup.style.display = 'none'; }, 180);
+        }
+        dateBtn.onclick = function() {
+          if (datePopup.style.display === 'block') {
+            hideDatePopup();
+          } else {
+            showDatePopup();
+          }
+        };
 
-    // On load, show the UI in correct state
-    updateDateUI();
+        function setDisneyDate(newCode) {
+          if (disneyServer === newCode) return;
+          if (lastTwoDates[0] !== newCode) {
+            lastTwoDates = [newCode, lastTwoDates[0]];
+          }
+          disneyServer = newCode;
+          var vis = disneyLayer.getVisible();
+          map.removeLayer(disneyLayer);
+          disneyLayer = makeDisneyLayer(newCode);
+          disneyLayer.setVisible(vis);
+          disneyLayer.getSource().set('extent', disneyWorldExtent);
+          map.getLayers().insertAt(0, disneyLayer);
+          updateDateUI();
+        }
+
+        function updateDateUI() {
+          var isDisney = showingDisney;
+          dateBtn.style.display = isDisney ? 'inline-flex' : 'none';
+          datePopup.style.display = 'none';
+          quickSwitchBtn.style.display = (isDisney && lastTwoDates[1]) ? 'flex' : 'none';
+          if (isDisney) {
+            currentDateDisplay.textContent = getLabelForCode(disneyServer);
+            currentDateDisplay.style.display = 'block';
+          } else {
+            currentDateDisplay.textContent = '';
+            currentDateDisplay.style.display = 'none';
+          }
+        }
+
+        var showingDisney = true;
+        document.getElementById('toggle-btn').onclick = function() {
+          showingDisney = !showingDisney;
+          disneyLayer.setVisible(showingDisney);
+          googleLayer.setVisible(!showingDisney);
+          updateDateUI();
+          document.getElementById('toggle-icon').querySelector('img').src =
+            showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
+          document.getElementById('toggle-icon').querySelector('img').alt =
+            showingDisney ? 'Satellite' : 'Disney Map';
+        };
+
+        quickSwitchBtn.onclick = function() {
+          if (lastTwoDates[1]) {
+            setDisneyDate(lastTwoDates[1]);
+          }
+        };
+
+        var roadsOn = false;
+        document.getElementById('roads-btn').onclick = function() {
+          roadsOn = !roadsOn;
+          document.getElementById('roads-icon').querySelector('img').src =
+            roadsOn ? 'icons/no_roads.svg' : 'icons/roads.svg';
+          document.getElementById('roads-icon').querySelector('img').alt =
+            roadsOn ? 'No Roads' : 'Roads';
+          googleRoadsLayer.setVisible(roadsOn);
+        };
+
+        var findmeBtn = document.getElementById('findme-btn');
+        var findmeMessage = document.getElementById('findme-message');
+        var userLocationLayer = null;
+
+        findmeBtn.onclick = function() {
+          if (!navigator.geolocation) { showFindMeMessage('Geolocation not supported'); return; }
+          navigator.geolocation.getCurrentPosition(function(pos) {
+            var coords = [pos.coords.longitude, pos.coords.latitude];
+            var projected = ol.proj.fromLonLat(coords);
+            var within = ol.extent.containsCoordinate(disneyWorldExtent, projected);
+            if (!within) { showFindMeMessage('Outside of WDW'); removeUserLocation(); return; }
+            removeUserLocation();
+            userLocationLayer = new ol.layer.Vector({
+              source: new ol.source.Vector({
+                features: [new ol.Feature({geometry: new ol.geom.Point(projected)})]
+              }),
+              style: new ol.style.Style({
+                image: new ol.style.Circle({
+                  radius: 10, fill: new ol.style.Fill({color: 'rgba(0,116,217,0.35)'}),
+                  stroke: new ol.style.Stroke({color: '#0074d9', width: 3})
+                })
+              }),
+              zIndex: 99
+            });
+            map.addLayer(userLocationLayer);
+            map.getView().animate({center: projected, zoom: 17, duration: 800});
+          }, function(error) {
+            showFindMeMessage('Unable to get location');
+          }, { enableHighAccuracy: true });
+        };
+
+        function showFindMeMessage(msg) {
+          findmeMessage.textContent = msg;
+          findmeMessage.style.display = 'block';
+          setTimeout(function() { findmeMessage.style.opacity = '1'; }, 10);
+          setTimeout(function() {
+            findmeMessage.style.opacity = '0';
+            setTimeout(function() { findmeMessage.style.display = 'none'; }, 400);
+          }, 2200);
+        }
+        function removeUserLocation() {
+          if (userLocationLayer) {
+            map.removeLayer(userLocationLayer);
+            userLocationLayer = null;
+          }
+        }
+
+        (function() {
+          var lastTap = 0;
+          var isHoldZoom = false;
+          var startY = 0;
+          var startZoom = 0;
+          var mapDiv = document.getElementById('map');
+          var holdTimeout = null;
+
+          mapDiv.addEventListener('touchstart', function(e) {
+            if (e.touches.length !== 1) return;
+            var now = Date.now();
+            if (now - lastTap < 350) {
+              e.preventDefault();
+              startY = e.touches[0].clientY;
+              startZoom = map.getView().getZoom();
+              isHoldZoom = true;
+              holdTimeout = setTimeout(function() {
+                mapDiv.addEventListener('touchmove', moveHandler, { passive: false });
+              }, 100);
+            } else {
+              lastTap = now;
+              isHoldZoom = false;
+              if (holdTimeout) clearTimeout(holdTimeout);
+            }
+          });
+          mapDiv.addEventListener('touchend', function(e) {
+            if (isHoldZoom) {
+              isHoldZoom = false;
+              mapDiv.removeEventListener('touchmove', moveHandler, { passive: false });
+            }
+            if (holdTimeout) clearTimeout(holdTimeout);
+          });
+          function moveHandler(e) {
+            if (!isHoldZoom || e.touches.length !== 1) return;
+            e.preventDefault();
+            var dy = e.touches[0].clientY - startY;
+            var newZoom = startZoom - dy / 80;
+            var view = map.getView();
+            newZoom = Math.max(view.getMinZoom(), Math.min(view.getMaxZoom(), newZoom));
+            view.setZoom(newZoom);
+          }
+        })();
+
+        updateDateUI();
+      });
   </script>
 </body>
 </html>
