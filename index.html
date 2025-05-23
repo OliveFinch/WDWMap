@@ -274,21 +274,7 @@
       font-size: 18px;
       color: #2a3487;
     }
-    #disclaimer-content button {
-      margin-top: 16px;
-      background: #f1f1f7;
-      border: 1px solid #ccc;
-      border-radius: 7px;
-      padding: 5px 18px;
-      font-size: 15px;
-      color: #2a3487;
-      cursor: pointer;
-      transition: background 0.2s, border 0.2s;
-    }
-    #disclaimer-content button:hover {
-      background: #eaeafd;
-      border-color: #777;
-    }
+    /* Remove close button styles */
 
     @media (max-width: 600px) {
       .control-row { right: 8px; top: 8px; gap: 6px; }
@@ -356,7 +342,6 @@
       <p>Created by Ashley Burton.<br>
       <br>This is an independent, non-commercial project and is not affiliated with, endorsed by, or connected to The Walt Disney Company. All map imagery <br>&copy; Disney or their respective owners.</p>
       <p>Google Satellite and Google Roads map data <br>&copy; Google. Imagery may be copyright of other providers as indicated within the map data.</p>
-      <button id="disclaimer-close" type="button">Close</button>
     </div>
   </div>
 
@@ -646,17 +631,13 @@
       }
     }
 
-    // Disclaimer modal logic
+    // Disclaimer modal logic (no close button)
     const logo = document.getElementById('logo');
     const disclaimerModal = document.getElementById('disclaimer-modal');
-    const disclaimerClose = document.getElementById('disclaimer-close');
-    if (logo && disclaimerModal && disclaimerClose) {
+    if (logo && disclaimerModal) {
       logo.style.cursor = 'pointer';
       logo.onclick = function() {
         disclaimerModal.classList.add('active');
-      };
-      disclaimerClose.onclick = function() {
-        disclaimerModal.classList.remove('active');
       };
       disclaimerModal.onclick = function(e) {
         if (e.target === disclaimerModal) {
