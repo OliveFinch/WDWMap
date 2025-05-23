@@ -98,14 +98,15 @@
       left: 16px;
       bottom: 16px;
       z-index: 1200;
-      pointer-events: none;
+      pointer-events: auto;
       opacity: 0.93;
+      cursor: pointer;
     }
     #logo img {
       display: block;
-      width: 160px;
-      height: 29px;
-      max-width: 90vw;
+      width: 200px;
+      height: 36px;
+      max-width: 98vw;
     }
     #findme-message {
       display: none;
@@ -241,11 +242,59 @@
       width: 24px;
       height: 24px;
     }
+
+    /* Disclaimer modal styles */
+    #disclaimer-modal {
+      display: none;
+      position: fixed;
+      z-index: 4000;
+      left: 0; top: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.45);
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s;
+    }
+    #disclaimer-modal.active { display: flex; }
+    #disclaimer-content {
+      background: #fff;
+      border-radius: 14px;
+      padding: 24px 20px 14px 20px;
+      box-shadow: 0 6px 32px #0003;
+      max-width: 96vw;
+      width: 350px;
+      font-size: 15px;
+      color: #222;
+      text-align: left;
+      position: relative;
+    }
+    #disclaimer-content h3 {
+      margin-top: 0;
+      margin-bottom: 14px;
+      font-size: 18px;
+      color: #2a3487;
+    }
+    #disclaimer-content button {
+      margin-top: 16px;
+      background: #f1f1f7;
+      border: 1px solid #ccc;
+      border-radius: 7px;
+      padding: 5px 18px;
+      font-size: 15px;
+      color: #2a3487;
+      cursor: pointer;
+      transition: background 0.2s, border 0.2s;
+    }
+    #disclaimer-content button:hover {
+      background: #eaeafd;
+      border-color: #777;
+    }
+
     @media (max-width: 600px) {
-  .control-row { right: 8px; top: 4px; gap: 6px; }
+      .control-row { right: 8px; top: 8px; gap: 6px; }
       #date-btn { margin-right: 0; }
-      #roads-btn { top: 44px; }
-      #findme-btn { top: 84px; }
+      #roads-btn { top: 48px; }
+      #findme-btn { top: 88px; }
       .ol-control-inner, #date-btn-inner, #quick-switch-btn {
         width: 32px; height: 32px; border-radius: 6px; font-size: 13px;
       }
@@ -253,7 +302,7 @@
       #date-btn-inner img,
       #quick-switch-btn img { width: 18px; height: 18px; }
       #logo { left: 50%; transform: translateX(-50%); bottom: 8px;}
-      #logo img { width: 105px !important; height: 19px !important; }
+      #logo img { width: 180px !important; height: 32px !important; }
       #current-date-display { font-size: 16px; padding: 0 10px; top: 10px; }
       #quick-switch-btn { bottom: 8px; right: 8px; }
       #date-popup { min-width: 140px; max-height: 50vh; top: 40px; }
@@ -299,6 +348,18 @@
     <img src="logo.svg" alt="WDW Magic Explorer Logo">
   </div>
   <div id="current-date-display"></div>
+
+  <!-- Disclaimer Modal -->
+  <div id="disclaimer-modal">
+    <div id="disclaimer-content">
+      <h3>About & Legal Notices</h3>
+      <p>Created by Ashley Burton.<br>
+      <br>This is an independent, non-commercial project and is not affiliated with, endorsed by, or connected to The Walt Disney Company. All map imagery <br>&copy; Disney or their respective owners.</p>
+      <p>Google Satellite and Google Roads map data <br>&copy; Google. Imagery may be copyright of other providers as indicated within the map data.</p>
+      <button id="disclaimer-close" type="button">Close</button>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
   <script>
     // Server/date options will be loaded from servers.json
@@ -583,6 +644,25 @@
         currentDateDisplay.textContent = '';
         currentDateDisplay.style.display = 'none';
       }
+    }
+
+    // Disclaimer modal logic
+    const logo = document.getElementById('logo');
+    const disclaimerModal = document.getElementById('disclaimer-modal');
+    const disclaimerClose = document.getElementById('disclaimer-close');
+    if (logo && disclaimerModal && disclaimerClose) {
+      logo.style.cursor = 'pointer';
+      logo.onclick = function() {
+        disclaimerModal.classList.add('active');
+      };
+      disclaimerClose.onclick = function() {
+        disclaimerModal.classList.remove('active');
+      };
+      disclaimerModal.onclick = function(e) {
+        if (e.target === disclaimerModal) {
+          disclaimerModal.classList.remove('active');
+        }
+      };
     }
   </script>
 </body>
