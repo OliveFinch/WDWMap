@@ -13,7 +13,7 @@ Features
 
 Live Demo
 
-Try it out: [Your live demo link here]
+Try it out: https://olivefinch.github.io/WDWMap/
 
 Screenshots
 
