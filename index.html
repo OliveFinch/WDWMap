@@ -69,10 +69,12 @@
       padding: 0;
       font-family: Arial, Helvetica, sans-serif;
     }
-    .ol-control-inner svg {
+    .ol-control-inner img {
       width: 24px;
       height: 24px;
       display: block;
+      pointer-events: none;
+      user-select: none;
     }
     .ol-control-inner:active,
     .ol-control-inner:focus,
@@ -149,6 +151,13 @@
       background: #f8f8f8;
       border-color: #999;
     }
+    #date-btn-inner img {
+      width: 22px;
+      height: 22px;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+    }
     #date-popup {
       display: none;
       opacity: 0;
@@ -220,6 +229,14 @@
       justify-content: center;
       align-items: center;
       color: #23287b;
+      padding: 0;
+    }
+    #quick-switch-btn .ol-control-inner img {
+      width: 24px;
+      height: 24px;
+      display: block;
+      pointer-events: none;
+      user-select: none;
     }
     #quick-switch-btn .ol-control-inner:active,
     #quick-switch-btn .ol-control-inner:focus,
@@ -233,7 +250,7 @@
       #roads-btn { top: 48px; }
       #findme-btn { top: 88px; }
       .ol-control-inner, #date-btn-inner { width: 32px; height: 32px; border-radius: 6px; font-size: 13px;}
-      .ol-control-inner svg, #date-btn-inner svg { width: 18px; height: 18px; }
+      .ol-control-inner img, #date-btn-inner img { width: 18px; height: 18px; }
       #logo { left: 50%; transform: translateX(-50%); bottom: 8px;}
       #logo svg { width: 105px !important; height: 19px !important; }
       #current-date-display { font-size: 16px; padding: 0 10px; top: 10px; }
@@ -248,31 +265,33 @@
     <!-- Date Selector Button -->
     <button id="date-btn" type="button">
       <span id="date-btn-inner" class="ol-control-inner">
-        <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><rect x="6" y="10" width="20" height="14" rx="3" fill="#3761c4"/><rect x="6" y="6" width="20" height="6" rx="3" fill="#bfd4f9"/><rect x="8" y="13" width="16" height="8" rx="1.7" fill="#fff"/><rect x="11" y="16" width="2" height="2" rx="1" fill="#bfd4f9"/><rect x="15" y="16" width="2" height="2" rx="1" fill="#bfd4f9"/><rect x="19" y="16" width="2" height="2" rx="1" fill="#bfd4f9"/></svg>
+        <img src="icons/calendar.svg" alt="Calendar">
       </span>
     </button>
     <div id="date-popup"></div>
     <!-- Toggle View Button -->
     <button id="toggle-btn" class="ol-control custom-btn">
       <span class="ol-control-inner" id="toggle-icon">
-        <!-- Satellite icon will be filled by JS -->
+        <img src="icons/satellite.svg" alt="Satellite" id="toggle-img">
       </span>
     </button>
   </div>
   <!-- Roads Button -->
   <button id="roads-btn" class="ol-control custom-btn">
-    <span class="ol-control-inner" id="roads-icon"></span>
+    <span class="ol-control-inner" id="roads-icon">
+      <img src="icons/roads.svg" alt="Roads" id="roads-img">
+    </span>
   </button>
   <!-- Find Me Button -->
   <button id="findme-btn" class="ol-control custom-btn">
     <span class="ol-control-inner" id="findme-icon">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M13 3C13 2.44772 12.5523 2 12 2C11.4477 2 11 2.44772 11 3V3.5582C7.10482 4.01469 4.01469 7.10482 3.5582 11H3C2.44772 11 2 11.4477 2 12C2 12.5523 2.44772 13 3 13H3.5582C4.01469 16.8952 7.10482 19.9853 11 20.4418V21C11 21.5523 11.4477 22 12 22C12.5523 22 13 21.5523 13 21V20.4418C16.8952 19.9853 19.9853 16.8952 20.4418 13H21C21.5523 13 22 12.5523 22 12C22 11.4477 21.5523 11 21 11H20.4418C19.9853 7.10482 16.8952 4.01469 13 3.5582V3ZM11 5.57645V7C11 7.55228 11.4477 8 12 8C12.5523 8 13 7.55228 13 7V5.57645C15.7891 6.00712 17.9929 8.21088 18.4236 11H17C16.4477 11 16 11.4477 16 12C16 12.5523 16.4477 13 17 13H18.4236C17.9929 15.7891 15.7891 17.9929 13 18.4236V17C13 16.4477 12.5523 16 12 16C11.4477 16 11 16.4477 11 17V18.4236C8.21088 17.9929 6.00712 15.7891 5.57645 13H7C7.55228 13 8 12.5523 8 12C8 11.4477 7.55228 11 7 11H5.57645C6.00712 8.21088 8.21088 6.00712 11 5.57645Z" fill="#000"/></svg>
+      <img src="icons/locateme.svg" alt="Find Me">
     </span>
   </button>
   <div id="findme-message"></div>
   <!-- Quick Switch Button -->
   <button id="quick-switch-btn" title="Quick Switch Dates">
-    <span class="ol-control-inner">&#8646;</span>
+    <span class="ol-control-inner"><img src="icons/switch.svg" alt="Switch"></span>
   </button>
   <!-- Logo -->
   <div id="logo">
@@ -343,15 +362,13 @@
       })
     });
 
-    // SVGs
-    var satelliteSVG = `<svg fill="#000" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 203.556 203.556"><g><path d="M201.359,137.3l-43.831-43.831l11.453-11.452c1.407-1.407,2.197-3.314,2.197-5.304c0-1.989-0.79-3.896-2.197-5.304l-36.835-36.834c-2.929-2.928-7.677-2.928-10.606,0l-11.452,11.452L66.253,2.196c-2.93-2.928-7.678-2.928-10.606,0L18.813,39.03c-2.929,2.93-2.929,7.678,0,10.607l43.831,43.831l-11.453,11.452c-1.407,1.407-2.197,3.314-2.197,5.304s0.79,3.896,2.197,5.304l36.837,36.836c1.464,1.464,3.384,2.196,5.303,2.196c1.919,0,3.839-0.732,5.303-2.196l11.453-11.453l43.83,43.83c1.465,1.464,3.384,2.196,5.303,2.196c1.919,0,3.839-0.732,5.303-2.196l36.835-36.834c1.407-1.407,2.197-3.314,2.197-5.304C203.556,140.614,202.766,138.707,201.359,137.3z"/><path d="M72.344,188.555c-15.317,0.001-29.717-5.964-40.548-16.795C20.965,160.929,15,146.528,15,131.211c0-4.143-3.358-7.5-7.5-7.5c-4.143,0-7.5,3.358-7.5,7.5c0,19.324,7.526,37.491,21.189,51.155c13.663,13.664,31.829,21.189,51.152,21.189c0.001,0,0.002,0,0.004,0c4.142,0,7.499-3.358,7.499-7.5C79.845,191.912,76.486,188.555,72.344,188.555z"/><path d="M69.346,174.133c4.142,0,7.5-3.357,7.5-7.5c0-4.143-3.358-7.5-7.5-7.5c-6.658,0-12.916-2.593-17.624-7.3c-4.707-4.707-7.299-10.965-7.299-17.622c0-4.142-3.357-7.5-7.5-7.5h0c-4.142,0-7.5,3.358-7.5,7.5c-0.001,10.663,4.152,20.688,11.693,28.229C48.656,169.981,58.682,174.133,69.346,174.133z"/></g></svg>`;
-    var mouseSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-92 -92 512 422"><circle r="92"/><circle cx="328" r="92"/><circle cx="164" cy="172" r="158"/></svg>`;
-    var roadsSVG = `<svg fill="#000" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 217.205 217.205"><g><path d="M167.631,101.102H49.574c-16.216,0-29.408-13.199-29.408-29.422c0-16.211,13.192-29.399,29.408-29.399h73.789c4.143,0,7.5-3.358,7.5-7.5c0-4.142-3.357-7.5-7.5-7.5H49.574c-24.486,0-44.408,19.917-44.408,44.399c0,24.494,19.922,44.422,44.408,44.422h118.057c16.216,0,29.408,13.199,29.408,29.423c0,16.211-13.192,29.399-29.408,29.399H93.205c-4.142,0-7.5,3.358-7.5,7.5s3.358,7.5,7.5,7.5h74.426c24.486,0,44.408-19.917,44.408-44.399C212.039,121.03,192.117,101.102,167.631,101.102z"/><path d="M48.516,130.001c-17.407,0-31.568,14.162-31.568,31.568c0,26.865,25.192,52.367,26.265,53.439c1.407,1.407,3.314,2.197,5.304,2.197c1.989,0,3.897-0.79,5.304-2.197c1.072-1.073,26.263-26.574,26.263-53.439C80.082,144.163,65.922,130.001,48.516,130.001z M48.516,198.357c-6.477-7.995-16.568-22.713-16.568-36.788c0-9.136,7.433-16.568,16.568-16.568c9.135,0,16.566,7.433,16.566,16.568C65.082,175.644,54.991,190.362,48.516,198.357z"/><path d="M168.053,87.202c1.919,0,3.838-0.732,5.302-2.195c1.073-1.072,26.278-26.573,26.278-53.44C199.633,14.161,185.466,0,168.053,0c-17.407,0-31.568,14.161-31.568,31.566c0,26.866,25.192,52.367,26.266,53.439C164.214,86.47,166.133,87.202,168.053,87.202z M168.053,15c9.143,0,16.58,7.432,16.58,16.566c0,14.076-10.1,28.796-16.579,36.79c-6.476-7.994-16.569-22.713-16.569-36.79C151.484,22.432,158.917,15,168.053,15z"/></g></svg>`;
-    var noRoadsSVG = `<svg width="24" height="24" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg"><g id="Group"><path id="Path" fill="#000000" stroke="none" d="M 617.411194 372.374481 L 182.588806 372.374481 C 122.86274 372.374481 74.274536 323.760498 74.274536 264.008667 C 74.274536 204.301025 122.86274 155.727539 182.588806 155.727539 L 454.365234 155.727539 C 469.624542 155.727539 481.988922 143.359497 481.988922 128.103882 C 481.988922 112.848206 469.624542 100.480164 454.365234 100.480164 L 182.588806 100.480164 C 92.40303 100.480164 19.027185 173.837646 19.027185 264.008667 C 19.027185 354.223907 92.40303 427.621826 182.588806 427.621826 L 617.411194 427.621826 C 677.137268 427.621826 725.725464 476.235809 725.725464 535.991333 C 725.725464 595.698975 677.137268 644.272461 617.411194 644.272461 L 343.288605 644.272461 C 328.03299 644.272461 315.664917 656.640503 315.664917 671.896118 C 315.664917 687.151733 328.03299 699.519775 343.288605 699.519775 L 617.411194 699.519775 C 707.596985 699.519775 780.972839 626.162415 780.972839 535.991333 C 780.972839 445.77243 707.596985 372.374481 617.411194 372.374481 Z"/><path id="path1" fill="#000000" stroke="none" d="M 178.692017 478.814056 C 114.579315 478.814056 62.422134 530.974854 62.422134 595.083923 C 62.422134 694.031921 155.208206 787.959778 159.160248 791.908081 C 164.342438 797.090271 171.366226 800 178.695694 800 C 186.0215 800 193.048965 797.090271 198.231155 791.908081 C 202.17952 787.956055 294.961914 694.031921 294.961914 595.083923 C 294.954529 530.974854 242.801025 478.814056 178.692017 478.814056 Z M 178.692017 730.579834 C 154.836227 701.133057 117.669479 646.924316 117.669479 595.083923 C 117.669479 561.43457 145.046387 534.061401 178.692017 534.061401 C 212.337662 534.061401 239.707199 561.438293 239.707199 595.083923 C 239.707199 646.924316 202.540466 701.133057 178.692017 730.579834 Z"/><path id="path2" fill="#000000" stroke="none" d="M 618.965454 321.178619 C 626.033447 321.178619 633.101501 318.482544 638.493591 313.094086 C 642.445618 309.145721 735.279541 215.221558 735.279541 116.266174 C 735.279541 52.157166 683.100281 0 618.965454 0 C 554.852783 0 502.695618 52.157166 502.695618 116.262512 C 502.695618 215.214172 595.481689 309.138367 599.437439 313.0867 C 604.825867 318.482544 611.893799 321.178619 618.965454 321.178619 Z M 618.965454 55.247375 C 652.640564 55.247375 680.032227 82.620544 680.032227 116.262512 C 680.032227 168.106628 642.832336 222.322693 618.969177 251.765869 C 595.117065 222.322693 557.942932 168.110291 557.942932 116.262512 C 557.93927 82.620544 585.316223 55.247375 618.965454 55.247375 Z"/></g><path id="Line" fill="none" stroke="#ff3900" stroke-width="100" stroke-linecap="round" d="M 55.003937 748.003906 L 739.001343 58.001343"/></svg>`;
-
-    // Fill initial button icons
-    document.getElementById('toggle-icon').innerHTML = satelliteSVG;
-    document.getElementById('roads-icon').innerHTML = roadsSVG;
+    // ICON paths
+    const ICONS = {
+      satellite: "icons/satellite.svg",
+      mouse: "icons/mouse.svg",
+      roads: "icons/roads.svg",
+      no_roads: "icons/no_roads.svg"
+    };
 
     // Date selector popup logic
     var dateBtn = document.getElementById('date-btn');
@@ -434,6 +451,10 @@
       }
     }
 
+    // Fill initial button icons (already set in HTML, but JS needs to toggle them)
+    const toggleImg = document.getElementById('toggle-img');
+    const roadsImg = document.getElementById('roads-img');
+
     // Toggle between Disney map and Satellite
     var showingDisney = true;
     document.getElementById('toggle-btn').onclick = function() {
@@ -442,7 +463,8 @@
       googleLayer.setVisible(!showingDisney);
       updateDateUI();
       // Switch icon
-      document.getElementById('toggle-icon').innerHTML = showingDisney ? satelliteSVG : mouseSVG;
+      toggleImg.src = showingDisney ? ICONS.satellite : ICONS.mouse;
+      toggleImg.alt = showingDisney ? "Satellite" : "Aerial";
     };
 
     // Quick Switch button logic
@@ -457,7 +479,8 @@
     document.getElementById('roads-btn').onclick = function() {
       roadsOn = !roadsOn;
       googleRoadsLayer.setVisible(roadsOn);
-      document.getElementById('roads-icon').innerHTML = roadsOn ? noRoadsSVG : roadsSVG;
+      roadsImg.src = roadsOn ? ICONS.no_roads : ICONS.roads;
+      roadsImg.alt = roadsOn ? "Hide Roads" : "Show Roads";
     };
 
     // FIND ME button
