@@ -52,7 +52,8 @@
       top: 104px;
       z-index: 1000;
     }
-    .ol-control-inner {
+    .ol-control-inner,
+    #quick-switch-btn {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -69,7 +70,8 @@
       padding: 0;
       font-family: Arial, Helvetica, sans-serif;
     }
-    .ol-control-inner img {
+    .ol-control-inner img,
+    #quick-switch-btn img {
       width: 24px;
       height: 24px;
       display: block;
@@ -78,7 +80,10 @@
     }
     .ol-control-inner:active,
     .ol-control-inner:focus,
-    .ol-control-inner:hover {
+    .ol-control-inner:hover,
+    #quick-switch-btn:active,
+    #quick-switch-btn:focus,
+    #quick-switch-btn:hover {
       background: #f8f8f8;
       border-color: #999;
     }
@@ -154,9 +159,6 @@
     #date-btn-inner img {
       width: 22px;
       height: 22px;
-      display: block;
-      pointer-events: none;
-      user-select: none;
     }
     #date-popup {
       display: none;
@@ -216,13 +218,9 @@
       z-index: 1300;
       display: none;
       font-family: Arial, Helvetica, sans-serif;
-    }
-    #quick-switch-btn .ol-control-inner {
       width: 40px;
       height: 40px;
       border-radius: 8px;
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 15px;
       background: rgba(255,255,255,0.90);
       border: 1.5px solid #ccc;
       box-shadow: 0 3px 15px #0002;
@@ -230,27 +228,29 @@
       align-items: center;
       color: #23287b;
       padding: 0;
+      cursor: pointer;
     }
-    #quick-switch-btn .ol-control-inner img {
-      width: 24px;
-      height: 24px;
-      display: block;
-      pointer-events: none;
-      user-select: none;
-    }
-    #quick-switch-btn .ol-control-inner:active,
-    #quick-switch-btn .ol-control-inner:focus,
-    #quick-switch-btn .ol-control-inner:hover {
+    #quick-switch-btn:active,
+    #quick-switch-btn:focus,
+    #quick-switch-btn:hover {
       background: #f8f8f8;
       border-color: #999;
+    }
+    #quick-switch-btn img {
+      width: 24px;
+      height: 24px;
     }
     @media (max-width: 600px) {
       .control-row { right: 4px; top: 4px; }
       #date-btn { margin-right: 0; }
       #roads-btn { top: 48px; }
       #findme-btn { top: 88px; }
-      .ol-control-inner, #date-btn-inner { width: 32px; height: 32px; border-radius: 6px; font-size: 13px;}
-      .ol-control-inner img, #date-btn-inner img { width: 18px; height: 18px; }
+      .ol-control-inner, #date-btn-inner, #quick-switch-btn {
+        width: 32px; height: 32px; border-radius: 6px; font-size: 13px;
+      }
+      .ol-control-inner img,
+      #date-btn-inner img,
+      #quick-switch-btn img { width: 18px; height: 18px; }
       #logo { left: 50%; transform: translateX(-50%); bottom: 8px;}
       #logo svg { width: 105px !important; height: 19px !important; }
       #current-date-display { font-size: 16px; padding: 0 10px; top: 10px; }
@@ -265,33 +265,33 @@
     <!-- Date Selector Button -->
     <button id="date-btn" type="button">
       <span id="date-btn-inner" class="ol-control-inner">
-        <img src="icons/calendar.svg" alt="Calendar">
+        <img src="icons/calendar.svg" alt="Date Selector">
       </span>
     </button>
     <div id="date-popup"></div>
     <!-- Toggle View Button -->
     <button id="toggle-btn" class="ol-control custom-btn">
       <span class="ol-control-inner" id="toggle-icon">
-        <img src="icons/satellite.svg" alt="Satellite" id="toggle-img">
+        <img src="icons/satellite.svg" alt="Satellite">
       </span>
     </button>
   </div>
   <!-- Roads Button -->
   <button id="roads-btn" class="ol-control custom-btn">
     <span class="ol-control-inner" id="roads-icon">
-      <img src="icons/roads.svg" alt="Roads" id="roads-img">
+      <img src="icons/roads.svg" alt="Roads">
     </span>
   </button>
   <!-- Find Me Button -->
   <button id="findme-btn" class="ol-control custom-btn">
     <span class="ol-control-inner" id="findme-icon">
-      <img src="icons/locateme.svg" alt="Find Me">
+      <img src="icons/locateme.svg" alt="Locate Me">
     </span>
   </button>
   <div id="findme-message"></div>
   <!-- Quick Switch Button -->
-  <button id="quick-switch-btn" title="Quick Switch Dates">
-    <span class="ol-control-inner"><img src="icons/switch.svg" alt="Switch"></span>
+  <button id="quick-switch-btn" title="Quick Switch Dates" class="ol-control-inner">
+    <img src="icons/switch.svg" alt="Switch">
   </button>
   <!-- Logo -->
   <div id="logo">
@@ -361,14 +361,6 @@
         extent: disneyWorldExtent
       })
     });
-
-    // ICON paths
-    const ICONS = {
-      satellite: "icons/satellite.svg",
-      mouse: "icons/mouse.svg",
-      roads: "icons/roads.svg",
-      no_roads: "icons/no_roads.svg"
-    };
 
     // Date selector popup logic
     var dateBtn = document.getElementById('date-btn');
@@ -440,7 +432,7 @@
       var isDisney = showingDisney;
       dateBtn.style.display = isDisney ? 'inline-flex' : 'none';
       datePopup.style.display = 'none';
-      quickSwitchBtn.style.display = (isDisney && lastTwoDates[1]) ? 'block' : 'none';
+      quickSwitchBtn.style.display = (isDisney && lastTwoDates[1]) ? 'flex' : 'none';
       // Show current date display
       if (isDisney) {
         currentDateDisplay.textContent = getLabelForCode(disneyServer);
@@ -451,10 +443,6 @@
       }
     }
 
-    // Fill initial button icons (already set in HTML, but JS needs to toggle them)
-    const toggleImg = document.getElementById('toggle-img');
-    const roadsImg = document.getElementById('roads-img');
-
     // Toggle between Disney map and Satellite
     var showingDisney = true;
     document.getElementById('toggle-btn').onclick = function() {
@@ -463,8 +451,10 @@
       googleLayer.setVisible(!showingDisney);
       updateDateUI();
       // Switch icon
-      toggleImg.src = showingDisney ? ICONS.satellite : ICONS.mouse;
-      toggleImg.alt = showingDisney ? "Satellite" : "Aerial";
+      document.getElementById('toggle-icon').querySelector('img').src =
+        showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
+      document.getElementById('toggle-icon').querySelector('img').alt =
+        showingDisney ? 'Satellite' : 'Disney Map';
     };
 
     // Quick Switch button logic
@@ -478,9 +468,11 @@
     var roadsOn = false;
     document.getElementById('roads-btn').onclick = function() {
       roadsOn = !roadsOn;
+      document.getElementById('roads-icon').querySelector('img').src =
+        roadsOn ? 'icons/no_roads.svg' : 'icons/roads.svg';
+      document.getElementById('roads-icon').querySelector('img').alt =
+        roadsOn ? 'No Roads' : 'Roads';
       googleRoadsLayer.setVisible(roadsOn);
-      roadsImg.src = roadsOn ? ICONS.no_roads : ICONS.roads;
-      roadsImg.alt = roadsOn ? "Hide Roads" : "Show Roads";
     };
 
     // FIND ME button
