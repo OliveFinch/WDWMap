@@ -66,4 +66,4 @@ Google Satellite and Roads map data © Google and their data providers.
 
 Buy Me a Coffee
 
-If you like this project, consider buying me a coffee – thank you!
+If you like this project, consider buying me a coffee (https://paypal.me/AshJB) – thank you!
