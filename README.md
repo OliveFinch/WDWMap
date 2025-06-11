@@ -17,37 +17,8 @@ Try it out: https://olivefinch.github.io/WDWMap/
 
 **Screenshots
 **
-(Add some screenshots here!)
 
-**Getting Started
-**
-**Prerequisites
-**	•	You need a simple web server (like Live Server, Python’s http.server, or a static web host)
-	•	OpenLayers is used via CDN (no build step needed)
-
-Installation
-**	1.	Clone this repository:
-**git clone https://github.com/yourusername/wdw-magic-explorer.git
-cd wdw-magic-explorer
-
-**	2.	Add map servers:
-**The app requires a servers.json file in the root directory containing available map server codes and labels.
-Example format:
-
-[
-  { "code": "2024", "label": "2024 Official Map" },
-  { "code": "2022", "label": "2022 Official Map" }
-  // ...etc
-]
-
-**	3.	Start your web server:
-** python3 -m http.server
-
- Then open http://localhost:8000 in your browser.
-
-**App Icons and Manifest
-**	•	Place your icons (favicon.ico, icon-192.png, icon-512.png, apple-touch-icon.png) in the root folder.
-	•	Edit manifest.webmanifest as needed for your app name and icons.
+placeholder
 
 **Add to Home Screen
 **
