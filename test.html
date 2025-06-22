@@ -1,0 +1,432 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WDW Magic Explorer</title>
+  <meta id="viewport-meta" name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#23287b">
+  <meta property="og:title" content="WDW Magic Explorer">
+  <meta property="og:description" content="Explore historical Disney World maps with custom overlays.">
+  <meta property="og:image" content="icon-512.png">
+  <meta property="og:type" content="website">
+  <style>
+    /* ... your existing styles ... */
+    html, body { margin: 0; padding: 0; height: 100%; overscroll-behavior: none; overflow: hidden; font-family: Arial, Helvetica, sans-serif; }
+    #map { width: 100vw; height: 100vh; touch-action: none; -webkit-user-select: none; user-select: none; }
+    /* ... rest of your CSS ... */
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="control-row">
+    <!-- Date Selector Button -->
+    <button id="date-btn" type="button">
+      <span id="date-btn-inner" class="ol-control-inner">
+        <img src="icons/calendar.svg" alt="Date Selector">
+      </span>
+    </button>
+    <div id="date-popup"></div>
+    <!-- Toggle View Button -->
+    <button id="toggle-btn" class="ol-control custom-btn">
+      <span class="ol-control-inner" id="toggle-icon">
+        <img src="icons/satellite.svg" alt="Satellite">
+      </span>
+    </button>
+  </div>
+  <!-- Roads Button -->
+  <button id="roads-btn" class="ol-control custom-btn">
+    <span class="ol-control-inner" id="roads-icon">
+      <img src="icons/roads.svg" alt="Roads">
+    </span>
+  </button>
+  <!-- Find Me Button -->
+  <button id="findme-btn" class="ol-control custom-btn">
+    <span class="ol-control-inner" id="findme-icon">
+      <img src="icons/locateme.svg" alt="Locate Me">
+    </span>
+  </button>
+  <div id="findme-message"></div>
+  <!-- Quick Switch Button -->
+  <button id="quick-switch-btn" title="Quick Switch Dates" class="ol-control-inner">
+    <img src="icons/switch.svg" alt="Switch">
+  </button>
+  <!-- Logo (external SVG) -->
+  <div id="logo">
+    <img src="logo.svg" alt="WDW Magic Explorer Logo">
+  </div>
+  <div id="current-date-display"></div>
+  <!-- About Modal -->
+  <div id="disclaimer-modal">
+    <div id="disclaimer-content">
+      <!-- ... your about modal ... -->
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
+  <script>
+    // --- Disney bounding box ---
+    var disneyWorldExtent = ol.proj.transformExtent(
+      [-81.9200, 28.1772, -81.2244, 28.6390],
+      'EPSG:4326', 'EPSG:3857'
+    );
+
+    // --- State ---
+    let serverOptions = [];
+    let disneyServer = null;
+    let lastTwoDates = [null, null];
+    let dateBtn, dateBtnInner, datePopup, currentDateDisplay, quickSwitchBtn;
+    let disneyLayer, esriLayer, googleRoadsLayer, map;
+    let esriWaybackReleases = [];
+    let esriCurrentReleaseNum = null;
+    let showingDisney = true;
+    let roadsOn = false;
+
+    // --- Helper: Get Disney label for code ---
+    function getLabelForCode(code) {
+      let found = serverOptions.find(opt => opt.code === code);
+      return found ? found.label : '';
+    }
+
+    // --- Helper: Get ESRI label for releaseNum ---
+    function getEsriLabelForReleaseNum(releaseNum) {
+      let found = esriWaybackReleases.find(opt => opt.releaseNum == releaseNum);
+      return found ? found.dateLabel + (found.isLatest ? ' (Latest)' : '') : '';
+    }
+
+    // --- Disney Map Layer ---
+    function makeDisneyLayer(server) {
+      return new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${server}/{z}/{x}/{y}.jpg`,
+          minZoom: 0, maxZoom: 20
+        }),
+        visible: true
+      });
+    }
+
+    // --- ESRI Wayback Imagery Layer ---
+    function makeEsriLayer(releaseNum) {
+      return new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery_${releaseNum}/MapServer/tile/{z}/{y}/{x}`,
+          minZoom: 0, maxZoom: 20
+        }),
+        visible: true
+      });
+    }
+
+    // --- Roads Layer (OpenStreetMap) ---
+    googleRoadsLayer = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        minZoom: 0, maxZoom: 20
+      }),
+      visible: false, opacity: 0.85
+    });
+
+    // --- Map Initialization ---
+    function initMap() {
+      disneyLayer = makeDisneyLayer(disneyServer);
+      esriLayer = null; // Will be created on demand
+      map = new ol.Map({
+        target: 'map',
+        layers: [disneyLayer, googleRoadsLayer],
+        view: new ol.View({
+          center: ol.proj.fromLonLat([-81.5494, 28.3747]),
+          zoom: 16,
+          minZoom: 0, maxZoom: 20,
+          extent: disneyWorldExtent
+        })
+      });
+      disneyLayer.getSource().set('extent', disneyWorldExtent);
+      googleRoadsLayer.getSource().set('extent', disneyWorldExtent);
+    }
+
+    // --- UI Setup ---
+    function setupUI() {
+      dateBtn = document.getElementById('date-btn');
+      dateBtnInner = document.getElementById('date-btn-inner');
+      datePopup = document.getElementById('date-popup');
+      currentDateDisplay = document.getElementById('current-date-display');
+      quickSwitchBtn = document.getElementById('quick-switch-btn');
+
+      lastTwoDates = [disneyServer, null];
+
+      // --- Date Popup ---
+      function fillDatePopup(selected) {
+        datePopup.innerHTML = '';
+        if (showingDisney) {
+          // Disney map dates
+          serverOptions.slice().reverse().forEach(opt => {
+            var btn = document.createElement('button');
+            btn.className = 'date-popup-item' + (opt.code === selected ? ' selected' : '');
+            btn.textContent = opt.label;
+            btn.onclick = function() {
+              setDisneyDate(opt.code);
+              hideDatePopup();
+            };
+            datePopup.appendChild(btn);
+          });
+        } else {
+          // ESRI Wayback dates
+          esriWaybackReleases.forEach(opt => {
+            var btn = document.createElement('button');
+            btn.className = 'date-popup-item' + (opt.releaseNum == selected ? ' selected' : '');
+            btn.textContent = opt.dateLabel + (opt.isLatest ? ' (Latest)' : '');
+            btn.onclick = function() {
+              setEsriDate(opt.releaseNum);
+              hideDatePopup();
+            };
+            datePopup.appendChild(btn);
+          });
+        }
+      }
+      function showDatePopup() {
+        fillDatePopup(showingDisney ? disneyServer : esriCurrentReleaseNum);
+        datePopup.style.display = 'block';
+        setTimeout(() => { datePopup.style.opacity = '1'; }, 10);
+        setTimeout(() => {
+          document.addEventListener('mousedown', hideOnOutside, { once: true });
+          document.addEventListener('touchstart', hideOnOutside, { once: true });
+        }, 0);
+      }
+      function hideOnOutside(e) {
+        if (!datePopup.contains(e.target) && !dateBtn.contains(e.target)) hideDatePopup();
+      }
+      function hideDatePopup() {
+        datePopup.style.opacity = '0';
+        setTimeout(() => { datePopup.style.display = 'none'; }, 180);
+      }
+      dateBtn.onclick = function() {
+        if (datePopup.style.display === 'block') {
+          hideDatePopup();
+        } else {
+          showDatePopup();
+        }
+      };
+
+      // --- Set Disney Date ---
+      function setDisneyDate(newCode) {
+        if (disneyServer === newCode) return;
+        if (lastTwoDates[0] !== newCode) {
+          lastTwoDates = [newCode, lastTwoDates[0]];
+        }
+        disneyServer = newCode;
+        var vis = disneyLayer.getVisible();
+        map.removeLayer(disneyLayer);
+        disneyLayer = makeDisneyLayer(newCode);
+        disneyLayer.setVisible(vis);
+        disneyLayer.getSource().set('extent', disneyWorldExtent);
+        map.getLayers().insertAt(0, disneyLayer);
+        updateDateUI();
+      }
+
+      // --- Set ESRI Date ---
+      function setEsriDate(releaseNum) {
+        if (esriCurrentReleaseNum == releaseNum) return;
+        esriCurrentReleaseNum = releaseNum;
+        if (esriLayer) {
+          map.removeLayer(esriLayer);
+        }
+        esriLayer = makeEsriLayer(releaseNum);
+        esriLayer.setVisible(true);
+        esriLayer.getSource().set('extent', disneyWorldExtent);
+        map.getLayers().insertAt(0, esriLayer);
+        updateDateUI();
+      }
+
+      // --- Toggle between Disney and Satellite ---
+      document.getElementById('toggle-btn').onclick = function() {
+        showingDisney = !showingDisney;
+        if (showingDisney) {
+          // Show Disney, hide ESRI
+          if (esriLayer) esriLayer.setVisible(false);
+          disneyLayer.setVisible(true);
+        } else {
+          // Show ESRI, hide Disney
+          disneyLayer.setVisible(false);
+          if (!esriLayer) {
+            // Default to latest
+            if (esriWaybackReleases.length > 0) {
+              setEsriDate(esriWaybackReleases[0].releaseNum);
+            }
+          } else {
+            esriLayer.setVisible(true);
+          }
+        }
+        updateDateUI();
+        // Switch icon
+        document.getElementById('toggle-icon').querySelector('img').src =
+          showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
+        document.getElementById('toggle-icon').querySelector('img').alt =
+          showingDisney ? 'Satellite' : 'Disney Map';
+      };
+
+      // --- Quick Switch button logic ---
+      quickSwitchBtn.onclick = function() {
+        if (lastTwoDates[1]) {
+          setDisneyDate(lastTwoDates[1]);
+        }
+      };
+
+      // --- Roads button logic ---
+      document.getElementById('roads-btn').onclick = function() {
+        roadsOn = !roadsOn;
+        document.getElementById('roads-icon').querySelector('img').src =
+          roadsOn ? 'icons/no_roads.svg' : 'icons/roads.svg';
+        document.getElementById('roads-icon').querySelector('img').alt =
+          roadsOn ? 'No Roads' : 'Roads';
+        googleRoadsLayer.setVisible(roadsOn);
+      };
+
+      // --- FIND ME button ---
+      var findmeBtn = document.getElementById('findme-btn');
+      var findmeMessage = document.getElementById('findme-message');
+      var userLocationLayer = null;
+      findmeBtn.onclick = function() {
+        if (!navigator.geolocation) { showFindMeMessage('Geolocation not supported'); return; }
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          var coords = [pos.coords.longitude, pos.coords.latitude];
+          var projected = ol.proj.fromLonLat(coords);
+          var within = ol.extent.containsCoordinate(disneyWorldExtent, projected);
+          if (!within) { showFindMeMessage('Outside of WDW'); removeUserLocation(); return; }
+          removeUserLocation();
+          userLocationLayer = new ol.layer.Vector({
+            source: new ol.source.Vector({
+              features: [new ol.Feature({geometry: new ol.geom.Point(projected)})]
+            }),
+            style: new ol.style.Style({
+              image: new ol.style.Circle({
+                radius: 10, fill: new ol.style.Fill({color: 'rgba(0,116,217,0.35)'}),
+                stroke: new ol.style.Stroke({color: '#0074d9', width: 3})
+              })
+            }),
+            zIndex: 99
+          });
+          map.addLayer(userLocationLayer);
+          map.getView().animate({center: projected, zoom: 17, duration: 800});
+        }, function(error) {
+          showFindMeMessage('Unable to get location');
+        }, { enableHighAccuracy: true });
+      };
+      function showFindMeMessage(msg) {
+        findmeMessage.textContent = msg;
+        findmeMessage.style.display = 'block';
+        setTimeout(function() { findmeMessage.style.opacity = '1'; }, 10);
+        setTimeout(function() {
+          findmeMessage.style.opacity = '0';
+          setTimeout(function() { findmeMessage.style.display = 'none'; }, 400);
+        }, 2200);
+      }
+      function removeUserLocation() {
+        if (userLocationLayer) {
+          map.removeLayer(userLocationLayer);
+          userLocationLayer = null;
+        }
+      }
+
+      // --- Double-tap and hold to zoom, Google Maps style ---
+      (function() {
+        var lastTap = 0;
+        var isHoldZoom = false;
+        var startY = 0;
+        var startZoom = 0;
+        var mapDiv = document.getElementById('map');
+        var holdTimeout = null;
+        mapDiv.addEventListener('touchstart', function(e) {
+          if (e.touches.length !== 1) return;
+          var now = Date.now();
+          if (now - lastTap < 350) {
+            e.preventDefault();
+            startY = e.touches[0].clientY;
+            startZoom = map.getView().getZoom();
+            isHoldZoom = true;
+            holdTimeout = setTimeout(function() {
+              mapDiv.addEventListener('touchmove', moveHandler, { passive: false });
+            }, 100);
+          } else {
+            lastTap = now;
+            isHoldZoom = false;
+            if (holdTimeout) clearTimeout(holdTimeout);
+          }
+        });
+        mapDiv.addEventListener('touchend', function(e) {
+          if (isHoldZoom) {
+            isHoldZoom = false;
+            mapDiv.removeEventListener('touchmove', moveHandler, { passive: false });
+          }
+          if (holdTimeout) clearTimeout(holdTimeout);
+        });
+        function moveHandler(e) {
+          if (!isHoldZoom || e.touches.length !== 1) return;
+          e.preventDefault();
+          var dy = e.touches[0].clientY - startY;
+          var newZoom = startZoom - dy / 80;
+          var view = map.getView();
+          newZoom = Math.max(view.getMinZoom(), Math.min(view.getMaxZoom(), newZoom));
+          view.setZoom(newZoom);
+        }
+      })();
+    }
+
+    // --- Update Date UI ---
+    function updateDateUI() {
+      var isDisney = showingDisney;
+      dateBtn.style.display = 'inline-flex';
+      datePopup.style.display = 'none';
+      quickSwitchBtn.style.display = (isDisney && lastTwoDates[1]) ? 'flex' : 'none';
+      // Show current date display
+      if (isDisney) {
+        currentDateDisplay.textContent = getLabelForCode(disneyServer);
+        currentDateDisplay.style.display = 'block';
+      } else {
+        currentDateDisplay.textContent = getEsriLabelForReleaseNum(esriCurrentReleaseNum);
+        currentDateDisplay.style.display = 'block';
+      }
+    }
+
+    // --- Fetch Disney servers.json and ESRI Wayback releases, then init ---
+    Promise.all([
+      fetch('servers.json').then(r => r.json()),
+      fetch('https://wayback-api.arcgis.com/v1/wayback/releases').then(r => r.json())
+    ]).then(([servers, esriData]) => {
+      serverOptions = servers;
+      disneyServer = serverOptions[serverOptions.length - 1].code;
+      esriWaybackReleases = esriData.releases.sort((a, b) => b.releaseNum - a.releaseNum);
+      esriCurrentReleaseNum = esriWaybackReleases[0].releaseNum;
+      initMap();
+      setupUI();
+      updateDateUI();
+    }).catch(err => {
+      alert('Failed to load map data: ' + err);
+    });
+
+    // --- About modal logic (no close button) ---
+    const logo = document.getElementById('logo');
+    const disclaimerModal = document.getElementById('disclaimer-modal');
+    const viewportMeta = document.getElementById('viewport-meta');
+    if (logo && disclaimerModal) {
+      logo.style.cursor = 'pointer';
+      logo.onclick = function() {
+        disclaimerModal.classList.add('active');
+        if (viewportMeta) {
+          viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover');
+        }
+      };
+      disclaimerModal.onclick = function(e) {
+        if (e.target === disclaimerModal) {
+          disclaimerModal.classList.remove('active');
+          if (viewportMeta) {
+            viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1, user-scalable=yes, viewport-fit=cover');
+          }
+        }
+      };
+    }
+  </script>
+</body>
+</html>
