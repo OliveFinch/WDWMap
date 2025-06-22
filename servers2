@@ -1,0 +1,440 @@
+[
+  {
+    "code": "47",
+    "label": "27 May 2017",
+    "esri_release_date": "2017-05-31",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/14342/{level}/{row}/{col}"
+  },
+  {
+    "code": "105",
+    "label": "15 Jun 2018",
+    "esri_release_date": "2018-06-06",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/8249/{level}/{row}/{col}"
+  },
+  {
+    "code": "106",
+    "label": "12 Jul 2018",
+    "esri_release_date": "2018-06-06",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/8249/{level}/{row}/{col}"
+  },
+  {
+    "code": "107",
+    "label": "08 Aug 2018",
+    "esri_release_date": "2018-07-25",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/14829/{level}/{row}/{col}"
+  },
+  {
+    "code": "108",
+    "label": "04 Sep 2018",
+    "esri_release_date": "2018-08-15",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/1858/{level}/{row}/{col}"
+  },
+  {
+    "code": "109",
+    "label": "01 Oct 2018",
+    "esri_release_date": "2018-09-06",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/2168/{level}/{row}/{col}"
+  },
+  {
+    "code": "110",
+    "label": "17 Oct 2018",
+    "esri_release_date": "2018-10-17",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/18820/{level}/{row}/{col}"
+  },
+  {
+    "code": "111",
+    "label": "02 Nov 2018",
+    "esri_release_date": "2018-10-17",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/18820/{level}/{row}/{col}"
+  },
+  {
+    "code": "112",
+    "label": "18 Nov 2018",
+    "esri_release_date": "2018-11-07",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/3201/{level}/{row}/{col}"
+  },
+  {
+    "code": "113",
+    "label": "04 Dec 2018",
+    "esri_release_date": "2018-11-29",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/239/{level}/{row}/{col}"
+  },
+  {
+    "code": "114",
+    "label": "20 Dec 2018",
+    "esri_release_date": "2018-12-14",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/23448/{level}/{row}/{col}"
+  },
+  {
+    "code": "115",
+    "label": "05 Jan 2019",
+    "esri_release_date": "2018-12-14",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/23448/{level}/{row}/{col}"
+  },
+  {
+    "code": "116",
+    "label": "21 Jan 2019",
+    "esri_release_date": "2019-01-09",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/6036/{level}/{row}/{col}"
+  },
+  {
+    "code": "117",
+    "label": "06 Feb 2019",
+    "esri_release_date": "2019-01-09",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/6036/{level}/{row}/{col}"
+  },
+  {
+    "code": "118",
+    "label": "22 Feb 2019",
+    "esri_release_date": "2019-02-21",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/17677/{level}/{row}/{col}"
+  },
+  {
+    "code": "119",
+    "label": "10 Mar 2019",
+    "esri_release_date": "2019-02-21",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/17677/{level}/{row}/{col}"
+  },
+  {
+    "code": "120",
+    "label": "26 Mar 2019",
+    "esri_release_date": "2019-03-13",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/4383/{level}/{row}/{col}"
+  },
+  {
+    "code": "121",
+    "label": "11 Apr 2019",
+    "esri_release_date": "2019-04-03",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/18691/{level}/{row}/{col}"
+  },
+  {
+    "code": "122",
+    "label": "27 Apr 2019",
+    "esri_release_date": "2019-04-24",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/18063/{level}/{row}/{col}"
+  },
+  {
+    "code": "123",
+    "label": "13 May 2019",
+    "esri_release_date": "2019-04-24",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/18063/{level}/{row}/{col}"
+  },
+  {
+    "code": "124",
+    "label": "29 May 2019",
+    "esri_release_date": "2019-05-15",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/9598/{level}/{row}/{col}"
+  },
+  {
+    "code": "125",
+    "label": "14 Jun 2019",
+    "esri_release_date": "2019-06-05",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/12576/{level}/{row}/{col}"
+  },
+  {
+    "code": "126",
+    "label": "09 Jul 2019",
+    "esri_release_date": "2019-06-26",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/645/{level}/{row}/{col}"
+  },
+  {
+    "code": "127",
+    "label": "18 Jul 2019",
+    "esri_release_date": "2019-07-17",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/16681/{level}/{row}/{col}"
+  },
+  {
+    "code": "128",
+    "label": "05 Aug 2019",
+    "esri_release_date": "2019-07-17",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/16681/{level}/{row}/{col}"
+  },
+  {
+    "code": "129",
+    "label": "12 Aug 2019",
+    "esri_release_date": "2019-08-07",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/17216/{level}/{row}/{col}"
+  },
+  {
+    "code": "130",
+    "label": "20 Aug 2019",
+    "esri_release_date": "2019-08-07",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/17216/{level}/{row}/{col}"
+  },
+  {
+    "code": "131",
+    "label": "30 Aug 2019",
+    "esri_release_date": "2019-08-28",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/30442/{level}/{row}/{col}"
+  },
+  {
+    "code": "132",
+    "label": "10 Sep 2019",
+    "esri_release_date": "2019-08-28",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/30442/{level}/{row}/{col}"
+  },
+  {
+    "code": "133",
+    "label": "20 Sep 2019",
+    "esri_release_date": "2019-09-18",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/9892/{level}/{row}/{col}"
+  },
+  {
+    "code": "134",
+    "label": "01 Oct 2019",
+    "esri_release_date": "2019-09-18",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/9892/{level}/{row}/{col}"
+  },
+  {
+    "code": "135",
+    "label": "12 Oct 2019",
+    "esri_release_date": "2019-10-09",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/11351/{level}/{row}/{col}"
+  },
+  {
+    "code": "136",
+    "label": "22 Oct 2019",
+    "esri_release_date": "2019-10-09",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/11351/{level}/{row}/{col}"
+  },
+  {
+    "code": "137",
+    "label": "02 Nov 2019",
+    "esri_release_date": "2019-10-30",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/11060/{level}/{row}/{col}"
+  },
+  {
+    "code": "138",
+    "label": "13 Nov 2019",
+    "esri_release_date": "2019-10-30",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/11060/{level}/{row}/{col}"
+  },
+  {
+    "code": "139",
+    "label": "23 Nov 2019",
+    "esri_release_date": "2019-10-30",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/11060/{level}/{row}/{col}"
+  },
+  {
+    "code": "140",
+    "label": "04 Dec 2019",
+    "esri_release_date": "2019-10-30",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/11060/{level}/{row}/{col}"
+  },
+  {
+    "code": "141",
+    "label": "15 Dec 2019",
+    "esri_release_date": "2019-12-12",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/4756/{level}/{row}/{col}"
+  },
+  {
+    "code": "142",
+    "label": "03 Jan 2020",
+    "esri_release_date": "2019-12-12",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/4756/{level}/{row}/{col}"
+  },
+  {
+    "code": "143",
+    "label": "23 Jan 2020",
+    "esri_release_date": "2020-01-08",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/23001/{level}/{row}/{col}"
+  },
+  {
+    "code": "144",
+    "label": "12 Feb 2020",
+    "esri_release_date": "2020-01-30",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/21485/{level}/{row}/{col}"
+  },
+  {
+    "code": "145",
+    "label": "03 Mar 2020",
+    "esri_release_date": "2020-02-20",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/8495/{level}/{row}/{col}"
+  },
+  {
+    "code": "146",
+    "label": "22 Mar 2020",
+    "esri_release_date": "2020-02-20",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/8495/{level}/{row}/{col}"
+  },
+  {
+    "code": "147",
+    "label": "11 Apr 2020",
+    "esri_release_date": "2020-04-08",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/26751/{level}/{row}/{col}"
+  },
+  {
+    "code": "148",
+    "label": "01 May 2020",
+    "esri_release_date": "2020-04-29",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/15045/{level}/{row}/{col}"
+  },
+  {
+    "code": "149",
+    "label": "21 May 2020",
+    "esri_release_date": "2020-05-20",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/32645/{level}/{row}/{col}"
+  },
+  {
+    "code": "150",
+    "label": "09 Jun 2020",
+    "esri_release_date": "2020-05-20",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/32645/{level}/{row}/{col}"
+  },
+  {
+    "code": "151",
+    "label": "29 Jun 2020",
+    "esri_release_date": "2020-06-10",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/11135/{level}/{row}/{col}"
+  },
+  {
+    "code": "152",
+    "label": "19 Jul 2020",
+    "esri_release_date": "2020-07-01",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/18289/{level}/{row}/{col}"
+  },
+  {
+    "code": "153",
+    "label": "08 Aug 2020",
+    "esri_release_date": "2020-07-22",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/9549/{level}/{row}/{col}"
+  },
+  {
+    "code": "154",
+    "label": "27 Aug 2020",
+    "esri_release_date": "2020-08-12",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/6049/{level}/{row}/{col}"
+  },
+  {
+    "code": "155",
+    "label": "16 Sep 2020",
+    "esri_release_date": "2020-09-02",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/9181/{level}/{row}/{col}"
+  },
+  {
+    "code": "156",
+    "label": "06 Oct 2020",
+    "esri_release_date": "2020-09-23",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/19187/{level}/{row}/{col}"
+  },
+  {
+    "code": "157",
+    "label": "06 Nov 2020",
+    "esri_release_date": "2020-10-14",
+    "esri_url": "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/119/{level}/{row}/{col}"
+  },
+  {
+    "code": "158",
+    "label": "20 Nov 2020",
+    "esri_release_date": "2020-11-18",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/20753/{level}/{row}/{col}"
+  },
+  {
+    "code": "159",
+    "label": "09 Dec 2020",
+    "esri_release_date": "2020-11-18",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/20753/{level}/{row}/{col}"
+  },
+  {
+    "code": "160",
+    "label": "30 Dec 2020",
+    "esri_release_date": "2020-12-16",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/29260/{level}/{row}/{col}"
+  },
+  {
+    "code": "161",
+    "label": "18 Jan 2021",
+    "esri_release_date": "2021-01-13",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/1049/{level}/{row}/{col}"
+  },
+  {
+    "code": "162",
+    "label": "08 Feb 2021",
+    "esri_release_date": "2021-01-13",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/1049/{level}/{row}/{col}"
+  },
+  {
+    "code": "163",
+    "label": "21 Feb 2021",
+    "esri_release_date": "2021-01-13",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/1049/{level}/{row}/{col}"
+  },
+  {
+    "code": "164",
+    "label": "13 Mar 2021",
+    "esri_release_date": "2021-02-24",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/9812/{level}/{row}/{col}"
+  },
+  {
+    "code": "165",
+    "label": "02 Apr 2021",
+    "esri_release_date": "2021-03-17",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/5359/{level}/{row}/{col}"
+  },
+  {
+    "code": "166",
+    "label": "22 Apr 2021",
+    "esri_release_date": "2021-03-17",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/5359/{level}/{row}/{col}"
+  },
+  {
+    "code": "192428169",
+    "label": "Oct 2021",
+    "esri_release_date": "2021-03-17",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/5359/{level}/{row}/{col}"
+  },
+  {
+    "code": "150629184",
+    "label": "Sep 2022",
+    "esri_release_date": "2021-03-17",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/5359/{level}/{row}/{col}"
+  },
+  {
+    "code": "148156448",
+    "label": "Oct 2022",
+    "esri_release_date": "2021-03-17",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/5359/{level}/{row}/{col}"
+  },
+  {
+    "code": "148786919",
+    "label": "Aug 2023",
+    "esri_release_date": "2021-03-17",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/5359/{level}/{row}/{col}"
+  },
+  {
+    "code": "136252875",
+    "label": "Oct 2023",
+    "esri_release_date": "2021-03-17",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/5359/{level}/{row}/{col}"
+  },
+  {
+    "code": "179053222",
+    "label": "Mar 2024",
+    "esri_release_date": "2021-03-17",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/5359/{level}/{row}/{col}"
+  },
+  {
+    "code": "170579610",
+    "label": "Dec 2024",
+    "esri_release_date": "2021-03-17",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/5359/{level}/{row}/{col}"
+  },
+  {
+    "code": "722864629",
+    "label": "April 2025",
+    "esri_release_date": "2021-03-17",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/5359/{level}/{row}/{col}"
+  },
+  {
+    "code": "961604122",
+    "label": "May 2025",
+    "esri_release_date": "2021-03-17",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/5359/{level}/{row}/{col}"
+  },
+  {
+    "code": "576598164",
+    "label": "June 2025",
+    "esri_release_date": "2021-03-17",
+    "esri_url": "https://waybackdev.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/5359/{level}/{row}/{col}"
+  }
+]
