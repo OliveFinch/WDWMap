@@ -67,50 +67,42 @@
 <body>
   <div id="map"></div>
   <div class="control-row">
-    <!-- Date Selector Button -->
     <button id="date-btn" type="button">
       <span id="date-btn-inner" class="ol-control-inner">
         <img src="icons/calendar.svg" alt="Date Selector">
       </span>
     </button>
     <div id="date-popup"></div>
-    <!-- Toggle View Button -->
     <button id="toggle-btn" class="ol-control custom-btn">
       <span class="ol-control-inner" id="toggle-icon">
         <img src="icons/satellite.svg" alt="Satellite">
       </span>
     </button>
   </div>
-  <!-- Roads Button -->
   <button id="roads-btn" class="ol-control custom-btn">
     <span class="ol-control-inner" id="roads-icon">
       <img src="icons/roads.svg" alt="Roads">
     </span>
   </button>
-  <!-- Find Me Button -->
   <button id="findme-btn" class="ol-control custom-btn">
     <span class="ol-control-inner" id="findme-icon">
       <img src="icons/locateme.svg" alt="Locate Me">
     </span>
   </button>
   <div id="findme-message"></div>
-  <!-- Quick Switch Button -->
   <button id="quick-switch-btn" title="Quick Switch Dates" class="ol-control-inner">
     <img src="icons/switch.svg" alt="Switch">
   </button>
-  <!-- Logo (external SVG) -->
   <div id="logo">
     <img src="logo.svg" alt="WDW Magic Explorer Logo">
   </div>
   <div id="current-date-display"></div>
-
-  <!-- About Modal -->
   <div id="disclaimer-modal">
     <div id="disclaimer-content">
       <h3>About</h3>
       <p>
         <strong>WDW Magic Explorer</strong> is a fan-made tool for viewing and comparing historical and current map imagery for Walt Disney World in Florida.<br>
-        Easily switch between official Disney park maps from different years and ESRI satellite overlays. Features include date switching, user location, and fast map view switching for exploration and research.<br>
+        Easily switch between official Disney park maps from different years, ESRI Wayback satellite, and roads overlays. Features include date switching, user location, and fast map view switching for exploration and research.<br>
         <br>
         Made for Disney fans and anyone curious about how the parks have changed over time.
       </p>
@@ -122,7 +114,7 @@
         This is an independent, non-commercial project and is not affiliated with, endorsed by, or connected to The Walt Disney Company.<br>
         All map imagery &copy; Disney or their respective owners.<br>
         <br>
-        ESRI World Imagery Wayback &copy; ESRI. Imagery may be copyright of other providers as indicated within the map data.
+        ESRI Wayback imagery &copy; ESRI and their providers.
       </p>
     </div>
   </div>
@@ -130,93 +122,24 @@
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
   <script>
     let serverOptions = [];
-    let currentServerIndex = 0; // Index in serverOptions
-    let showingDisney = true;
-    let disneyLayer, esriLayer, googleRoadsLayer, map;
+    let disneyServer = null;
+    let currentEsriId = null;
+    let map, disneyLayer, satelliteLayer, googleRoadsLayer;
     let lastTwoDates = [null, null];
-    let dateBtn, dateBtnInner, datePopup, currentDateDisplay, quickSwitchBtn;
+    let dateBtn, datePopup, currentDateDisplay, quickSwitchBtn;
+    let showingDisney = true;
 
-    // Disney bounding box
-    const disneyWorldExtent = ol.proj.transformExtent(
+    var disneyWorldExtent = ol.proj.transformExtent(
       [-81.9200, 28.1772, -81.2244, 28.6390],
       'EPSG:4326', 'EPSG:3857'
     );
 
-    function makeDisneyLayer(code) {
-      return new ol.layer.Tile({
-        source: new ol.source.XYZ({
-          url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code}/{z}/{x}/{y}.jpg`,
-          minZoom: 0, maxZoom: 20
-        }),
-        visible: true
-      });
-    }
-
-function makeWaybackLayer(esri_id) {
-  return new ol.layer.Tile({
-    source: new ol.source.XYZ({
-      url: `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${esri_id}/{z}/{x}/{y}`,
-      minZoom: 0,
-      maxZoom: 20,
-      tilePixelRatio: 1,
-    }),
-    visible: false
-  });
-}
-
-    function makeRoadsLayer() {
-      // Google Roads Layer (can be removed or replaced if you have a different overlay)
-      return new ol.layer.Tile({
-        source: new ol.source.XYZ({
-          url: 'https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}',
-          minZoom: 0, maxZoom: 20
-        }),
-        visible: false, opacity: 0.85
-      });
-    }
-
-    function getCurrentServer() {
-      return serverOptions[currentServerIndex] || serverOptions[0];
-    }
-
-    function setLayer(newIndex) {
-      currentServerIndex = newIndex;
-      const opt = getCurrentServer();
-
-      if (showingDisney) {
-        map.removeLayer(esriLayer);
-        if (disneyLayer) map.removeLayer(disneyLayer);
-        disneyLayer = makeDisneyLayer(opt.code);
-        disneyLayer.getSource().set('extent', disneyWorldExtent);
-        map.getLayers().insertAt(0, disneyLayer);
-      } else {
-        map.removeLayer(disneyLayer);
-        if (esriLayer) map.removeLayer(esriLayer);
-        esriLayer = makeEsriLayer(opt.esri_id);
-        esriLayer.getSource().set('extent', disneyWorldExtent);
-        map.getLayers().insertAt(0, esriLayer);
-      }
-      updateDateUI();
-    }
-
-    function updateDateUI() {
-      const opt = getCurrentServer();
-      dateBtn.style.display = 'inline-flex';
-      datePopup.style.display = 'none';
-      quickSwitchBtn.style.display = lastTwoDates[1] ? 'flex' : 'none';
-      currentDateDisplay.textContent = opt.label || '';
-      currentDateDisplay.style.display = 'block';
-    }
-
-    // Fetch servers2.json and initialize
     fetch('servers2.json')
-      .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
-        return response.json();
-      })
+      .then(response => response.json())
       .then(json => {
         serverOptions = json;
-        currentServerIndex = serverOptions.length - 1;
+        disneyServer = serverOptions[serverOptions.length - 1].code;
+        currentEsriId = serverOptions[serverOptions.length - 1].esri_id;
         initMap();
         setupUI();
         updateDateUI();
@@ -225,55 +148,94 @@ function makeWaybackLayer(esri_id) {
         alert('Failed to load servers2.json: ' + err);
       });
 
+    function getLabelForCode(code) {
+      let found = serverOptions.find(opt => opt.code === code);
+      return found ? found.label : '';
+    }
+    function getEsriIdForCode(code) {
+      let found = serverOptions.find(opt => opt.code === code);
+      return found && found.esri_id ? found.esri_id : null;
+    }
+
+    function makeDisneyLayer(server) {
+      return new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${server}/{z}/{x}/{y}.jpg`,
+          minZoom: 0, maxZoom: 20
+        }),
+        visible: true
+      });
+    }
+
+    function makeWaybackLayer(esri_id) {
+      if (!esri_id) return null;
+      return new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${esri_id}/{z}/{x}/{y}`,
+          minZoom: 0,
+          maxZoom: 20,
+          tilePixelRatio: 1,
+        }),
+        visible: false
+      });
+    }
+
+    function makeRoadsLayer() {
+      return new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: 'https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}',
+          minZoom: 0, maxZoom: 20
+        }),
+        visible: false,
+        opacity: 0.85
+      });
+    }
+
     function initMap() {
-      const opt = getCurrentServer();
-      disneyLayer = makeDisneyLayer(opt.code);
-      esriLayer = makeEsriLayer(opt.esri_id);
+      disneyLayer = makeDisneyLayer(disneyServer);
+      satelliteLayer = makeWaybackLayer(currentEsriId);
       googleRoadsLayer = makeRoadsLayer();
+
       disneyLayer.getSource().set('extent', disneyWorldExtent);
-      esriLayer.getSource().set('extent', disneyWorldExtent);
+      if (satelliteLayer) satelliteLayer.getSource().set('extent', disneyWorldExtent);
       googleRoadsLayer.getSource().set('extent', disneyWorldExtent);
 
       map = new ol.Map({
         target: 'map',
-        layers: [disneyLayer, esriLayer, googleRoadsLayer],
+        layers: [disneyLayer, satelliteLayer, googleRoadsLayer],
         view: new ol.View({
           center: ol.proj.fromLonLat([-81.5494, 28.3747]),
           zoom: 16,
-          minZoom: 0, maxZoom: 20,
+          minZoom: 0,
+          maxZoom: 20,
           extent: disneyWorldExtent
         })
       });
-
-      esriLayer.setVisible(false); // Start on Disney
     }
 
     function setupUI() {
       dateBtn = document.getElementById('date-btn');
-      dateBtnInner = document.getElementById('date-btn-inner');
       datePopup = document.getElementById('date-popup');
       currentDateDisplay = document.getElementById('current-date-display');
       quickSwitchBtn = document.getElementById('quick-switch-btn');
-      lastTwoDates = [serverOptions[currentServerIndex]?.code || null, null];
 
-      // Date popup
-      function fillDatePopup(selectedIndex) {
+      lastTwoDates = [disneyServer, null];
+
+      function fillDatePopup(selectedCode) {
         datePopup.innerHTML = '';
-        // Reverse for most recent first
-        serverOptions.slice().reverse().forEach((opt, idx, arr) => {
-          const realIndex = serverOptions.length - 1 - idx;
+        serverOptions.slice().reverse().forEach(opt => {
           var btn = document.createElement('button');
-          btn.className = 'date-popup-item' + (realIndex === selectedIndex ? ' selected' : '');
+          btn.className = 'date-popup-item' + (opt.code === selectedCode ? ' selected' : '');
           btn.textContent = opt.label;
           btn.onclick = function() {
-            setDateByIndex(realIndex);
+            setMapDate(opt.code);
             hideDatePopup();
           };
           datePopup.appendChild(btn);
         });
       }
       function showDatePopup() {
-        fillDatePopup(currentServerIndex);
+        fillDatePopup(showingDisney ? disneyServer : disneyServer);
         datePopup.style.display = 'block';
         setTimeout(() => { datePopup.style.opacity = '1'; }, 10);
         setTimeout(() => {
@@ -296,36 +258,64 @@ function makeWaybackLayer(esri_id) {
         }
       };
 
-      function setDateByIndex(newIndex) {
-        if (currentServerIndex === newIndex) return;
-        if (lastTwoDates[0] !== serverOptions[newIndex].code) {
-          lastTwoDates = [serverOptions[newIndex].code, lastTwoDates[0]];
+      function setMapDate(newCode) {
+        if (showingDisney) {
+          if (disneyServer === newCode) return;
+          if (lastTwoDates[0] !== newCode) {
+            lastTwoDates = [newCode, lastTwoDates[0]];
+          }
+          disneyServer = newCode;
+          var vis = disneyLayer.getVisible();
+          map.removeLayer(disneyLayer);
+          disneyLayer = makeDisneyLayer(newCode);
+          disneyLayer.setVisible(vis);
+          disneyLayer.getSource().set('extent', disneyWorldExtent);
+          map.getLayers().insertAt(0, disneyLayer);
+        } else {
+          var esriId = getEsriIdForCode(newCode);
+          if (currentEsriId === esriId) return;
+          currentEsriId = esriId;
+          // Remove old satellite layer if exists
+          if (satelliteLayer) map.removeLayer(satelliteLayer);
+          satelliteLayer = makeWaybackLayer(currentEsriId);
+          if (satelliteLayer) {
+            satelliteLayer.getSource().set('extent', disneyWorldExtent);
+            satelliteLayer.setVisible(true);
+            map.getLayers().insertAt(0, satelliteLayer);
+          }
         }
-        setLayer(newIndex);
+        updateDateUI();
       }
 
-      // Toggle between Disney map and Satellite
+      // Toggle between Disney and Satellite
       document.getElementById('toggle-btn').onclick = function() {
         showingDisney = !showingDisney;
         if (showingDisney) {
-          esriLayer.setVisible(false);
           disneyLayer.setVisible(true);
+          if (satelliteLayer) satelliteLayer.setVisible(false);
+          document.getElementById('toggle-icon').querySelector('img').src = 'icons/satellite.svg';
+          document.getElementById('toggle-icon').querySelector('img').alt = 'Satellite';
         } else {
           disneyLayer.setVisible(false);
-          esriLayer.setVisible(true);
+          // Remove old, add correct ESRI layer for date
+          var esriId = getEsriIdForCode(disneyServer);
+          if (satelliteLayer) map.removeLayer(satelliteLayer);
+          satelliteLayer = makeWaybackLayer(esriId);
+          if (satelliteLayer) {
+            satelliteLayer.getSource().set('extent', disneyWorldExtent);
+            satelliteLayer.setVisible(true);
+            map.getLayers().insertAt(0, satelliteLayer);
+          }
+          document.getElementById('toggle-icon').querySelector('img').src = 'icons/mouse.svg';
+          document.getElementById('toggle-icon').querySelector('img').alt = 'Disney Map';
         }
         updateDateUI();
-        document.getElementById('toggle-icon').querySelector('img').src =
-          showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
-        document.getElementById('toggle-icon').querySelector('img').alt =
-          showingDisney ? 'Satellite' : 'Disney Map';
       };
 
-      // Quick Switch button logic
+      // Quick Switch button logic (works for Disney view only)
       quickSwitchBtn.onclick = function() {
         if (lastTwoDates[1]) {
-          const idx = serverOptions.findIndex(opt => opt.code === lastTwoDates[1]);
-          if (idx !== -1) setDateByIndex(idx);
+          setMapDate(lastTwoDates[1]);
         }
       };
 
@@ -340,7 +330,7 @@ function makeWaybackLayer(esri_id) {
         googleRoadsLayer.setVisible(roadsOn);
       };
 
-      // FIND ME button
+      // Find Me Button
       var findmeBtn = document.getElementById('findme-btn');
       var findmeMessage = document.getElementById('findme-message');
       var userLocationLayer = null;
@@ -431,30 +421,42 @@ function makeWaybackLayer(esri_id) {
           view.setZoom(newZoom);
         }
       })();
+    }
 
-      // About modal logic
-      const logo = document.getElementById('logo');
-      const disclaimerModal = document.getElementById('disclaimer-modal');
-      const viewportMeta = document.getElementById('viewport-meta');
-      if (logo && disclaimerModal) {
-        logo.style.cursor = 'pointer';
-        logo.onclick = function() {
-          disclaimerModal.classList.add('active');
-          // Disable zoom when modal is open
-          if (viewportMeta) {
-            viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover');
-          }
-        };
-        disclaimerModal.onclick = function(e) {
-          if (e.target === disclaimerModal) {
-            disclaimerModal.classList.remove('active');
-            // Enable zoom again when modal is closed
-            if (viewportMeta) {
-              viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1, user-scalable=yes, viewport-fit=cover');
-            }
-          }
-        };
+    function updateDateUI() {
+      var isDisney = showingDisney;
+      dateBtn.style.display = 'inline-flex';
+      datePopup.style.display = 'none';
+      quickSwitchBtn.style.display = (isDisney && lastTwoDates[1]) ? 'flex' : 'none';
+      if (isDisney) {
+        currentDateDisplay.textContent = getLabelForCode(disneyServer);
+        currentDateDisplay.style.display = 'block';
+      } else {
+        currentDateDisplay.textContent = getLabelForCode(disneyServer);
+        currentDateDisplay.style.display = 'block';
       }
+    }
+
+    // About modal logic (no close button)
+    const logo = document.getElementById('logo');
+    const disclaimerModal = document.getElementById('disclaimer-modal');
+    const viewportMeta = document.getElementById('viewport-meta');
+    if (logo && disclaimerModal) {
+      logo.style.cursor = 'pointer';
+      logo.onclick = function() {
+        disclaimerModal.classList.add('active');
+        if (viewportMeta) {
+          viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover');
+        }
+      };
+      disclaimerModal.onclick = function(e) {
+        if (e.target === disclaimerModal) {
+          disclaimerModal.classList.remove('active');
+          if (viewportMeta) {
+            viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1, user-scalable=yes, viewport-fit=cover');
+          }
+        }
+      };
     }
   </script>
 </body>
