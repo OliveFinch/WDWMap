@@ -15,15 +15,311 @@
   <meta property="og:image" content="icon-512.png">
   <meta property="og:type" content="website">
   <style>
-    /* -- Your CSS remains unchanged from your original for brevity -- */
-    html, body { margin: 0; padding: 0; height: 100%; overscroll-behavior: none; overflow: hidden; font-family: Arial, Helvetica, sans-serif;}
-    #map { width: 100vw; height: 100vh; touch-action: none; -webkit-user-select: none; user-select: none;}
-    button, .ol-control-inner, #date-btn-inner, #quick-switch-btn, #roads-btn, #findme-btn { touch-action: manipulation; }
-    /* ... (copy all your CSS as-is from original code here) ... */
-    #disclaimer-modal { display: none; position: fixed; z-index: 4000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.45); align-items: center; justify-content: center; transition: opacity 0.2s;}
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overscroll-behavior: none;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    #map {
+      width: 100vw;
+      height: 100vh;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    button, .ol-control-inner, #date-btn-inner, #quick-switch-btn, #roads-btn, #findme-btn {
+      touch-action: manipulation;
+    }
+    .control-row {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      z-index: 1100;
+      gap: 0px;
+    }
+    .ol-control.custom-btn {
+      position: static;
+      padding: 0;
+      border: none;
+      background: none;
+      box-shadow: none;
+      outline: none;
+      margin-bottom: 0;
+    }
+    #toggle-btn { margin: 0; }
+    #roads-btn {
+      position: absolute;
+      right: 8px;
+      top: 56px;
+      z-index: 1000;
+    }
+    #findme-btn {
+      position: absolute;
+      right: 8px;
+      top: 104px;
+      z-index: 1000;
+    }
+    .ol-control-inner,
+    #quick-switch-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.85);
+      border: 1.5px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+      color: #222;
+      cursor: pointer;
+      transition: background 0.2s, border 0.2s;
+      user-select: none;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .ol-control-inner img,
+    #quick-switch-btn img {
+      width: 24px;
+      height: 24px;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+    }
+    .ol-control-inner:active,
+    .ol-control-inner:focus,
+    .ol-control-inner:hover,
+    #quick-switch-btn:active,
+    #quick-switch-btn:focus,
+    #quick-switch-btn:hover {
+      background: #f8f8f8;
+      border-color: #999;
+    }
+    .ol-rotate {
+      top: 80px !important;
+      left: 8px !important;
+      right: auto !important;
+    }
+    #logo {
+      position: absolute;
+      left: 16px;
+      bottom: 16px;
+      z-index: 1200;
+      pointer-events: auto;
+      opacity: 0.93;
+      cursor: pointer;
+    }
+    #logo img {
+      display: block;
+      width: 200px;
+      height: 36px;
+      max-width: 98vw;
+    }
+    #findme-message {
+      display: none;
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2000;
+      background: rgba(255,255,255,0.92);
+      color: #d62525;
+      font-size: 17px;
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: bold;
+      text-align: center;
+      opacity: 0;
+      padding: 7px 20px;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px #0001;
+      transition: opacity 0.4s;
+      pointer-events: none;
+    }
+    #date-btn {
+      margin-right: 7px;
+      padding: 0;
+      border: none;
+      background: none;
+      outline: none;
+      font-family: Arial, Helvetica, sans-serif;
+      cursor: pointer;
+    }
+    .hide-date-btn { display: none !important; }
+    #date-btn-inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.85);
+      border: 1.5px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+      color: #222;
+      cursor: pointer;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    #date-btn-inner:active,
+    #date-btn-inner:focus,
+    #date-btn-inner:focus {
+      background: #f8f8f8;
+      border-color: #999;
+    }
+    #date-btn-inner img {
+      width: 22px;
+      height: 22px;
+    }
+    #date-popup {
+      display: none;
+      opacity: 0;
+      position: absolute;
+      right: 0;
+      top: 48px;
+      min-width: 180px;
+      max-height: 70vh;
+      overflow-y: auto;
+      background: rgba(255,255,255,0.96);
+      border: 1.5px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 3px 15px #0002;
+      z-index: 1400;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .date-popup-item {
+      display: block;
+      width: 100%;
+      border: none;
+      background: none;
+      font-size: 15px;
+      text-align: left;
+      padding: 9px 16px;
+      cursor: pointer;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .date-popup-item.selected {
+      background: #f2f5fa;
+      color: #3761c4;
+      font-weight: bold;
+    }
+    .date-popup-item:active, .date-popup-item:hover {
+      background: #f8f8f8;
+    }
+    #current-date-display {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1500;
+      background: none;
+      color: #fff;
+      font-size: 22px;
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: bold;
+      text-shadow: 0 3px 16px #222, 0 1px 0 #222;
+      pointer-events: none;
+      opacity: 0.97;
+      padding: 0 22px;
+    }
+    #quick-switch-btn {
+      position: absolute;
+      bottom: calc(18px + env(safe-area-inset-bottom, 0));
+      right: 16px;
+      z-index: 1300;
+      display: none;
+      font-family: Arial, Helvetica, sans-serif;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.90);
+      border: 1.5px solid #ccc;
+      box-shadow: 0 3px 15px #0002;
+      justify-content: center;
+      align-items: center;
+      color: #23287b;
+      padding: 0;
+      cursor: pointer;
+    }
+    #quick-switch-btn:active,
+    #quick-switch-btn:focus,
+    #quick-switch-btn:hover {
+      background: #f8f8f8;
+      border-color: #999;
+    }
+    #quick-switch-btn img {
+      width: 24px;
+      height: 24px;
+    }
+
+    /* About modal styles */
+    #disclaimer-modal {
+      display: none;
+      position: fixed;
+      z-index: 4000;
+      left: 0; top: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.45);
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s;
+    }
     #disclaimer-modal.active { display: flex; }
-    #disclaimer-content { background: #fff; border-radius: 14px; padding: 24px 20px 14px 20px; box-shadow: 0 6px 32px #0003; max-width: 96vw; width: 350px; font-size: 15px; color: #222; text-align: left; position: relative;}
-    /* ... (rest of your CSS) ... */
+    #disclaimer-content {
+      background: #fff;
+      border-radius: 14px;
+      padding: 24px 20px 14px 20px;
+      box-shadow: 0 6px 32px #0003;
+      max-width: 96vw;
+      width: 350px;
+      font-size: 15px;
+      color: #222;
+      text-align: left;
+      position: relative;
+    }
+    #disclaimer-content h3 {
+      margin-top: 0;
+      margin-bottom: 14px;
+      font-size: 18px;
+      color: #2a3487;
+    }
+    #coffee-link {
+      display: inline-block;
+      margin-top: 8px;
+      margin-bottom: 14px;
+      color: #0070ba;
+      font-weight: bold;
+      text-decoration: none;
+      border: 1.5px solid #0070ba;
+      border-radius: 7px;
+      padding: 6px 15px;
+      background: #f7fbff;
+      transition: background 0.2s, border 0.2s;
+    }
+    #coffee-link:hover {
+      background: #eaf6ff;
+      border-color: #005fa3;
+    }
+    @media (max-width: 600px) {
+      .control-row { right: 8px; top: 8px; gap: 6px; }
+      #date-btn { margin-right: 0; }
+      #roads-btn { top: 48px; }
+      #findme-btn { top: 88px; }
+      .ol-control-inner, #date-btn-inner, #quick-switch-btn {
+        width: 32px; height: 32px; border-radius: 6px; font-size: 13px;
+      }
+      .ol-control-inner img,
+      #date-btn-inner img,
+      #quick-switch-btn img { width: 18px; height: 18px; }
+      #logo { left: 50%; transform: translateX(-50%); bottom: 8px;}
+      #logo img { width: 180px !important; height: 32px !important; }
+      #current-date-display { font-size: 16px; padding: 0 10px; top: 10px; }
+      #quick-switch-btn { bottom: calc(8px + env(safe-area-inset-bottom, 0)); right: 8px; }
+      #date-popup { min-width: 140px; max-height: 50vh; top: 40px; }
+    }
   </style>
 </head>
 <body>
@@ -176,24 +472,32 @@
       currentDateDisplay = document.getElementById('current-date-display');
       quickSwitchBtn = document.getElementById('quick-switch-btn');
 
-      // Fill date popup for either Disney or ESRI
+      lastTwoDates = [showingDisney ? disneyServer : esriServer, null];
+
+      function getCurrentDatesArray() {
+        return showingDisney ? disneyDates : esriDates;
+      }
+      function getCurrentServer() {
+        return showingDisney ? disneyServer : esriServer;
+      }
+
+      // Date popup
       function fillDatePopup(selectedCode) {
+        let dates = getCurrentDatesArray();
         datePopup.innerHTML = '';
-        let list = showingDisney ? disneyDates : esriDates;
-        list.slice().reverse().forEach(opt => {
+        dates.slice().reverse().forEach(opt => {
           var btn = document.createElement('button');
           btn.className = 'date-popup-item' + (opt.code === selectedCode ? ' selected' : '');
           btn.textContent = opt.label;
           btn.onclick = function() {
-            setMapDate(opt.code);
+            setDate(opt.code);
             hideDatePopup();
           };
           datePopup.appendChild(btn);
         });
       }
-
       function showDatePopup() {
-        fillDatePopup(showingDisney ? disneyServer : esriServer);
+        fillDatePopup(getCurrentServer());
         datePopup.style.display = 'block';
         setTimeout(() => { datePopup.style.opacity = '1'; }, 10);
         setTimeout(() => {
@@ -216,15 +520,13 @@
         }
       };
 
-      function setMapDate(newCode) {
+      // Change date for current mode
+      function setDate(newCode) {
         if (showingDisney) {
           if (disneyServer === newCode) return;
-          // Track last two unique selections
-          if (lastTwoDates[0] !== newCode) {
-            lastTwoDates = [newCode, lastTwoDates[0]];
-          }
+          if (lastTwoDates[0] !== newCode) lastTwoDates = [newCode, lastTwoDates[0]];
           disneyServer = newCode;
-          var vis = disneyLayer.getVisible();
+          let vis = disneyLayer.getVisible();
           map.removeLayer(disneyLayer);
           disneyLayer = makeDisneyLayer(newCode);
           disneyLayer.setVisible(vis);
@@ -232,41 +534,38 @@
           map.getLayers().insertAt(0, disneyLayer);
         } else {
           if (esriServer === newCode) return;
-          if (lastTwoDates[0] !== newCode) {
-            lastTwoDates = [newCode, lastTwoDates[0]];
-          }
+          if (lastTwoDates[0] !== newCode) lastTwoDates = [newCode, lastTwoDates[0]];
           esriServer = newCode;
-          var vis = esriLayer.getVisible();
+          let vis = esriLayer.getVisible();
           map.removeLayer(esriLayer);
           esriLayer = makeESRILayer(esriDates.find(e => e.code === newCode));
           esriLayer.setVisible(vis);
           esriLayer.getSource().set('extent', disneyWorldExtent);
-          map.getLayers().insertAt(1, esriLayer); // Insert after Disney layer
+          map.getLayers().insertAt(1, esriLayer);
         }
         updateDateUI();
       }
 
-      // Toggle between Disney map and Satellite (ESRI)
+      // Toggle Disney/ESRI
       document.getElementById('toggle-btn').onclick = function() {
         showingDisney = !showingDisney;
         disneyLayer.setVisible(showingDisney);
         esriLayer.setVisible(!showingDisney);
         updateDateUI();
-        // Switch icon
         document.getElementById('toggle-icon').querySelector('img').src =
           showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
         document.getElementById('toggle-icon').querySelector('img').alt =
           showingDisney ? 'Satellite' : 'Disney Map';
       };
 
-      // Quick Switch button logic
+      // Quick Switch
       quickSwitchBtn.onclick = function() {
         if (lastTwoDates[1]) {
-          setMapDate(lastTwoDates[1]);
+          setDate(lastTwoDates[1]);
         }
       };
 
-      // Roads button logic (optional: only enable on Disney if you wish)
+      // Roads overlay (only in Satellite mode)
       var roadsOn = false;
       document.getElementById('roads-btn').onclick = function() {
         roadsOn = !roadsOn;
@@ -274,10 +573,10 @@
           roadsOn ? 'icons/no_roads.svg' : 'icons/roads.svg';
         document.getElementById('roads-icon').querySelector('img').alt =
           roadsOn ? 'No Roads' : 'Roads';
-        googleRoadsLayer.setVisible(roadsOn);
+        googleRoadsLayer.setVisible(roadsOn && !showingDisney);
       };
 
-      // FIND ME button
+      // Find Me
       var findmeBtn = document.getElementById('findme-btn');
       var findmeMessage = document.getElementById('findme-message');
       var userLocationLayer = null;
@@ -370,18 +669,23 @@
 
     function updateDateUI() {
       let isDisney = showingDisney;
-      let label = isDisney
-        ? (disneyDates.find(e => e.code === disneyServer) || {}).label
-        : (esriDates.find(e => e.code === esriServer) || {}).label;
-
       dateBtn.style.display = 'inline-flex';
       datePopup.style.display = 'none';
       quickSwitchBtn.style.display = (lastTwoDates[1]) ? 'flex' : 'none';
-      currentDateDisplay.textContent = label || '';
-      currentDateDisplay.style.display = 'block';
+      // Show current date display
+      if (isDisney) {
+        currentDateDisplay.textContent = disneyDates.find(e => e.code === disneyServer)?.label || '';
+        currentDateDisplay.style.display = 'block';
+      } else {
+        currentDateDisplay.textContent = esriDates.find(e => e.code === esriServer)?.label || '';
+        currentDateDisplay.style.display = 'block';
+      }
+      // Only allow roads overlay when in satellite view
+      document.getElementById('roads-btn').style.display = isDisney ? 'none' : '';
+      googleRoadsLayer.setVisible(!isDisney && googleRoadsLayer.getVisible());
     }
 
-    // About modal logic (no close button)
+    // About modal logic
     const logo = document.getElementById('logo');
     const disclaimerModal = document.getElementById('disclaimer-modal');
     const viewportMeta = document.getElementById('viewport-meta');
