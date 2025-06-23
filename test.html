@@ -152,15 +152,17 @@
       });
     }
 
-    function makeEsriLayer(esri_id) {
-      return new ol.layer.Tile({
-        source: new ol.source.XYZ({
-          url: `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${esri_id}/{z}/{x}/{y}`,
-          minZoom: 0, maxZoom: 20
-        }),
-        visible: true
-      });
-    }
+function makeWaybackLayer(esri_id) {
+  return new ol.layer.Tile({
+    source: new ol.source.XYZ({
+      url: `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${esri_id}/{z}/{x}/{y}`,
+      minZoom: 0,
+      maxZoom: 20,
+      tilePixelRatio: 1,
+    }),
+    visible: false
+  });
+}
 
     function makeRoadsLayer() {
       // Google Roads Layer (can be removed or replaced if you have a different overlay)
