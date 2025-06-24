@@ -127,6 +127,7 @@
     let dateBtn, dateBtnInner, datePopup, currentDateDisplay, quickSwitchBtn;
     let disneyLayer, esriLayer, roadsLayer, map;
     let showingDisney = true;
+    let roadsOn = false; // <-- Track this globally
 
     const disneyWorldExtent = ol.proj.transformExtent(
       [-81.9200, 28.1772, -81.2244, 28.6390], 'EPSG:4326', 'EPSG:3857'
@@ -167,15 +168,15 @@
     }
     function makeEsriLayer(esri_id) {
       if (!esri_id) return null;
-      let layer = new ol.layer.Tile({
+      let lyr = new ol.layer.Tile({
         source: new ol.source.XYZ({
           url: `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${esri_id}/{z}/{y}/{x}`,
           minZoom: 0, maxZoom: 20
         }),
         visible: false
       });
-      layer.set('esri_id', esri_id);
-      return layer;
+      lyr.set('esri_id', esri_id);
+      return lyr;
     }
     function makeRoadsLayer() {
       return new ol.layer.Tile({
@@ -185,6 +186,21 @@
         }),
         visible: false, opacity: 0.85
       });
+    }
+
+    function setRoadsLayerState() {
+      if (roadsLayer) {
+        roadsLayer.setVisible(roadsOn);
+        // Always put roadsLayer on top
+        let layers = map.getLayers();
+        if (layers.getArray()[layers.getLength() - 1] !== roadsLayer) {
+          map.removeLayer(roadsLayer);
+          map.addLayer(roadsLayer);
+        }
+      }
+    }
+    function onBaseLayerChange() {
+      setRoadsLayerState();
     }
 
     function initMap() {
@@ -213,6 +229,7 @@
       datePopup = document.getElementById('date-popup');
       currentDateDisplay = document.getElementById('current-date-display');
       quickSwitchBtn = document.getElementById('quick-switch-btn');
+
       lastTwoDates = [disneyServer, null];
 
       // Date selection logic
@@ -273,10 +290,10 @@
           }
           esriLayer.setVisible(vis);
         }
+        onBaseLayerChange();
         updateDateUI();
       }
 
-      // --- HERE is the improved toggle logic ---
       showingDisney = true;
       document.getElementById('toggle-btn').onclick = function() {
         showingDisney = !showingDisney;
@@ -295,6 +312,7 @@
           }
           esriLayer.setVisible(true);
         }
+        onBaseLayerChange();
         updateDateUI();
         document.getElementById('toggle-icon').querySelector('img').src =
           showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
@@ -302,20 +320,17 @@
           showingDisney ? 'Satellite' : 'Disney Map';
       };
 
-      // Quick Switch button logic
       quickSwitchBtn.onclick = function() {
         if (lastTwoDates[1]) setMapDate(lastTwoDates[1]);
       };
 
-      // Roads button logic
-      var roadsOn = false;
       document.getElementById('roads-btn').onclick = function() {
         roadsOn = !roadsOn;
         document.getElementById('roads-icon').querySelector('img').src =
           roadsOn ? 'icons/no_roads.svg' : 'icons/roads.svg';
         document.getElementById('roads-icon').querySelector('img').alt =
           roadsOn ? 'No Roads' : 'Roads';
-        roadsLayer.setVisible(roadsOn);
+        setRoadsLayerState();
       };
 
       // FIND ME button
@@ -413,7 +428,6 @@
       const isDisney = showingDisney;
       dateBtn.style.display = 'inline-flex';
       datePopup.style.display = 'none';
-      // Show correct label for each mode
       if (isDisney) {
         currentDateDisplay.textContent = getLabelForCode(disneyServer);
       } else {
