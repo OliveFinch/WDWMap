@@ -169,7 +169,7 @@
       if (!esri_id) return null;
       return new ol.layer.Tile({
         source: new ol.source.XYZ({
-          url: `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${esri_id}/{z}/{x}/{y}`,
+          url: `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${esri_id}/{z}/{y}/{x}`,
           minZoom: 0, maxZoom: 20
         }),
         visible: false
