@@ -167,13 +167,15 @@
     }
     function makeEsriLayer(esri_id) {
       if (!esri_id) return null;
-      return new ol.layer.Tile({
+      let layer = new ol.layer.Tile({
         source: new ol.source.XYZ({
           url: `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${esri_id}/{z}/{y}/{x}`,
           minZoom: 0, maxZoom: 20
         }),
         visible: false
       });
+      layer.set('esri_id', esri_id);
+      return layer;
     }
     function makeRoadsLayer() {
       return new ol.layer.Tile({
@@ -211,7 +213,6 @@
       datePopup = document.getElementById('date-popup');
       currentDateDisplay = document.getElementById('current-date-display');
       quickSwitchBtn = document.getElementById('quick-switch-btn');
-
       lastTwoDates = [disneyServer, null];
 
       // Date selection logic
@@ -262,24 +263,38 @@
           map.getLayers().setAt(0, disneyLayer);
         } else {
           var esri_id = getEsriIdForCode(newCode);
-          var vis = esriLayer.getVisible();
-          map.removeLayer(esriLayer);
-          esriLayer = makeEsriLayer(esri_id);
-          if (esriLayer) {
-            esriLayer.setVisible(vis);
+          var vis = esriLayer && esriLayer.getVisible();
+          if (!esriLayer || esriLayer.get('esri_id') !== esri_id) {
+            if (esriLayer) map.removeLayer(esriLayer);
+            esriLayer = makeEsriLayer(esri_id);
+            esriLayer.set('esri_id', esri_id);
             esriLayer.getSource().set('extent', disneyWorldExtent);
             map.getLayers().setAt(1, esriLayer);
           }
+          esriLayer.setVisible(vis);
         }
         updateDateUI();
       }
 
-      // Toggle button logic
+      // --- HERE is the improved toggle logic ---
       showingDisney = true;
       document.getElementById('toggle-btn').onclick = function() {
         showingDisney = !showingDisney;
-        disneyLayer.setVisible(showingDisney);
-        esriLayer.setVisible(!showingDisney);
+        if (showingDisney) {
+          disneyLayer.setVisible(true);
+          esriLayer.setVisible(false);
+        } else {
+          disneyLayer.setVisible(false);
+          let esriId = getEsriIdForCode(disneyServer);
+          if (!esriLayer || esriLayer.get('esri_id') !== esriId) {
+            if (esriLayer) map.removeLayer(esriLayer);
+            esriLayer = makeEsriLayer(esriId);
+            esriLayer.set('esri_id', esriId);
+            esriLayer.getSource().set('extent', disneyWorldExtent);
+            map.getLayers().setAt(1, esriLayer);
+          }
+          esriLayer.setVisible(true);
+        }
         updateDateUI();
         document.getElementById('toggle-icon').querySelector('img').src =
           showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
