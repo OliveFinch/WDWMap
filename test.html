@@ -127,7 +127,6 @@
     let dateBtn, dateBtnInner, datePopup, currentDateDisplay, quickSwitchBtn;
     let disneyLayer, esriLayer, roadsLayer, map;
     let showingDisney = true;
-    let roadsOn = false; // <-- Track this globally
 
     const disneyWorldExtent = ol.proj.transformExtent(
       [-81.9200, 28.1772, -81.2244, 28.6390], 'EPSG:4326', 'EPSG:3857'
@@ -137,24 +136,25 @@
       .then(r => r.json())
       .then(json => {
         serverOptions = json;
-        disneyServer = serverOptions[serverOptions.length - 1].code;
+        // Set to last Disney map date by default, or last entry if all satellite-only
+        disneyServer = serverOptions.slice().reverse().find(opt => opt.code)?.code || serverOptions[serverOptions.length-1].esri_id;
         initMap();
         setupUI();
         updateDateUI();
       })
       .catch(err => alert('Failed to load servers2.json: ' + err));
 
-    function getLabelForCode(code) {
-      let rec = serverOptions.find(opt => opt.code === code);
+    function getLabelForCode(codeOrEsriId) {
+      let rec = serverOptions.find(opt => (opt.code === codeOrEsriId) || (opt.esri_id === codeOrEsriId));
       return rec ? rec.label : '';
     }
-    function getEsriLabelForCode(code) {
-      let rec = serverOptions.find(opt => opt.code === code);
-      return rec && rec.esri_label ? rec.esri_label : '';
-    }
-    function getEsriIdForCode(code) {
-      let rec = serverOptions.find(opt => opt.code === code);
+    function getEsriIdForCode(codeOrEsriId) {
+      let rec = serverOptions.find(opt => (opt.code === codeOrEsriId) || (opt.esri_id === codeOrEsriId));
       return rec && rec.esri_id ? rec.esri_id : '';
+    }
+    function isSatelliteOnlyCode(codeOrEsriId) {
+      let rec = serverOptions.find(opt => (opt.code === codeOrEsriId) || (opt.esri_id === codeOrEsriId));
+      return rec && !rec.code;
     }
 
     function makeDisneyLayer(server) {
@@ -168,15 +168,13 @@
     }
     function makeEsriLayer(esri_id) {
       if (!esri_id) return null;
-      let lyr = new ol.layer.Tile({
+      return new ol.layer.Tile({
         source: new ol.source.XYZ({
           url: `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${esri_id}/{z}/{y}/{x}`,
           minZoom: 0, maxZoom: 20
         }),
         visible: false
       });
-      lyr.set('esri_id', esri_id);
-      return lyr;
     }
     function makeRoadsLayer() {
       return new ol.layer.Tile({
@@ -186,21 +184,6 @@
         }),
         visible: false, opacity: 0.85
       });
-    }
-
-    function setRoadsLayerState() {
-      if (roadsLayer) {
-        roadsLayer.setVisible(roadsOn);
-        // Always put roadsLayer on top
-        let layers = map.getLayers();
-        if (layers.getArray()[layers.getLength() - 1] !== roadsLayer) {
-          map.removeLayer(roadsLayer);
-          map.addLayer(roadsLayer);
-        }
-      }
-    }
-    function onBaseLayerChange() {
-      setRoadsLayerState();
     }
 
     function initMap() {
@@ -233,14 +216,20 @@
       lastTwoDates = [disneyServer, null];
 
       // Date selection logic
-      function fillDatePopup(selectedCode) {
+      function fillDatePopup(selectedCodeOrEsriId) {
         datePopup.innerHTML = '';
         serverOptions.slice().reverse().forEach(opt => {
+          // Disney mode: skip satellite-only dates
+          if (showingDisney && !opt.code) return;
+          // Satellite: show all
+          let isSelected = showingDisney
+            ? (opt.code === selectedCodeOrEsriId)
+            : ((opt.code === selectedCodeOrEsriId) || (!opt.code && opt.esri_id === selectedCodeOrEsriId));
           var btn = document.createElement('button');
-          btn.className = 'date-popup-item' + (opt.code === selectedCode ? ' selected' : '');
-          btn.textContent = showingDisney ? opt.label : (opt.esri_label || opt.label);
+          btn.className = 'date-popup-item' + (isSelected ? ' selected' : '');
+          btn.textContent = opt.label;
           btn.onclick = function() {
-            setMapDate(opt.code);
+            setMapDate(opt.code || opt.esri_id);
             hideDatePopup();
           };
           datePopup.appendChild(btn);
@@ -267,52 +256,52 @@
         else showDatePopup();
       };
 
-      function setMapDate(newCode) {
-        if (disneyServer === newCode) return;
-        if (lastTwoDates[0] !== newCode) lastTwoDates = [newCode, lastTwoDates[0]];
-        disneyServer = newCode;
+      function setMapDate(newCodeOrEsriId) {
+        if (disneyServer === newCodeOrEsriId) return;
+        if (lastTwoDates[0] !== newCodeOrEsriId) lastTwoDates = [newCodeOrEsriId, lastTwoDates[0]];
+        disneyServer = newCodeOrEsriId;
+
         if (showingDisney) {
+          let opt = serverOptions.find(opt => opt.code === newCodeOrEsriId);
+          if (!opt) return;
           var vis = disneyLayer.getVisible();
           map.removeLayer(disneyLayer);
-          disneyLayer = makeDisneyLayer(newCode);
+          disneyLayer = makeDisneyLayer(opt.code);
           disneyLayer.setVisible(vis);
           disneyLayer.getSource().set('extent', disneyWorldExtent);
           map.getLayers().setAt(0, disneyLayer);
         } else {
-          var esri_id = getEsriIdForCode(newCode);
-          var vis = esriLayer && esriLayer.getVisible();
-          if (!esriLayer || esriLayer.get('esri_id') !== esri_id) {
-            if (esriLayer) map.removeLayer(esriLayer);
-            esriLayer = makeEsriLayer(esri_id);
-            esriLayer.set('esri_id', esri_id);
+          let opt = serverOptions.find(opt =>
+            (opt.code && opt.code === newCodeOrEsriId) ||
+            (!opt.code && opt.esri_id === newCodeOrEsriId)
+          );
+          if (!opt) return;
+          var vis = esriLayer.getVisible();
+          map.removeLayer(esriLayer);
+          esriLayer = makeEsriLayer(opt.esri_id);
+          if (esriLayer) {
+            esriLayer.setVisible(vis);
             esriLayer.getSource().set('extent', disneyWorldExtent);
             map.getLayers().setAt(1, esriLayer);
           }
-          esriLayer.setVisible(vis);
         }
-        onBaseLayerChange();
         updateDateUI();
       }
 
+      // Toggle button logic
       showingDisney = true;
       document.getElementById('toggle-btn').onclick = function() {
-        showingDisney = !showingDisney;
-        if (showingDisney) {
-          disneyLayer.setVisible(true);
-          esriLayer.setVisible(false);
-        } else {
-          disneyLayer.setVisible(false);
-          let esriId = getEsriIdForCode(disneyServer);
-          if (!esriLayer || esriLayer.get('esri_id') !== esriId) {
-            if (esriLayer) map.removeLayer(esriLayer);
-            esriLayer = makeEsriLayer(esriId);
-            esriLayer.set('esri_id', esriId);
-            esriLayer.getSource().set('extent', disneyWorldExtent);
-            map.getLayers().setAt(1, esriLayer);
+        // If switching to Disney, and the current code is satellite-only, pick the last Disney date
+        if (!showingDisney) {
+          let rec = serverOptions.slice().reverse().find(opt => opt.code);
+          if (!rec) return; // fallback
+          if (!rec.code || !serverOptions.find(opt => opt.code === disneyServer)) {
+            disneyServer = rec.code;
           }
-          esriLayer.setVisible(true);
         }
-        onBaseLayerChange();
+        showingDisney = !showingDisney;
+        disneyLayer.setVisible(showingDisney);
+        esriLayer.setVisible(!showingDisney);
         updateDateUI();
         document.getElementById('toggle-icon').querySelector('img').src =
           showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
@@ -320,17 +309,20 @@
           showingDisney ? 'Satellite' : 'Disney Map';
       };
 
+      // Quick Switch button logic
       quickSwitchBtn.onclick = function() {
         if (lastTwoDates[1]) setMapDate(lastTwoDates[1]);
       };
 
+      // Roads button logic
+      var roadsOn = false;
       document.getElementById('roads-btn').onclick = function() {
         roadsOn = !roadsOn;
         document.getElementById('roads-icon').querySelector('img').src =
           roadsOn ? 'icons/no_roads.svg' : 'icons/roads.svg';
         document.getElementById('roads-icon').querySelector('img').alt =
           roadsOn ? 'No Roads' : 'Roads';
-        setRoadsLayerState();
+        roadsLayer.setVisible(roadsOn);
       };
 
       // FIND ME button
@@ -428,10 +420,11 @@
       const isDisney = showingDisney;
       dateBtn.style.display = 'inline-flex';
       datePopup.style.display = 'none';
+      // Show correct label for each mode
       if (isDisney) {
         currentDateDisplay.textContent = getLabelForCode(disneyServer);
       } else {
-        currentDateDisplay.textContent = getEsriLabelForCode(disneyServer) || getLabelForCode(disneyServer) + ' (Satellite)';
+        currentDateDisplay.textContent = getLabelForCode(disneyServer);
       }
       currentDateDisplay.style.display = 'block';
       quickSwitchBtn.style.display = (lastTwoDates[1]) ? 'flex' : 'none';
