@@ -10,8 +10,7 @@
     #map { width: 100vw; height: 100vh; }
     .controls {
       position: absolute;
-      top: 10px;
-      left: 10px;
+      top: 10px; left: 10px;
       background: rgba(255,255,255,0.93);
       padding: 10px;
       border-radius: 8px;
@@ -19,24 +18,16 @@
       font-family: Arial, sans-serif;
       font-size: 15px;
     }
-    select { margin: 4px 0 12px 0; width: 180px; font-size: 15px;}
-    #swipe {
-      position: absolute;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      z-index: 1200;
-      background: transparent;
-      pointer-events: none;
-    }
+    select, button { margin: 6px 0 12px 0; width: 180px; font-size: 15px;}
+    button { width: 200px; cursor: pointer; }
     #swipe-thumb {
-      position: absolute;
-      top: 0; bottom: 0;
+      position: absolute; top: 0; bottom: 0;
       width: 5px; background: #e24141cc;
-      z-index: 1300;
-      cursor: ew-resize;
+      z-index: 1300; cursor: ew-resize;
       border-radius: 3px;
-      transition: background 0.18s;
       box-shadow: 0 2px 12px #3336;
       pointer-events: auto;
+      display: none;
     }
   </style>
 </head>
@@ -48,54 +39,32 @@
     </label><br>
     <label for="rightSelect">Compare With:<br>
       <select id="rightSelect"></select>
-    </label>
+    </label><br>
+    <button id="toggleModeBtn">Highlight Changes Mode</button>
   </div>
-  <div id="swipe"></div>
   <div id="swipe-thumb"></div>
-
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
   <script>
-    // Projected Disney World bounding box (in Web Mercator)
+    // === Disney bounds and global state ===
     const extent = ol.proj.transformExtent(
       [-81.9200, 28.1772, -81.2244, 28.6390],
       'EPSG:4326', 'EPSG:3857'
     );
-
-    // Layer and UI state
-    let leftLayer, rightLayer;
-    const leftSelect = document.getElementById('leftSelect');
-    const rightSelect = document.getElementById('rightSelect');
-    const swipe = document.getElementById('swipe');
-    const swipeThumb = document.getElementById('swipe-thumb');
-
-    // Default swipe ratio (0.5 = center)
-    let swipeRatio = 0.5;
-
-    // OpenLayers Map
     const view = new ol.View({
       center: ol.proj.fromLonLat([-81.5494, 28.3747]),
       zoom: 16, minZoom: 14, maxZoom: 20, extent
     });
-
     const map = new ol.Map({ target: 'map', view });
+    let leftLayer, rightLayer, highlightLayer;
+    let swipeRatio = 0.5;
+    let mode = 'swipe';
 
-    // --- Layer creation helper ---
-    function makeLayer(code) {
-      return new ol.layer.Tile({
-        source: new ol.source.XYZ({
-          url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code}/{z}/{x}/{y}.jpg`,
-          maxZoom: 20,
-          crossOrigin: 'anonymous',
-          tileLoadFunction: function(imageTile, src) {
-            setTimeout(() => {
-              imageTile.getImage().src = src;
-            }, 100 + Math.random() * 250);
-          }
-        })
-      });
-    }
+    const leftSelect = document.getElementById('leftSelect');
+    const rightSelect = document.getElementById('rightSelect');
+    const swipeThumb = document.getElementById('swipe-thumb');
+    const toggleBtn = document.getElementById('toggleModeBtn');
 
-    // --- UI: Populate selectors, trigger update ---
+    // --- UI: selectors & populate ---
     fetch('servers.json')
       .then(r => r.json())
       .then(servers => {
@@ -109,14 +78,36 @@
         });
         leftSelect.value = servers[0].code;
         rightSelect.value = servers[servers.length - 1].code;
-        updateLayers();
+        launchSwipeMode();
       });
 
-    leftSelect.addEventListener('change', updateLayers);
-    rightSelect.addEventListener('change', updateLayers);
+    leftSelect.addEventListener('change', () => {
+      if (mode === 'swipe') launchSwipeMode(); else launchHighlightMode();
+    });
+    rightSelect.addEventListener('change', () => {
+      if (mode === 'swipe') launchSwipeMode(); else launchHighlightMode();
+    });
 
-    // --- Layer loading, sequential with swipe ---
-    function updateLayers() {
+    // --- Layer creators ---
+    function makeLayer(code) {
+      return new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code}/{z}/{x}/{y}.jpg`,
+          maxZoom: 20,
+          crossOrigin: 'anonymous',
+          tileLoadFunction: function(imageTile, src) {
+            setTimeout(() => { imageTile.getImage().src = src; }, 80 + Math.random() * 200);
+          }
+        })
+      });
+    }
+
+    // --- Swipe Mode (Comparison Slider) ---
+    function launchSwipeMode() {
+      mode = 'swipe';
+      toggleBtn.textContent = 'Highlight Changes Mode';
+      // Remove any highlight/diff layer
+      if (highlightLayer) { map.removeLayer(highlightLayer); highlightLayer = null; }
       if (leftLayer) map.removeLayer(leftLayer);
       if (rightLayer) map.removeLayer(rightLayer);
 
@@ -125,11 +116,9 @@
 
       let rightLoaded = false;
       const source = leftLayer.getSource();
-
-      const handleTileLoadEnd = () => {
+      source.on('tileloadend', function handleTileLoadEnd() {
         if (rightLoaded) return;
         rightLoaded = true;
-
         rightLayer = makeLayer(rightSelect.value);
         map.addLayer(rightLayer);
 
@@ -148,13 +137,123 @@
         });
         map.render();
         source.un('tileloadend', handleTileLoadEnd);
-      };
+      });
 
-      source.on('tileloadend', handleTileLoadEnd);
       updateSwipeUI();
     }
 
-    // --- Swipe UI & Drag Logic ---
+    // --- Highlight Changes Mode ---
+    function launchHighlightMode() {
+      mode = 'highlight';
+      toggleBtn.textContent = 'Back to Comparison View';
+      // Remove swipe and layers
+      if (leftLayer) map.removeLayer(leftLayer);
+      if (rightLayer) map.removeLayer(rightLayer);
+      if (highlightLayer) map.removeLayer(highlightLayer);
+
+      // Custom tile class
+      class DiffTile extends ol.source.TileImage {
+        constructor(baseUrl, compareUrl, options = {}) {
+          super(Object.assign({
+            tileUrlFunction: ol.TileUrlFunction.createFromTemplates(['{z}/{x}/{y}'], ol.proj.get('EPSG:3857')),
+            crossOrigin: 'anonymous'
+          }, options));
+          this.baseUrl = baseUrl;
+          this.compareUrl = compareUrl;
+        }
+        getTile(z, x, y, pixelRatio, projection) {
+          const tileCoord = [z, x, y];
+          const key = this.getKey(tileCoord, pixelRatio, projection);
+          let tile = this.tileCache.get(key);
+          if (!tile) {
+            tile = new ol.ImageTile(tileCoord, ol.TileState.IDLE, '', null, this.tileLoadFunction);
+            tile.load = () => {
+              // Load both images
+              const img1 = new window.Image(), img2 = new window.Image();
+              img1.crossOrigin = img2.crossOrigin = 'anonymous';
+              let loaded1 = false, loaded2 = false;
+              img1.onload = () => { loaded1 = true; maybe(); };
+              img2.onload = () => { loaded2 = true; maybe(); };
+              img1.onerror = img2.onerror = () => { tile.state = ol.TileState.ERROR; tile.changed(); };
+              img1.src = this.baseUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+              img2.src = this.compareUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+
+              function maybe() {
+                if (!(loaded1 && loaded2)) return;
+                // Draw both images to canvas
+                const w = img1.width, h = img1.height;
+                if (!w || !h) { tile.state = ol.TileState.ERROR; tile.changed(); return; }
+                const c = document.createElement('canvas');
+                c.width = w; c.height = h;
+                const ctx = c.getContext('2d');
+                ctx.drawImage(img1, 0, 0, w, h);
+
+                // Greyscale the base
+                const baseImg = ctx.getImageData(0, 0, w, h);
+                for (let i = 0; i < baseImg.data.length; i += 4) {
+                  const r = baseImg.data[i], g = baseImg.data[i+1], b = baseImg.data[i+2];
+                  const gray = 0.3*r + 0.59*g + 0.11*b;
+                  baseImg.data[i] = baseImg.data[i+1] = baseImg.data[i+2] = gray;
+                }
+                ctx.putImageData(baseImg, 0, 0);
+
+                // Overlay changes from compare image
+                ctx.globalAlpha = 1.0;
+                ctx.globalCompositeOperation = 'source-over';
+                // Draw compare image to temp canvas
+                const c2 = document.createElement('canvas');
+                c2.width = w; c2.height = h;
+                const ctx2 = c2.getContext('2d');
+                ctx2.drawImage(img2, 0, 0, w, h);
+                const cmpImg = ctx2.getImageData(0, 0, w, h);
+
+                // Simple pixel diff threshold (tuneable)
+                const threshold = 28; // out of 255, tune for \"difference\"
+                for (let i = 0; i < baseImg.data.length; i += 4) {
+                  const dr = Math.abs(baseImg.data[i] - cmpImg.data[i]);
+                  const dg = Math.abs(baseImg.data[i+1] - cmpImg.data[i+1]);
+                  const db = Math.abs(baseImg.data[i+2] - cmpImg.data[i+2]);
+                  if (dr + dg + db > threshold) {
+                    // Show compare image pixel in color
+                    baseImg.data[i] = cmpImg.data[i];
+                    baseImg.data[i+1] = cmpImg.data[i+1];
+                    baseImg.data[i+2] = cmpImg.data[i+2];
+                  }
+                }
+                ctx.putImageData(baseImg, 0, 0);
+
+                tile.getImage = () => c;
+                tile.state = ol.TileState.LOADED;
+                tile.changed();
+              }
+            };
+            tile.load();
+            this.tileCache.set(key, tile);
+          }
+          return tile;
+        }
+      }
+
+      // Create custom diff tile layer
+      const leftCode = leftSelect.value, rightCode = rightSelect.value;
+      const baseUrl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${leftCode}/{z}/{x}/{y}.jpg`;
+      const compareUrl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${rightCode}/{z}/{x}/{y}.jpg`;
+
+      highlightLayer = new ol.layer.Tile({
+        source: new DiffTile(baseUrl, compareUrl, { crossOrigin: 'anonymous', maxZoom: 20 })
+      });
+      map.addLayer(highlightLayer);
+
+      swipeThumb.style.display = 'none';
+    }
+
+    // --- UI Toggle Button ---
+    toggleBtn.onclick = () => {
+      if (mode === 'swipe') launchHighlightMode();
+      else launchSwipeMode();
+    };
+
+    // --- Swipe UI logic ---
     function updateSwipeUI() {
       const mapDiv = map.getTargetElement();
       const w = mapDiv.clientWidth;
@@ -165,7 +264,6 @@
       swipeThumb.style.display = 'block';
       map.render();
     }
-
     function startSwipeDrag(e) {
       e.preventDefault();
       document.body.style.userSelect = 'none';
@@ -189,7 +287,6 @@
     }
     swipeThumb.addEventListener('mousedown', startSwipeDrag);
     swipeThumb.addEventListener('touchstart', startSwipeDrag);
-
     window.addEventListener('resize', updateSwipeUI);
   </script>
 </body>
