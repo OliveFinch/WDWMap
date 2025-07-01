@@ -2,169 +2,158 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>WDW Map Compare</title>
+  <title>Disney Map Comparison Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
   <style>
-    html, body, #map {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
-    #controls {
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+    #map { width: 100%; height: 100%; }
+    .controls {
       position: absolute;
       top: 10px;
-      right: 10px;
+      left: 10px;
       background: rgba(255,255,255,0.9);
-      border-radius: 8px;
       padding: 10px;
+      border-radius: 8px;
       z-index: 1000;
     }
+    select { margin: 5px 0; width: 200px; }
     #slider {
       position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 3px;
-      background: #ff5050;
-      z-index: 900;
+      top: 0; left: 50%;
+      width: 3px; height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999;
       cursor: ew-resize;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-size: 14px;
-    }
-    select {
-      width: 150px;
-      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
-  <div id="controls">
-    <label for="leftDate">Left Map</label>
-    <select id="leftDate"></select>
-    <label for="rightDate">Right Map</label>
-    <select id="rightDate"></select>
-  </div>
   <div id="slider"></div>
+  <div class="controls">
+    <label>Base Map Date:
+      <select id="leftSelect"></select>
+    </label><br>
+    <label>Compare With:
+      <select id="rightSelect"></select>
+    </label>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
   <script>
-    const mapCenter = ol.proj.fromLonLat([-81.5494, 28.3747]);
-    const disneyExtent = ol.proj.transformExtent(
-      [-81.9200, 28.1772, -81.2244, 28.6390],
-      'EPSG:4326', 'EPSG:3857'
-    );
+    const extent = ol.proj.transformExtent([
+      -81.9200, 28.1772, -81.2244, 28.6390
+    ], 'EPSG:4326', 'EPSG:3857');
 
-    let serverOptions = [];
-    let leftLayer, rightLayer;
-
-    const leftSelect = document.getElementById('leftDate');
-    const rightSelect = document.getElementById('rightDate');
-    const slider = document.getElementById('slider');
-
-    const map = new ol.Map({
-      target: 'map',
-      view: new ol.View({ center: mapCenter, zoom: 17, extent: disneyExtent }),
-      layers: []
+    const view = new ol.View({
+      center: ol.proj.fromLonLat([-81.5494, 28.3747]),
+      zoom: 16,
+      minZoom: 14,
+      maxZoom: 20,
+      extent
     });
+
+    let leftLayer, rightLayer;
+    const map = new ol.Map({ target: 'map', view });
+
+    const leftSelect = document.getElementById('leftSelect');
+    const rightSelect = document.getElementById('rightSelect');
 
     function makeLayer(code) {
       return new ol.layer.Tile({
         source: new ol.source.XYZ({
           url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code}/{z}/{x}/{y}.jpg`,
-          crossOrigin: 'anonymous'
-        }),
-        extent: disneyExtent
+          maxZoom: 20,
+          crossOrigin: 'anonymous',
+          tileLoadFunction: function(imageTile, src) {
+            setTimeout(() => {
+              imageTile.getImage().src = src;
+            }, 100 + Math.random() * 300);
+          }
+        })
       });
     }
 
     function updateLayers() {
       if (leftLayer) map.removeLayer(leftLayer);
       if (rightLayer) map.removeLayer(rightLayer);
+
       leftLayer = makeLayer(leftSelect.value);
-      rightLayer = makeLayer(rightSelect.value);
       map.addLayer(leftLayer);
-      map.addLayer(rightLayer);
-      applySwipe();
+
+      const source = leftLayer.getSource();
+      let rightLayerLoaded = false;
+
+      const handleTileLoadEnd = () => {
+        if (rightLayerLoaded) return;
+        rightLayerLoaded = true;
+
+        rightLayer = makeLayer(rightSelect.value);
+        map.addLayer(rightLayer);
+        applySwipe();
+
+        source.un('tileloadend', handleTileLoadEnd);
+      };
+
+      source.on('tileloadend', handleTileLoadEnd);
+      updateSliderPosition();
     }
 
     function applySwipe() {
-      map.on('postrender', function(e) {
-        const ctx = e.context;
-        const width = ctx.canvas.width * swipeRatio;
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(0, 0, width, ctx.canvas.height);
-        ctx.clip();
-        ctx.restore();
-      });
-      leftLayer.on('precompose', function(e) {
-        const ctx = e.context;
-        const width = ctx.canvas.width * swipeRatio;
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(0, 0, width, ctx.canvas.height);
-        ctx.clip();
-      });
-      leftLayer.on('postcompose', function(e) {
-        e.context.restore();
+      map.on('postrender', function() {
+        if (!rightLayer) return;
+        const width = map.getSize()[0];
+        const clip = document.getElementById('slider').offsetLeft;
+        rightLayer.on('precompose', function(event) {
+          const ctx = event.context;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(clip, 0, width - clip, map.getSize()[1]);
+          ctx.clip();
+        });
+        rightLayer.on('postcompose', function(event) {
+          event.context.restore();
+        });
       });
     }
 
-    let swipeRatio = 0.5;
     function updateSliderPosition() {
-      const w = map.getTargetElement().clientWidth;
-      slider.style.left = (w * swipeRatio - 1.5) + 'px';
-      map.render();
-    }
-
-    slider.addEventListener('mousedown', startDragging);
-    slider.addEventListener('touchstart', startDragging);
-
-    function startDragging(e) {
-      e.preventDefault();
-      const moveFn = e.type === 'mousedown' ? 'mousemove' : 'touchmove';
-      const upFn = e.type === 'mousedown' ? 'mouseup' : 'touchend';
-      const moveHandler = (ev) => {
-        const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-        const width = map.getTargetElement().clientWidth;
-        swipeRatio = Math.max(0, Math.min(1, clientX / width));
-        updateSliderPosition();
+      const slider = document.getElementById('slider');
+      const move = (e) => {
+        const rect = map.getTargetElement().getBoundingClientRect();
+        let left = (e.clientX || e.touches[0].clientX) - rect.left;
+        slider.style.left = `${left}px`;
+        map.render();
       };
-      const stopDragging = () => {
-        window.removeEventListener(moveFn, moveHandler);
-        window.removeEventListener(upFn, stopDragging);
+      slider.onmousedown = (e) => {
+        document.onmousemove = move;
+        document.onmouseup = () => document.onmousemove = null;
       };
-      window.addEventListener(moveFn, moveHandler);
-      window.addEventListener(upFn, stopDragging);
+      slider.ontouchstart = (e) => {
+        document.ontouchmove = move;
+        document.ontouchend = () => document.ontouchmove = null;
+      };
     }
 
     fetch('servers.json')
-      .then(res => res.json())
-      .then(data => {
-        serverOptions = data;
-        for (const opt of serverOptions) {
-          const optEl1 = document.createElement('option');
-          optEl1.value = opt.code;
-          optEl1.textContent = opt.label;
-          leftSelect.appendChild(optEl1);
-
-          const optEl2 = optEl1.cloneNode(true);
-          rightSelect.appendChild(optEl2);
-        }
-        leftSelect.value = serverOptions[0].code;
-        rightSelect.value = serverOptions[serverOptions.length - 1].code;
+      .then(r => r.json())
+      .then(servers => {
+        servers.forEach(({ code, label }) => {
+          const opt1 = document.createElement('option');
+          const opt2 = document.createElement('option');
+          opt1.value = opt2.value = code;
+          opt1.textContent = opt2.textContent = label;
+          leftSelect.appendChild(opt1);
+          rightSelect.appendChild(opt2);
+        });
+        leftSelect.value = servers[0].code;
+        rightSelect.value = servers[servers.length - 1].code;
         updateLayers();
-        updateSliderPosition();
       });
 
-    leftSelect.onchange = updateLayers;
-    rightSelect.onchange = updateLayers;
-    window.addEventListener('resize', updateSliderPosition);
+    leftSelect.addEventListener('change', updateLayers);
+    rightSelect.addEventListener('change', updateLayers);
   </script>
 </body>
 </html>
