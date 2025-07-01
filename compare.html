@@ -89,7 +89,6 @@
           maxZoom: 20,
           crossOrigin: 'anonymous',
           tileLoadFunction: function(tile, src) {
-            // src is the base image (greyscale background)
             const zxy = tile.tileCoord;
             const compareUrl = compareUrlTpl
               .replace('{z}', zxy[0])
@@ -107,43 +106,58 @@
                 const canvas = document.createElement('canvas');
                 canvas.width = w; canvas.height = h;
                 const ctx = canvas.getContext('2d');
-                ctx.drawImage(baseImg, 0, 0, w, h);
-                // Greyscale base
-                const baseData = ctx.getImageData(0, 0, w, h);
+
+                // Get pixel data for both images
+                const offCanvas1 = document.createElement('canvas');
+                offCanvas1.width = w; offCanvas1.height = h;
+                const ctx1 = offCanvas1.getContext('2d');
+                ctx1.drawImage(baseImg, 0, 0, w, h);
+                const baseData = ctx1.getImageData(0, 0, w, h);
+
+                const offCanvas2 = document.createElement('canvas');
+                offCanvas2.width = w; offCanvas2.height = h;
+                const ctx2 = offCanvas2.getContext('2d');
+                ctx2.drawImage(cmpImg, 0, 0, w, h);
+                const cmpData = ctx2.getImageData(0, 0, w, h);
+
+                // Greyscale base, but overlay colour from compare if changed
+                const outData = ctx.createImageData(w, h);
+                const threshold = 28;
+                for (let i = 0; i < baseData.data.length; i += 4) {
+                  const r1 = baseData.data[i],   g1 = baseData.data[i+1], b1 = baseData.data[i+2], a1 = baseData.data[i+3];
+                  const r2 = cmpData.data[i],    g2 = cmpData.data[i+1],  b2 = cmpData.data[i+2],  a2 = cmpData.data[i+3];
+                  const dr = Math.abs(r1 - r2), dg = Math.abs(g1 - g2), db = Math.abs(b1 - b2);
+                  if (dr + dg + db > threshold) {
+                    // changed: use compare (full colour)
+                    outData.data[i] = r2;
+                    outData.data[i+1] = g2;
+                    outData.data[i+2] = b2;
+                    outData.data[i+3] = a2;
+                  } else {
+                    // no change: greyscale base
+                    const gray = 0.3*r1 + 0.59*g1 + 0.11*b1;
+                    outData.data[i] = outData.data[i+1] = outData.data[i+2] = gray;
+                    outData.data[i+3] = a1;
+                  }
+                }
+                ctx.putImageData(outData, 0, 0);
+                tile.getImage().src = canvas.toDataURL();
+              };
+              cmpImg.onerror = function() {
+                // Just greyscale base
+                const canvas = document.createElement('canvas');
+                canvas.width = baseImg.width || 256;
+                canvas.height = baseImg.height || 256;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
+                const baseData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 for (let i = 0; i < baseData.data.length; i += 4) {
                   const r = baseData.data[i], g = baseData.data[i+1], b = baseData.data[i+2];
                   const gray = 0.3*r + 0.59*g + 0.11*b;
                   baseData.data[i] = baseData.data[i+1] = baseData.data[i+2] = gray;
                 }
                 ctx.putImageData(baseData, 0, 0);
-
-                // Overlay changes from compare image
-                ctx.globalAlpha = 1.0;
-                ctx.globalCompositeOperation = 'source-over';
-                const tmp = document.createElement('canvas');
-                tmp.width = w; tmp.height = h;
-                const ctx2 = tmp.getContext('2d');
-                ctx2.drawImage(cmpImg, 0, 0, w, h);
-                const cmpData = ctx2.getImageData(0, 0, w, h);
-
-                // Simple pixel diff threshold
-                const threshold = 28;
-                for (let i = 0; i < baseData.data.length; i += 4) {
-                  const dr = Math.abs(baseData.data[i] - cmpData.data[i]);
-                  const dg = Math.abs(baseData.data[i+1] - cmpData.data[i+1]);
-                  const db = Math.abs(baseData.data[i+2] - cmpData.data[i+2]);
-                  if (dr + dg + db > threshold) {
-                    baseData.data[i] = cmpData.data[i];
-                    baseData.data[i+1] = cmpData.data[i+1];
-                    baseData.data[i+2] = cmpData.data[i+2];
-                  }
-                }
-                ctx.putImageData(baseData, 0, 0);
                 tile.getImage().src = canvas.toDataURL();
-              };
-              cmpImg.onerror = function() {
-                // Just greyscale base
-                tile.getImage().src = canvasFromImage(baseImg).toDataURL();
               };
               cmpImg.src = compareUrl;
             };
@@ -157,14 +171,6 @@
           }
         })
       });
-    }
-
-    function canvasFromImage(img) {
-      const c = document.createElement('canvas');
-      c.width = img.width || 256;
-      c.height = img.height || 256;
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      return c;
     }
 
     // --- UI: selectors & populate ---
