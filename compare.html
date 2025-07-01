@@ -82,7 +82,6 @@
     class DiffTile extends ol.source.TileImage {
       constructor(baseUrl, compareUrl, options = {}) {
         super(Object.assign({
-          tileUrlFunction: ol.TileUrlFunction.createFromTemplates(['{z}/{x}/{y}'], ol.proj.get('EPSG:3857')),
           crossOrigin: 'anonymous'
         }, options));
         this.baseUrl = baseUrl;
