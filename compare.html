@@ -64,6 +64,124 @@
     const swipeThumb = document.getElementById('swipe-thumb');
     const toggleBtn = document.getElementById('toggleModeBtn');
 
+    // --- Layer creators ---
+    function makeLayer(code) {
+      return new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code}/{z}/{x}/{y}.jpg`,
+          maxZoom: 20,
+          crossOrigin: 'anonymous',
+          tileLoadFunction: function(imageTile, src) {
+            setTimeout(() => { imageTile.getImage().src = src; }, 80 + Math.random() * 200);
+          }
+        })
+      });
+    }
+
+    // --- DiffTile: declared globally and after OpenLayers is loaded ---
+    class DiffTile extends ol.source.TileImage {
+      constructor(baseUrl, compareUrl, options = {}) {
+        super(Object.assign({
+          tileUrlFunction: ol.TileUrlFunction.createFromTemplates(['{z}/{x}/{y}'], ol.proj.get('EPSG:3857')),
+          crossOrigin: 'anonymous'
+        }, options));
+        this.baseUrl = baseUrl;
+        this.compareUrl = compareUrl;
+      }
+      getTile(z, x, y, pixelRatio, projection) {
+        const tileCoord = [z, x, y];
+        const key = this.getKey(tileCoord, pixelRatio, projection);
+        let tile = this.tileCache.get(key);
+        if (!tile) {
+          tile = new ol.ImageTile(tileCoord, ol.TileState.IDLE, '', null, this.tileLoadFunction);
+          tile.load = () => {
+            let done = false;
+            const img1 = new window.Image(), img2 = new window.Image();
+            img1.crossOrigin = img2.crossOrigin = 'anonymous';
+            let loaded1 = false, loaded2 = false;
+
+            // URLs:
+            const url1 = this.baseUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+            const url2 = this.compareUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+            console.log(`Highlight loading base: ${url1}`);
+            console.log(`Highlight loading compare: ${url2}`);
+
+            img1.onload = () => { loaded1 = true; console.log('Loaded base', url1); maybe(); };
+            img2.onload = () => { loaded2 = true; console.log('Loaded compare', url2); maybe(); };
+
+            img1.onerror = () => { loaded1 = -1; console.warn('FAILED base', url1); maybe(); };
+            img2.onerror = () => { loaded2 = -1; console.warn('FAILED compare', url2); maybe(); };
+
+            img1.src = url1;
+            img2.src = url2;
+
+            function maybe() {
+              if (done) return;
+              // Only run if both images finished (loaded or error)
+              if ((loaded1 === true || loaded1 === -1) && (loaded2 === true || loaded2 === -1)) {
+                done = true;
+                const w = (img1.width || img2.width || 256);
+                const h = (img1.height || img2.height || 256);
+                const c = document.createElement('canvas');
+                c.width = w; c.height = h;
+                const ctx = c.getContext('2d');
+                if (loaded1 !== true) {
+                  // If base failed, blank
+                  console.warn('Drawing blank tile (base failed)');
+                  tile.getImage = () => c;
+                  tile.state = ol.TileState.ERROR;
+                  tile.changed();
+                  return;
+                }
+                ctx.drawImage(img1, 0, 0, w, h);
+                // Greyscale the base
+                const baseImg = ctx.getImageData(0, 0, w, h);
+                for (let i = 0; i < baseImg.data.length; i += 4) {
+                  const r = baseImg.data[i], g = baseImg.data[i+1], b = baseImg.data[i+2];
+                  const gray = 0.3*r + 0.59*g + 0.11*b;
+                  baseImg.data[i] = baseImg.data[i+1] = baseImg.data[i+2] = gray;
+                }
+                ctx.putImageData(baseImg, 0, 0);
+
+                if (loaded2 === true) {
+                  // Overlay changes from compare image
+                  ctx.globalAlpha = 1.0;
+                  ctx.globalCompositeOperation = 'source-over';
+                  const c2 = document.createElement('canvas');
+                  c2.width = w; c2.height = h;
+                  const ctx2 = c2.getContext('2d');
+                  ctx2.drawImage(img2, 0, 0, w, h);
+                  const cmpImg = ctx2.getImageData(0, 0, w, h);
+
+                  // Simple pixel diff threshold
+                  const threshold = 28;
+                  for (let i = 0; i < baseImg.data.length; i += 4) {
+                    const dr = Math.abs(baseImg.data[i] - cmpImg.data[i]);
+                    const dg = Math.abs(baseImg.data[i+1] - cmpImg.data[i+1]);
+                    const db = Math.abs(baseImg.data[i+2] - cmpImg.data[i+2]);
+                    if (dr + dg + db > threshold) {
+                      baseImg.data[i] = cmpImg.data[i];
+                      baseImg.data[i+1] = cmpImg.data[i+1];
+                      baseImg.data[i+2] = cmpImg.data[i+2];
+                    }
+                  }
+                  ctx.putImageData(baseImg, 0, 0);
+                } else {
+                  console.warn('Compare image failed to load; showing greyscale only');
+                }
+                tile.getImage = () => c;
+                tile.state = ol.TileState.LOADED;
+                tile.changed();
+              }
+            }
+          };
+          tile.load();
+          this.tileCache.set(key, tile);
+        }
+        return tile;
+      }
+    }
+
     // --- UI: selectors & populate ---
     fetch('servers.json')
       .then(r => r.json())
@@ -88,25 +206,10 @@
       if (mode === 'swipe') launchSwipeMode(); else launchHighlightMode();
     });
 
-    // --- Layer creators ---
-    function makeLayer(code) {
-      return new ol.layer.Tile({
-        source: new ol.source.XYZ({
-          url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code}/{z}/{x}/{y}.jpg`,
-          maxZoom: 20,
-          crossOrigin: 'anonymous',
-          tileLoadFunction: function(imageTile, src) {
-            setTimeout(() => { imageTile.getImage().src = src; }, 80 + Math.random() * 200);
-          }
-        })
-      });
-    }
-
     // --- Swipe Mode (Comparison Slider) ---
     function launchSwipeMode() {
       mode = 'swipe';
       toggleBtn.textContent = 'Highlight Changes Mode';
-      // Remove any highlight/diff layer
       if (highlightLayer) { map.removeLayer(highlightLayer); highlightLayer = null; }
       if (leftLayer) map.removeLayer(leftLayer);
       if (rightLayer) map.removeLayer(rightLayer);
@@ -122,7 +225,6 @@
         rightLayer = makeLayer(rightSelect.value);
         map.addLayer(rightLayer);
 
-        // Set up swipe rendering on rightLayer only
         rightLayer.on('prerender', function(event) {
           const ctx = event.context;
           const mapWidth = ctx.canvas.width;
@@ -143,121 +245,18 @@
     }
 
     // --- Highlight Changes Mode ---
-    // Fixed DiffTile class
-class DiffTile extends ol.source.TileImage {
-  constructor(baseUrl, compareUrl, options = {}) {
-    super(Object.assign({
-      tileUrlFunction: ol.TileUrlFunction.createFromTemplates(['{z}/{x}/{y}'], ol.proj.get('EPSG:3857')),
-      crossOrigin: 'anonymous'
-    }, options));
-    this.baseUrl = baseUrl;
-    this.compareUrl = compareUrl;
-  }
-  getTile(z, x, y, pixelRatio, projection) {
-    const tileCoord = [z, x, y];
-    const key = this.getKey(tileCoord, pixelRatio, projection);
-    let tile = this.tileCache.get(key);
-    if (!tile) {
-      tile = new ol.ImageTile(tileCoord, ol.TileState.IDLE, '', null, this.tileLoadFunction);
-      tile.load = () => {
-        let done = false;
-        const img1 = new window.Image(), img2 = new window.Image();
-        img1.crossOrigin = img2.crossOrigin = 'anonymous';
-        let loaded1 = false, loaded2 = false;
-
-        // URLs:
-        const url1 = this.baseUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
-        const url2 = this.compareUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
-        console.log(`Loading base: ${url1}`);
-        console.log(`Loading compare: ${url2}`);
-
-        img1.onload = () => { loaded1 = true; console.log('Loaded base', url1); maybe(); };
-        img2.onload = () => { loaded2 = true; console.log('Loaded compare', url2); maybe(); };
-
-        img1.onerror = () => { loaded1 = -1; console.warn('FAILED base', url1); maybe(); };
-        img2.onerror = () => { loaded2 = -1; console.warn('FAILED compare', url2); maybe(); };
-
-        img1.crossOrigin = 'anonymous';
-        img2.crossOrigin = 'anonymous';
-        img1.src = url1;
-        img2.src = url2;
-
-        function maybe() {
-          if (done) return;
-          // Only run if both images finished (loaded or error)
-          if ((loaded1 === true || loaded1 === -1) && (loaded2 === true || loaded2 === -1)) {
-            done = true;
-            const w = (img1.width || img2.width || 256);
-            const h = (img1.height || img2.height || 256);
-            const c = document.createElement('canvas');
-            c.width = w; c.height = h;
-            const ctx = c.getContext('2d');
-            if (loaded1 !== true) {
-              // If base failed, blank
-              console.warn('Drawing blank tile (base failed)');
-              tile.getImage = () => c;
-              tile.state = ol.TileState.ERROR;
-              tile.changed();
-              return;
-            }
-            ctx.drawImage(img1, 0, 0, w, h);
-            // Greyscale the base
-            const baseImg = ctx.getImageData(0, 0, w, h);
-            for (let i = 0; i < baseImg.data.length; i += 4) {
-              const r = baseImg.data[i], g = baseImg.data[i+1], b = baseImg.data[i+2];
-              const gray = 0.3*r + 0.59*g + 0.11*b;
-              baseImg.data[i] = baseImg.data[i+1] = baseImg.data[i+2] = gray;
-            }
-            ctx.putImageData(baseImg, 0, 0);
-
-            if (loaded2 === true) {
-              // Overlay changes from compare image
-              ctx.globalAlpha = 1.0;
-              ctx.globalCompositeOperation = 'source-over';
-              const c2 = document.createElement('canvas');
-              c2.width = w; c2.height = h;
-              const ctx2 = c2.getContext('2d');
-              ctx2.drawImage(img2, 0, 0, w, h);
-              const cmpImg = ctx2.getImageData(0, 0, w, h);
-
-              // Simple pixel diff threshold
-              const threshold = 28;
-              for (let i = 0; i < baseImg.data.length; i += 4) {
-                const dr = Math.abs(baseImg.data[i] - cmpImg.data[i]);
-                const dg = Math.abs(baseImg.data[i+1] - cmpImg.data[i+1]);
-                const db = Math.abs(baseImg.data[i+2] - cmpImg.data[i+2]);
-                if (dr + dg + db > threshold) {
-                  baseImg.data[i] = cmpImg.data[i];
-                  baseImg.data[i+1] = cmpImg.data[i+1];
-                  baseImg.data[i+2] = cmpImg.data[i+2];
-                }
-              }
-              ctx.putImageData(baseImg, 0, 0);
-            } else {
-              console.warn('Compare image failed to load; showing greyscale only');
-            }
-            tile.getImage = () => c;
-            tile.state = ol.TileState.LOADED;
-            tile.changed();
-          }
-        }
-      };
-      tile.load();
-      this.tileCache.set(key, tile);
-    }
-    return tile;
-  }
-}
-
     function launchHighlightMode() {
       mode = 'highlight';
       toggleBtn.textContent = 'Back to Comparison View';
-      // Remove swipe and layers
       if (leftLayer) map.removeLayer(leftLayer);
       if (rightLayer) map.removeLayer(rightLayer);
       if (highlightLayer) map.removeLayer(highlightLayer);
 
-      const leftCode = leftSelect.value, rightCode = rightSelect.value;
+      const leftCode = leftSelect.value;
+      const rightCode = rightSelect.value;
+      console.log("Highlight Mode base code:", leftCode);
+      console.log("Highlight Mode compare code:", rightCode);
+
       const baseUrl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${leftCode}/{z}/{x}/{y}.jpg`;
       const compareUrl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${rightCode}/{z}/{x}/{y}.jpg`;
 
