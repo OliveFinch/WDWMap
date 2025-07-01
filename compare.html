@@ -7,74 +7,79 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
   <style>
     html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-    #map { width: 100%; height: 100%; }
+    #map { width: 100vw; height: 100vh; }
     .controls {
       position: absolute;
       top: 10px;
       left: 10px;
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.93);
       padding: 10px;
       border-radius: 8px;
       z-index: 1000;
+      font-family: Arial, sans-serif;
+      font-size: 15px;
     }
-    select { margin: 5px 0; width: 200px; }
+    select { margin: 4px 0 12px 0; width: 180px; font-size: 15px;}
     #swipe {
       position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      z-index: 1100;
-      appearance: none;
-      height: 100%;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 1200;
       background: transparent;
-      pointer-events: all;
-      touch-action: pan-y;
+      pointer-events: none;
     }
-    #swipe::-webkit-slider-thumb {
-      width: 3px;
-      height: 100vh;
-      background: rgba(0,0,0,0.5);
+    #swipe-thumb {
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 5px; background: #e24141cc;
+      z-index: 1300;
       cursor: ew-resize;
-    }
-    #swipe::-moz-range-thumb {
-      width: 3px;
-      height: 100vh;
-      background: rgba(0,0,0,0.5);
-      cursor: ew-resize;
+      border-radius: 3px;
+      transition: background 0.18s;
+      box-shadow: 0 2px 12px #3336;
+      pointer-events: auto;
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
-  <input type="range" id="swipe" min="0" max="100" value="50">
   <div class="controls">
-    <label>Base Map Date:
+    <label for="leftSelect">Base Map Date:<br>
       <select id="leftSelect"></select>
     </label><br>
-    <label>Compare With:
+    <label for="rightSelect">Compare With:<br>
       <select id="rightSelect"></select>
     </label>
   </div>
+  <div id="swipe"></div>
+  <div id="swipe-thumb"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
   <script>
-    const extent = ol.proj.transformExtent([
-      -81.9200, 28.1772, -81.2244, 28.6390
-    ], 'EPSG:4326', 'EPSG:3857');
+    // Projected Disney World bounding box (in Web Mercator)
+    const extent = ol.proj.transformExtent(
+      [-81.9200, 28.1772, -81.2244, 28.6390],
+      'EPSG:4326', 'EPSG:3857'
+    );
 
-    const view = new ol.View({
-      center: ol.proj.fromLonLat([-81.5494, 28.3747]),
-      zoom: 16,
-      minZoom: 14,
-      maxZoom: 20,
-      extent
-    });
-
+    // Layer and UI state
     let leftLayer, rightLayer;
-    const map = new ol.Map({ target: 'map', view });
     const leftSelect = document.getElementById('leftSelect');
     const rightSelect = document.getElementById('rightSelect');
     const swipe = document.getElementById('swipe');
+    const swipeThumb = document.getElementById('swipe-thumb');
 
+    // Default swipe ratio (0.5 = center)
+    let swipeRatio = 0.5;
+
+    // OpenLayers Map
+    const view = new ol.View({
+      center: ol.proj.fromLonLat([-81.5494, 28.3747]),
+      zoom: 16, minZoom: 14, maxZoom: 20, extent
+    });
+
+    const map = new ol.Map({ target: 'map', view });
+
+    // --- Layer creation helper ---
     function makeLayer(code) {
       return new ol.layer.Tile({
         source: new ol.source.XYZ({
@@ -84,49 +89,13 @@
           tileLoadFunction: function(imageTile, src) {
             setTimeout(() => {
               imageTile.getImage().src = src;
-            }, 100 + Math.random() * 300);
+            }, 100 + Math.random() * 250);
           }
         })
       });
     }
 
-    function updateLayers() {
-      if (leftLayer) map.removeLayer(leftLayer);
-      if (rightLayer) map.removeLayer(rightLayer);
-
-      leftLayer = makeLayer(leftSelect.value);
-      map.addLayer(leftLayer);
-
-      const source = leftLayer.getSource();
-      let rightLayerLoaded = false;
-
-      const handleTileLoadEnd = () => {
-        if (rightLayerLoaded) return;
-        rightLayerLoaded = true;
-
-        rightLayer = makeLayer(rightSelect.value);
-        map.addLayer(rightLayer);
-
-        rightLayer.on('prerender', function (event) {
-          const ctx = event.context;
-          const width = ctx.canvas.width * swipe.value / 100;
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(width, 0, ctx.canvas.width - width, ctx.canvas.height);
-          ctx.clip();
-        });
-
-        rightLayer.on('postrender', function (event) {
-          event.context.restore();
-        });
-
-        map.render();
-        source.un('tileloadend', handleTileLoadEnd);
-      };
-
-      source.on('tileloadend', handleTileLoadEnd);
-    }
-
+    // --- UI: Populate selectors, trigger update ---
     fetch('servers.json')
       .then(r => r.json())
       .then(servers => {
@@ -145,7 +114,83 @@
 
     leftSelect.addEventListener('change', updateLayers);
     rightSelect.addEventListener('change', updateLayers);
-    swipe.addEventListener('input', () => map.render());
+
+    // --- Layer loading, sequential with swipe ---
+    function updateLayers() {
+      if (leftLayer) map.removeLayer(leftLayer);
+      if (rightLayer) map.removeLayer(rightLayer);
+
+      leftLayer = makeLayer(leftSelect.value);
+      map.addLayer(leftLayer);
+
+      let rightLoaded = false;
+      const source = leftLayer.getSource();
+
+      const handleTileLoadEnd = () => {
+        if (rightLoaded) return;
+        rightLoaded = true;
+
+        rightLayer = makeLayer(rightSelect.value);
+        map.addLayer(rightLayer);
+
+        // Set up swipe rendering on rightLayer only
+        rightLayer.on('prerender', function(event) {
+          const ctx = event.context;
+          const mapWidth = ctx.canvas.width;
+          const swipeX = Math.round(mapWidth * swipeRatio);
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(swipeX, 0, mapWidth - swipeX, ctx.canvas.height);
+          ctx.clip();
+        });
+        rightLayer.on('postrender', function(event) {
+          event.context.restore();
+        });
+        map.render();
+        source.un('tileloadend', handleTileLoadEnd);
+      };
+
+      source.on('tileloadend', handleTileLoadEnd);
+      updateSwipeUI();
+    }
+
+    // --- Swipe UI & Drag Logic ---
+    function updateSwipeUI() {
+      const mapDiv = map.getTargetElement();
+      const w = mapDiv.clientWidth;
+      const x = Math.round(w * swipeRatio);
+      swipeThumb.style.left = (x - 2) + 'px';
+      swipeThumb.style.top = '0px';
+      swipeThumb.style.height = mapDiv.clientHeight + 'px';
+      swipeThumb.style.display = 'block';
+      map.render();
+    }
+
+    function startSwipeDrag(e) {
+      e.preventDefault();
+      document.body.style.userSelect = 'none';
+      function move(ev) {
+        const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+        const rect = map.getTargetElement().getBoundingClientRect();
+        swipeRatio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        updateSwipeUI();
+      }
+      function stop() {
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', stop);
+        document.removeEventListener('touchmove', move);
+        document.removeEventListener('touchend', stop);
+        document.body.style.userSelect = '';
+      }
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', stop);
+      document.addEventListener('touchmove', move);
+      document.addEventListener('touchend', stop);
+    }
+    swipeThumb.addEventListener('mousedown', startSwipeDrag);
+    swipeThumb.addEventListener('touchstart', startSwipeDrag);
+
+    window.addEventListener('resize', updateSwipeUI);
   </script>
 </body>
 </html>
