@@ -18,19 +18,34 @@
       z-index: 1000;
     }
     select { margin: 5px 0; width: 200px; }
-    #slider {
+    #swipe {
       position: absolute;
-      top: 0; left: 50%;
-      width: 3px; height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 999;
+      top: 0; left: 0;
+      width: 100%;
+      z-index: 1100;
+      appearance: none;
+      height: 100%;
+      background: transparent;
+      pointer-events: all;
+      touch-action: pan-y;
+    }
+    #swipe::-webkit-slider-thumb {
+      width: 3px;
+      height: 100vh;
+      background: rgba(0,0,0,0.5);
+      cursor: ew-resize;
+    }
+    #swipe::-moz-range-thumb {
+      width: 3px;
+      height: 100vh;
+      background: rgba(0,0,0,0.5);
       cursor: ew-resize;
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
-  <div id="slider"></div>
+  <input type="range" id="swipe" min="0" max="100" value="50">
   <div class="controls">
     <label>Base Map Date:
       <select id="leftSelect"></select>
@@ -56,9 +71,9 @@
 
     let leftLayer, rightLayer;
     const map = new ol.Map({ target: 'map', view });
-
     const leftSelect = document.getElementById('leftSelect');
     const rightSelect = document.getElementById('rightSelect');
+    const swipe = document.getElementById('swipe');
 
     function makeLayer(code) {
       return new ol.layer.Tile({
@@ -91,49 +106,25 @@
 
         rightLayer = makeLayer(rightSelect.value);
         map.addLayer(rightLayer);
-        applySwipe();
 
+        rightLayer.on('prerender', function (event) {
+          const ctx = event.context;
+          const width = ctx.canvas.width * swipe.value / 100;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(width, 0, ctx.canvas.width - width, ctx.canvas.height);
+          ctx.clip();
+        });
+
+        rightLayer.on('postrender', function (event) {
+          event.context.restore();
+        });
+
+        map.render();
         source.un('tileloadend', handleTileLoadEnd);
       };
 
       source.on('tileloadend', handleTileLoadEnd);
-      updateSliderPosition();
-    }
-
-    function applySwipe() {
-      map.on('postrender', function() {
-        if (!rightLayer) return;
-        const width = map.getSize()[0];
-        const clip = document.getElementById('slider').offsetLeft;
-        rightLayer.on('precompose', function(event) {
-          const ctx = event.context;
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(clip, 0, width - clip, map.getSize()[1]);
-          ctx.clip();
-        });
-        rightLayer.on('postcompose', function(event) {
-          event.context.restore();
-        });
-      });
-    }
-
-    function updateSliderPosition() {
-      const slider = document.getElementById('slider');
-      const move = (e) => {
-        const rect = map.getTargetElement().getBoundingClientRect();
-        let left = (e.clientX || e.touches[0].clientX) - rect.left;
-        slider.style.left = `${left}px`;
-        map.render();
-      };
-      slider.onmousedown = (e) => {
-        document.onmousemove = move;
-        document.onmouseup = () => document.onmousemove = null;
-      };
-      slider.ontouchstart = (e) => {
-        document.ontouchmove = move;
-        document.ontouchend = () => document.ontouchmove = null;
-      };
     }
 
     fetch('servers.json')
@@ -154,6 +145,7 @@
 
     leftSelect.addEventListener('change', updateLayers);
     rightSelect.addEventListener('change', updateLayers);
+    swipe.addEventListener('input', () => map.render());
   </script>
 </body>
 </html>
