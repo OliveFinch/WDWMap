@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Disney Map Diff Viewer</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; }
+    #map { width: 100vw; height: 100vh; }
+    .controls {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      z-index: 1000;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+<div class="controls">
+  <label for="date1">Date 1:</label>
+  <select id="date1"></select><br>
+  <label for="date2">Date 2:</label>
+  <select id="date2"></select><br>
+  <button onclick="compareTiles()">Compare</button>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
+<script>
+  const disneyWorldExtent = ol.proj.transformExtent(
+    [-81.9200, 28.1772, -81.2244, 28.6390],
+    'EPSG:4326', 'EPSG:3857'
+  );
+
+  let map = new ol.Map({
+    target: 'map',
+    layers: [],
+    view: new ol.View({
+      center: ol.proj.fromLonLat([-81.5494, 28.3747]),
+      zoom: 16,
+      minZoom: 0,
+      maxZoom: 20,
+      extent: disneyWorldExtent
+    })
+  });
+
+  let serverOptions = [];
+
+  function loadServers() {
+    fetch('servers2.json')
+      .then(res => res.json())
+      .then(data => {
+        serverOptions = data;
+        const select1 = document.getElementById('date1');
+        const select2 = document.getElementById('date2');
+        data.forEach(entry => {
+          let opt1 = document.createElement('option');
+          opt1.value = entry.code;
+          opt1.textContent = entry.label;
+          select1.appendChild(opt1);
+          let opt2 = opt1.cloneNode(true);
+          select2.appendChild(opt2);
+        });
+        select1.selectedIndex = data.length - 2;
+        select2.selectedIndex = data.length - 1;
+        compareTiles();
+      });
+  }
+
+  function createTileLayer(code, isGrey = false, onLoadCallback) {
+    return new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code}/{z}/{x}/{y}.jpg`,
+        tileLoadFunction: function(imageTile, src) {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            if (isGrey || onLoadCallback) {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0);
+              if (isGrey) {
+                let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < imageData.data.length; i += 4) {
+                  let avg = (imageData.data[i] + imageData.data[i+1] + imageData.data[i+2]) / 3;
+                  imageData.data[i] = imageData.data[i+1] = imageData.data[i+2] = avg;
+                }
+                ctx.putImageData(imageData, 0, 0);
+              }
+              if (onLoadCallback) {
+                onLoadCallback(imageTile.getImage(), canvas);
+              } else {
+                imageTile.getImage().src = canvas.toDataURL();
+              }
+            } else {
+              imageTile.getImage().src = src;
+            }
+          };
+          img.src = src;
+        },
+        crossOrigin: 'anonymous'
+      }),
+      extent: disneyWorldExtent
+    });
+  }
+
+  function compareTiles() {
+    let code1 = document.getElementById('date1').value;
+    let code2 = document.getElementById('date2').value;
+
+    map.getLayers().clear();
+
+    const greyLayer = createTileLayer(code1, true);
+    const diffLayer = createTileLayer(code2, false, (image, baseCanvas) => {
+      const ctx = baseCanvas.getContext('2d');
+      const imageData = ctx.getImageData(0, 0, baseCanvas.width, baseCanvas.height);
+      const result = ctx.createImageData(imageData);
+
+      for (let i = 0; i < imageData.data.length; i += 4) {
+        let avg = (imageData.data[i] + imageData.data[i+1] + imageData.data[i+2]) / 3;
+        result.data[i] = result.data[i+1] = result.data[i+2] = avg;
+        result.data[i+3] = 255;
+      }
+      ctx.putImageData(result, 0, 0);
+      image.src = baseCanvas.toDataURL();
+    });
+
+    map.addLayer(greyLayer);
+    map.addLayer(diffLayer);
+  }
+
+  loadServers();
+</script>
+</body>
+</html>
