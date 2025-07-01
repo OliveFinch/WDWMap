@@ -78,105 +78,93 @@
       });
     }
 
-    // --- DiffTile: declared globally and after OpenLayers is loaded ---
-    class DiffTile extends ol.source.TileImage {
-      constructor(baseUrl, compareUrl, options = {}) {
-        super(Object.assign({
-          crossOrigin: 'anonymous'
-        }, options));
-        this.baseUrl = baseUrl;
-        this.compareUrl = compareUrl;
-      }
-      getTile(z, x, y, pixelRatio, projection) {
-        const tileCoord = [z, x, y];
-        const key = this.getKey(tileCoord, pixelRatio, projection);
-        let tile = this.tileCache.get(key);
-        if (!tile) {
-          tile = new ol.ImageTile(tileCoord, ol.TileState.IDLE, '', null, this.tileLoadFunction);
-          this.tileCache.set(key, tile); // <-- fix: set in cache immediately!
-          tile.load = () => {
-            let done = false;
-            const img1 = new window.Image(), img2 = new window.Image();
-            img1.crossOrigin = img2.crossOrigin = 'anonymous';
-            let loaded1 = false, loaded2 = false;
+    // --- HighlightLayer using a robust custom tileLoadFunction ---
+    function makeHighlightLayer(baseCode, compareCode) {
+      const baseUrlTpl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${baseCode}/{z}/{x}/{y}.jpg`;
+      const compareUrlTpl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${compareCode}/{z}/{x}/{y}.jpg`;
 
-            // URLs:
-            const url1 = this.baseUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
-            const url2 = this.compareUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
-            // Uncomment for debugging:
-            // console.log(`Highlight loading base: ${url1}`);
-            // console.log(`Highlight loading compare: ${url2}`);
-
-            img1.onload = () => { loaded1 = true; maybe(); };
-            img2.onload = () => { loaded2 = true; maybe(); };
-
-            img1.onerror = () => { loaded1 = -1; maybe(); };
-            img2.onerror = () => { loaded2 = -1; maybe(); };
-
-            img1.src = url1;
-            img2.src = url2;
-
-            function maybe() {
-              if (done) return;
-              // Only run if both images finished (loaded or error)
-              if ((loaded1 === true || loaded1 === -1) && (loaded2 === true || loaded2 === -1)) {
-                done = true;
-                const w = (img1.width || img2.width || 256);
-                const h = (img1.height || img2.height || 256);
-                const c = document.createElement('canvas');
-                c.width = w; c.height = h;
-                const ctx = c.getContext('2d');
-                if (loaded1 !== true) {
-                  // If base failed, blank
-                  tile.getImage = () => c;
-                  tile.state = ol.TileState.ERROR;
-                  tile.changed();
-                  return;
-                }
-                ctx.drawImage(img1, 0, 0, w, h);
-                // Greyscale the base
-                const baseImg = ctx.getImageData(0, 0, w, h);
-                for (let i = 0; i < baseImg.data.length; i += 4) {
-                  const r = baseImg.data[i], g = baseImg.data[i+1], b = baseImg.data[i+2];
+      return new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: baseUrlTpl,
+          maxZoom: 20,
+          crossOrigin: 'anonymous',
+          tileLoadFunction: function(tile, src) {
+            // src is the base image (greyscale background)
+            const zxy = tile.tileCoord;
+            const compareUrl = compareUrlTpl
+              .replace('{z}', zxy[0])
+              .replace('{x}', zxy[1])
+              .replace('{y}', zxy[2]);
+            const baseImg = new Image();
+            baseImg.crossOrigin = 'anonymous';
+            baseImg.onload = function() {
+              const cmpImg = new Image();
+              cmpImg.crossOrigin = 'anonymous';
+              cmpImg.onload = function() {
+                // Compose highlight
+                const w = baseImg.width || cmpImg.width || 256;
+                const h = baseImg.height || cmpImg.height || 256;
+                const canvas = document.createElement('canvas');
+                canvas.width = w; canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(baseImg, 0, 0, w, h);
+                // Greyscale base
+                const baseData = ctx.getImageData(0, 0, w, h);
+                for (let i = 0; i < baseData.data.length; i += 4) {
+                  const r = baseData.data[i], g = baseData.data[i+1], b = baseData.data[i+2];
                   const gray = 0.3*r + 0.59*g + 0.11*b;
-                  baseImg.data[i] = baseImg.data[i+1] = baseImg.data[i+2] = gray;
+                  baseData.data[i] = baseData.data[i+1] = baseData.data[i+2] = gray;
                 }
-                ctx.putImageData(baseImg, 0, 0);
+                ctx.putImageData(baseData, 0, 0);
 
-                if (loaded2 === true) {
-                  // Overlay changes from compare image
-                  ctx.globalAlpha = 1.0;
-                  ctx.globalCompositeOperation = 'source-over';
-                  const c2 = document.createElement('canvas');
-                  c2.width = w; c2.height = h;
-                  const ctx2 = c2.getContext('2d');
-                  ctx2.drawImage(img2, 0, 0, w, h);
-                  const cmpImg = ctx2.getImageData(0, 0, w, h);
+                // Overlay changes from compare image
+                ctx.globalAlpha = 1.0;
+                ctx.globalCompositeOperation = 'source-over';
+                const tmp = document.createElement('canvas');
+                tmp.width = w; tmp.height = h;
+                const ctx2 = tmp.getContext('2d');
+                ctx2.drawImage(cmpImg, 0, 0, w, h);
+                const cmpData = ctx2.getImageData(0, 0, w, h);
 
-                  // Simple pixel diff threshold
-                  const threshold = 28;
-                  for (let i = 0; i < baseImg.data.length; i += 4) {
-                    const dr = Math.abs(baseImg.data[i] - cmpImg.data[i]);
-                    const dg = Math.abs(baseImg.data[i+1] - cmpImg.data[i+1]);
-                    const db = Math.abs(baseImg.data[i+2] - cmpImg.data[i+2]);
-                    if (dr + dg + db > threshold) {
-                      baseImg.data[i] = cmpImg.data[i];
-                      baseImg.data[i+1] = cmpImg.data[i+1];
-                      baseImg.data[i+2] = cmpImg.data[i+2];
-                    }
+                // Simple pixel diff threshold
+                const threshold = 28;
+                for (let i = 0; i < baseData.data.length; i += 4) {
+                  const dr = Math.abs(baseData.data[i] - cmpData.data[i]);
+                  const dg = Math.abs(baseData.data[i+1] - cmpData.data[i+1]);
+                  const db = Math.abs(baseData.data[i+2] - cmpData.data[i+2]);
+                  if (dr + dg + db > threshold) {
+                    baseData.data[i] = cmpData.data[i];
+                    baseData.data[i+1] = cmpData.data[i+1];
+                    baseData.data[i+2] = cmpData.data[i+2];
                   }
-                  ctx.putImageData(baseImg, 0, 0);
                 }
-                tile.getImage = () => c;
-                tile.state = ol.TileState.LOADED;
-                tile.changed();
-              }
-            }
-          };
-          tile.load();
-        }
-        return tile;
-      }
+                ctx.putImageData(baseData, 0, 0);
+                tile.getImage().src = canvas.toDataURL();
+              };
+              cmpImg.onerror = function() {
+                // Just greyscale base
+                tile.getImage().src = canvasFromImage(baseImg).toDataURL();
+              };
+              cmpImg.src = compareUrl;
+            };
+            baseImg.onerror = function() {
+              // Blank
+              const blank = document.createElement('canvas');
+              blank.width = blank.height = 256;
+              tile.getImage().src = blank.toDataURL();
+            };
+            baseImg.src = src;
+          }
+        })
+      });
+    }
+
+    function canvasFromImage(img) {
+      const c = document.createElement('canvas');
+      c.width = img.width || 256;
+      c.height = img.height || 256;
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      return c;
     }
 
     // --- UI: selectors & populate ---
@@ -249,15 +237,7 @@
       if (rightLayer) map.removeLayer(rightLayer);
       if (highlightLayer) map.removeLayer(highlightLayer);
 
-      const leftCode = leftSelect.value;
-      const rightCode = rightSelect.value;
-
-      const baseUrl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${leftCode}/{z}/{x}/{y}.jpg`;
-      const compareUrl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${rightCode}/{z}/{x}/{y}.jpg`;
-
-      highlightLayer = new ol.layer.Tile({
-        source: new DiffTile(baseUrl, compareUrl, { crossOrigin: 'anonymous', maxZoom: 20 })
-      });
+      highlightLayer = makeHighlightLayer(leftSelect.value, rightSelect.value);
       map.addLayer(highlightLayer);
 
       swipeThumb.style.display = 'none';
