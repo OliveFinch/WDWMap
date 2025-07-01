@@ -80,7 +80,7 @@
       source: new ol.source.XYZ({
         tileLoadFunction: function(imageTile, src) {
           const coords = imageTile.getTileCoord();
-          const z = coords[0], x = coords[1], y = -coords[2] - 1;
+          const z = coords[0], x = coords[1], y = coords[2];
 
           const url1 = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code1}/${z}/${x}/${y}.jpg`;
           const url2 = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code2}/${z}/${x}/${y}.jpg`;
@@ -90,38 +90,42 @@
           img1.crossOrigin = img2.crossOrigin = 'anonymous';
 
           let loaded = 0;
+          const imgsReady = [];
 
           const checkBothLoaded = () => {
             if (++loaded < 2) return;
 
+            if (!imgsReady[0].naturalWidth || !imgsReady[1].naturalWidth) {
+              imageTile.getImage().src = url2; // fallback to latest if one failed
+              return;
+            }
+
             const canvas = document.createElement('canvas');
-            canvas.width = img1.width;
-            canvas.height = img1.height;
+            const w = imgsReady[0].naturalWidth;
+            const h = imgsReady[0].naturalHeight;
+            canvas.width = w;
+            canvas.height = h;
             const ctx = canvas.getContext('2d');
 
             const c1 = document.createElement('canvas');
-            c1.width = img1.width; c1.height = img1.height;
+            c1.width = w; c1.height = h;
             const ctx1 = c1.getContext('2d');
-            ctx1.drawImage(img1, 0, 0);
+            ctx1.drawImage(imgsReady[0], 0, 0);
 
             const c2 = document.createElement('canvas');
-            c2.width = img2.width; c2.height = img2.height;
+            c2.width = w; c2.height = h;
             const ctx2 = c2.getContext('2d');
-            ctx2.drawImage(img2, 0, 0);
+            ctx2.drawImage(imgsReady[1], 0, 0);
 
-            const d1 = ctx1.getImageData(0, 0, c1.width, c1.height);
-            const d2 = ctx2.getImageData(0, 0, c2.width, c2.height);
-            const out = ctx.createImageData(c1.width, c1.height);
+            const d1 = ctx1.getImageData(0, 0, w, h);
+            const d2 = ctx2.getImageData(0, 0, w, h);
+            const out = ctx.createImageData(w, h);
 
             const threshold = 15;
             for (let i = 0; i < d1.data.length; i += 4) {
               const r1 = d1.data[i], g1 = d1.data[i+1], b1 = d1.data[i+2];
               const r2 = d2.data[i], g2 = d2.data[i+1], b2 = d2.data[i+2];
-              const diff = Math.sqrt(
-                (r1 - r2) * (r1 - r2) +
-                (g1 - g2) * (g1 - g2) +
-                (b1 - b2) * (b1 - b2)
-              );
+              const diff = Math.sqrt((r1 - r2)**2 + (g1 - g2)**2 + (b1 - b2)**2);
 
               if (diff > threshold) {
                 out.data[i] = r2;
@@ -134,13 +138,16 @@
                 out.data[i+3] = 255;
               }
             }
-
             ctx.putImageData(out, 0, 0);
             imageTile.getImage().src = canvas.toDataURL();
           };
 
-          img1.onload = checkBothLoaded;
-          img2.onload = checkBothLoaded;
+          img1.onload = () => { imgsReady[0] = img1; checkBothLoaded(); };
+          img2.onload = () => { imgsReady[1] = img2; checkBothLoaded(); };
+
+          img1.onerror = img2.onerror = () => {
+            imageTile.getImage().src = url2;
+          };
 
           img1.src = url1;
           img2.src = url2;
