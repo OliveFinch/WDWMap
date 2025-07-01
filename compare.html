@@ -71,7 +71,7 @@
       });
   }
 
-  function createTileLayer(code, isGrey = false, onLoadCallback) {
+  function createTileLayer(code, isGrey = false, isDiff = false, baseImgMap = {}) {
     return new ol.layer.Tile({
       source: new ol.source.XYZ({
         url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code}/{z}/{x}/{y}.jpg`,
@@ -79,25 +79,51 @@
           const img = new Image();
           img.crossOrigin = 'anonymous';
           img.onload = () => {
-            if (isGrey || onLoadCallback) {
-              const canvas = document.createElement('canvas');
-              canvas.width = img.width;
-              canvas.height = img.height;
-              const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0);
-              if (isGrey) {
-                let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                for (let i = 0; i < imageData.data.length; i += 4) {
-                  let avg = (imageData.data[i] + imageData.data[i+1] + imageData.data[i+2]) / 3;
-                  imageData.data[i] = imageData.data[i+1] = imageData.data[i+2] = avg;
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+
+            if (isGrey) {
+              let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              for (let i = 0; i < imageData.data.length; i += 4) {
+                let avg = (imageData.data[i] + imageData.data[i+1] + imageData.data[i+2]) / 3;
+                imageData.data[i] = imageData.data[i+1] = imageData.data[i+2] = avg;
+              }
+              ctx.putImageData(imageData, 0, 0);
+              imageTile.getImage().src = canvas.toDataURL();
+            } else if (isDiff) {
+              const key = imageTile.getTileCoord().join('-');
+              const baseCanvas = baseImgMap[key];
+              if (!baseCanvas) return;
+              const ctx2 = canvas.getContext('2d');
+              const baseCtx = baseCanvas.getContext('2d');
+              const imgData1 = baseCtx.getImageData(0, 0, canvas.width, canvas.height);
+              const imgData2 = ctx2.getImageData(0, 0, canvas.width, canvas.height);
+              const outData = ctx.createImageData(canvas.width, canvas.height);
+              const threshold = 15;
+              for (let i = 0; i < imgData1.data.length; i += 4) {
+                const r1 = imgData1.data[i], g1 = imgData1.data[i+1], b1 = imgData1.data[i+2];
+                const r2 = imgData2.data[i], g2 = imgData2.data[i+1], b2 = imgData2.data[i+2];
+                const diff = Math.sqrt(
+                  Math.pow(r1 - r2, 2) +
+                  Math.pow(g1 - g2, 2) +
+                  Math.pow(b1 - b2, 2)
+                );
+                if (diff > threshold) {
+                  outData.data[i] = r2;
+                  outData.data[i+1] = g2;
+                  outData.data[i+2] = b2;
+                  outData.data[i+3] = 255;
+                } else {
+                  const avg = (r2 + g2 + b2) / 3;
+                  outData.data[i] = outData.data[i+1] = outData.data[i+2] = avg;
+                  outData.data[i+3] = 255;
                 }
-                ctx.putImageData(imageData, 0, 0);
               }
-              if (onLoadCallback) {
-                onLoadCallback(imageTile.getImage(), canvas);
-              } else {
-                imageTile.getImage().src = canvas.toDataURL();
-              }
+              ctx.putImageData(outData, 0, 0);
+              imageTile.getImage().src = canvas.toDataURL();
             } else {
               imageTile.getImage().src = src;
             }
@@ -111,27 +137,37 @@
   }
 
   function compareTiles() {
-    let code1 = document.getElementById('date1').value;
-    let code2 = document.getElementById('date2').value;
-
+    const code1 = document.getElementById('date1').value;
+    const code2 = document.getElementById('date2').value;
     map.getLayers().clear();
 
-    const greyLayer = createTileLayer(code1, true);
-    const diffLayer = createTileLayer(code2, false, (image, baseCanvas) => {
-      const ctx = baseCanvas.getContext('2d');
-      const imageData = ctx.getImageData(0, 0, baseCanvas.width, baseCanvas.height);
-      const result = ctx.createImageData(imageData);
+    const baseImgMap = {};
 
-      for (let i = 0; i < imageData.data.length; i += 4) {
-        let avg = (imageData.data[i] + imageData.data[i+1] + imageData.data[i+2]) / 3;
-        result.data[i] = result.data[i+1] = result.data[i+2] = avg;
-        result.data[i+3] = 255;
-      }
-      ctx.putImageData(result, 0, 0);
-      image.src = baseCanvas.toDataURL();
+    const baseLayer = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code1}/{z}/{x}/{y}.jpg`,
+        tileLoadFunction: function(imageTile, src) {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            baseImgMap[imageTile.getTileCoord().join('-')] = canvas;
+            imageTile.getImage().src = canvas.toDataURL();
+          };
+          img.src = src;
+        },
+        crossOrigin: 'anonymous'
+      }),
+      extent: disneyWorldExtent
     });
 
-    map.addLayer(greyLayer);
+    const diffLayer = createTileLayer(code2, false, true, baseImgMap);
+
+    map.addLayer(baseLayer);
     map.addLayer(diffLayer);
   }
 
