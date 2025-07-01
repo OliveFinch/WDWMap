@@ -93,6 +93,7 @@
         let tile = this.tileCache.get(key);
         if (!tile) {
           tile = new ol.ImageTile(tileCoord, ol.TileState.IDLE, '', null, this.tileLoadFunction);
+          this.tileCache.set(key, tile); // <-- fix: set in cache immediately!
           tile.load = () => {
             let done = false;
             const img1 = new window.Image(), img2 = new window.Image();
@@ -102,14 +103,15 @@
             // URLs:
             const url1 = this.baseUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
             const url2 = this.compareUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
-            console.log(`Highlight loading base: ${url1}`);
-            console.log(`Highlight loading compare: ${url2}`);
+            // Uncomment for debugging:
+            // console.log(`Highlight loading base: ${url1}`);
+            // console.log(`Highlight loading compare: ${url2}`);
 
-            img1.onload = () => { loaded1 = true; console.log('Loaded base', url1); maybe(); };
-            img2.onload = () => { loaded2 = true; console.log('Loaded compare', url2); maybe(); };
+            img1.onload = () => { loaded1 = true; maybe(); };
+            img2.onload = () => { loaded2 = true; maybe(); };
 
-            img1.onerror = () => { loaded1 = -1; console.warn('FAILED base', url1); maybe(); };
-            img2.onerror = () => { loaded2 = -1; console.warn('FAILED compare', url2); maybe(); };
+            img1.onerror = () => { loaded1 = -1; maybe(); };
+            img2.onerror = () => { loaded2 = -1; maybe(); };
 
             img1.src = url1;
             img2.src = url2;
@@ -126,7 +128,6 @@
                 const ctx = c.getContext('2d');
                 if (loaded1 !== true) {
                   // If base failed, blank
-                  console.warn('Drawing blank tile (base failed)');
                   tile.getImage = () => c;
                   tile.state = ol.TileState.ERROR;
                   tile.changed();
@@ -165,8 +166,6 @@
                     }
                   }
                   ctx.putImageData(baseImg, 0, 0);
-                } else {
-                  console.warn('Compare image failed to load; showing greyscale only');
                 }
                 tile.getImage = () => c;
                 tile.state = ol.TileState.LOADED;
@@ -175,7 +174,6 @@
             }
           };
           tile.load();
-          this.tileCache.set(key, tile);
         }
         return tile;
       }
@@ -253,8 +251,6 @@
 
       const leftCode = leftSelect.value;
       const rightCode = rightSelect.value;
-      console.log("Highlight Mode base code:", leftCode);
-      console.log("Highlight Mode compare code:", rightCode);
 
       const baseUrl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${leftCode}/{z}/{x}/{y}.jpg`;
       const compareUrl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${rightCode}/{z}/{x}/{y}.jpg`;
