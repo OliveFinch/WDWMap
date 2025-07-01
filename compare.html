@@ -1,162 +1,170 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Disney Map Diff Viewer</title>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8">
+  <title>WDW Map Compare</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
   <style>
-    html, body { margin: 0; padding: 0; height: 100%; }
-    #map { width: 100vw; height: 100vh; }
-    .controls {
+    html, body, #map {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    #controls {
       position: absolute;
-      top: 8px;
-      left: 8px;
-      background: white;
-      padding: 10px;
+      top: 10px;
+      right: 10px;
+      background: rgba(255,255,255,0.9);
       border-radius: 8px;
+      padding: 10px;
       z-index: 1000;
-      font-family: sans-serif;
+    }
+    #slider {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: #ff5050;
+      z-index: 900;
+      cursor: ew-resize;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+    select {
+      width: 150px;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
-<div id="map"></div>
-<div class="controls">
-  <label for="date1">Date 1:</label>
-  <select id="date1"></select><br>
-  <label for="date2">Date 2:</label>
-  <select id="date2"></select><br>
-  <button onclick="compareTiles()">Compare</button>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
-<script>
-  const disneyWorldExtent = ol.proj.transformExtent(
-    [-81.9200, 28.1772, -81.2244, 28.6390],
-    'EPSG:4326', 'EPSG:3857'
-  );
+  <div id="map"></div>
+  <div id="controls">
+    <label for="leftDate">Left Map</label>
+    <select id="leftDate"></select>
+    <label for="rightDate">Right Map</label>
+    <select id="rightDate"></select>
+  </div>
+  <div id="slider"></div>
+  <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
+  <script>
+    const mapCenter = ol.proj.fromLonLat([-81.5494, 28.3747]);
+    const disneyExtent = ol.proj.transformExtent(
+      [-81.9200, 28.1772, -81.2244, 28.6390],
+      'EPSG:4326', 'EPSG:3857'
+    );
 
-  let map = new ol.Map({
-    target: 'map',
-    layers: [],
-    view: new ol.View({
-      center: ol.proj.fromLonLat([-81.5494, 28.3747]),
-      zoom: 19,
-      minZoom: 0,
-      maxZoom: 20,
-      extent: disneyWorldExtent
-    })
-  });
+    let serverOptions = [];
+    let leftLayer, rightLayer;
 
-  let serverOptions = [];
+    const leftSelect = document.getElementById('leftDate');
+    const rightSelect = document.getElementById('rightDate');
+    const slider = document.getElementById('slider');
 
-  function loadServers() {
-    fetch('servers2.json')
+    const map = new ol.Map({
+      target: 'map',
+      view: new ol.View({ center: mapCenter, zoom: 17, extent: disneyExtent }),
+      layers: []
+    });
+
+    function makeLayer(code) {
+      return new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code}/{z}/{x}/{y}.jpg`,
+          crossOrigin: 'anonymous'
+        }),
+        extent: disneyExtent
+      });
+    }
+
+    function updateLayers() {
+      if (leftLayer) map.removeLayer(leftLayer);
+      if (rightLayer) map.removeLayer(rightLayer);
+      leftLayer = makeLayer(leftSelect.value);
+      rightLayer = makeLayer(rightSelect.value);
+      map.addLayer(leftLayer);
+      map.addLayer(rightLayer);
+      applySwipe();
+    }
+
+    function applySwipe() {
+      map.on('postrender', function(e) {
+        const ctx = e.context;
+        const width = ctx.canvas.width * swipeRatio;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, width, ctx.canvas.height);
+        ctx.clip();
+        ctx.restore();
+      });
+      leftLayer.on('precompose', function(e) {
+        const ctx = e.context;
+        const width = ctx.canvas.width * swipeRatio;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, width, ctx.canvas.height);
+        ctx.clip();
+      });
+      leftLayer.on('postcompose', function(e) {
+        e.context.restore();
+      });
+    }
+
+    let swipeRatio = 0.5;
+    function updateSliderPosition() {
+      const w = map.getTargetElement().clientWidth;
+      slider.style.left = (w * swipeRatio - 1.5) + 'px';
+      map.render();
+    }
+
+    slider.addEventListener('mousedown', startDragging);
+    slider.addEventListener('touchstart', startDragging);
+
+    function startDragging(e) {
+      e.preventDefault();
+      const moveFn = e.type === 'mousedown' ? 'mousemove' : 'touchmove';
+      const upFn = e.type === 'mousedown' ? 'mouseup' : 'touchend';
+      const moveHandler = (ev) => {
+        const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+        const width = map.getTargetElement().clientWidth;
+        swipeRatio = Math.max(0, Math.min(1, clientX / width));
+        updateSliderPosition();
+      };
+      const stopDragging = () => {
+        window.removeEventListener(moveFn, moveHandler);
+        window.removeEventListener(upFn, stopDragging);
+      };
+      window.addEventListener(moveFn, moveHandler);
+      window.addEventListener(upFn, stopDragging);
+    }
+
+    fetch('servers.json')
       .then(res => res.json())
       .then(data => {
         serverOptions = data;
-        const select1 = document.getElementById('date1');
-        const select2 = document.getElementById('date2');
-        data.forEach(entry => {
-          let opt1 = document.createElement('option');
-          opt1.value = entry.code; // Using Disney server ID (code)
-          opt1.textContent = entry.label;
-          select1.appendChild(opt1);
-          let opt2 = opt1.cloneNode(true);
-          select2.appendChild(opt2);
-        });
-        select1.selectedIndex = data.length - 2;
-        select2.selectedIndex = data.length - 1;
-        compareTiles();
+        for (const opt of serverOptions) {
+          const optEl1 = document.createElement('option');
+          optEl1.value = opt.code;
+          optEl1.textContent = opt.label;
+          leftSelect.appendChild(optEl1);
+
+          const optEl2 = optEl1.cloneNode(true);
+          rightSelect.appendChild(optEl2);
+        }
+        leftSelect.value = serverOptions[0].code;
+        rightSelect.value = serverOptions[serverOptions.length - 1].code;
+        updateLayers();
+        updateSliderPosition();
       });
-  }
 
-  function compareTiles() {
-    const server1 = document.getElementById('date1').value;
-    const server2 = document.getElementById('date2').value;
-    map.getLayers().clear();
-
-    const diffLayer = new ol.layer.Tile({
-      source: new ol.source.XYZ({
-        tileLoadFunction(imageTile, src) {
-          const [z, x, y] = imageTile.getTileCoord();
-
-          const url1 = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${server1}/${z}/${x}/${y}.jpg`;
-          const url2 = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${server2}/${z}/${x}/${y}.jpg`;
-
-          const img1 = new Image();
-          const img2 = new Image();
-          img1.crossOrigin = img2.crossOrigin = 'anonymous';
-
-          let loaded = 0;
-          const imgsReady = [];
-
-          const checkBothLoaded = () => {
-            if (++loaded < 2) return;
-
-            if (!imgsReady[0].naturalWidth || !imgsReady[1].naturalWidth) {
-              imageTile.getImage().src = imgsReady[1]?.src || imgsReady[0]?.src;
-              return;
-            }
-
-            const w = imgsReady[0].naturalWidth;
-            const h = imgsReady[0].naturalHeight;
-            const canvas = document.createElement('canvas');
-            canvas.width = w;
-            canvas.height = h;
-            const ctx = canvas.getContext('2d');
-
-            const c1 = document.createElement('canvas');
-            c1.width = w;
-            c1.height = h;
-            const ctx1 = c1.getContext('2d');
-            ctx1.drawImage(imgsReady[0], 0, 0);
-
-            const c2 = document.createElement('canvas');
-            c2.width = w;
-            c2.height = h;
-            const ctx2 = c2.getContext('2d');
-            ctx2.drawImage(imgsReady[1], 0, 0);
-
-            const d1 = ctx1.getImageData(0, 0, w, h);
-            const d2 = ctx2.getImageData(0, 0, w, h);
-            const out = ctx.createImageData(w, h);
-
-            const threshold = 15;
-            for (let i = 0; i < d1.data.length; i += 4) {
-              const r1 = d1.data[i], g1 = d1.data[i+1], b1 = d1.data[i+2];
-              const r2 = d2.data[i], g2 = d2.data[i+1], b2 = d2.data[i+2];
-              const diff = Math.sqrt((r1 - r2)**2 + (g1 - g2)**2 + (b1 - b2)**2);
-
-              if (diff > threshold) {
-                out.data.set([r2, g2, b2, 255], i);
-              } else {
-                const avg = (r2 + g2 + b2) / 3;
-                out.data.set([avg, avg, avg, 255], i);
-              }
-            }
-            ctx.putImageData(out, 0, 0);
-            imageTile.getImage().src = canvas.toDataURL();
-          };
-
-          img1.onload = () => { imgsReady[0] = img1; checkBothLoaded(); };
-          img2.onload = () => { imgsReady[1] = img2; checkBothLoaded(); };
-          img1.onerror = img2.onerror = () => {
-            imageTile.getImage().src = url2;
-          };
-
-          img1.src = url1;
-          img2.src = url2;
-        },
-        crossOrigin: 'anonymous'
-      }),
-      extent: disneyWorldExtent
-    });
-
-    map.addLayer(diffLayer);
-  }
-
-  loadServers();
-</script>
+    leftSelect.onchange = updateLayers;
+    rightSelect.onchange = updateLayers;
+    window.addEventListener('resize', updateSliderPosition);
+  </script>
 </body>
 </html>
