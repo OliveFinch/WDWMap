@@ -143,51 +143,59 @@
     }
 
     // --- Highlight Changes Mode ---
-    function launchHighlightMode() {
-      mode = 'highlight';
-      toggleBtn.textContent = 'Back to Comparison View';
-      // Remove swipe and layers
-      if (leftLayer) map.removeLayer(leftLayer);
-      if (rightLayer) map.removeLayer(rightLayer);
-      if (highlightLayer) map.removeLayer(highlightLayer);
+    // Fixed DiffTile class
+    class DiffTile extends ol.source.TileImage {
+      constructor(baseUrl, compareUrl, options = {}) {
+        super(Object.assign({
+          tileUrlFunction: ol.TileUrlFunction.createFromTemplates(['{z}/{x}/{y}'], ol.proj.get('EPSG:3857')),
+          crossOrigin: 'anonymous'
+        }, options));
+        this.baseUrl = baseUrl;
+        this.compareUrl = compareUrl;
+      }
+      getTile(z, x, y, pixelRatio, projection) {
+        const tileCoord = [z, x, y];
+        const key = this.getKey(tileCoord, pixelRatio, projection);
+        let tile = this.tileCache.get(key);
+        if (!tile) {
+          tile = new ol.ImageTile(tileCoord, ol.TileState.IDLE, '', null, this.tileLoadFunction);
+          tile.load = () => {
+            let done = false;
+            const img1 = new window.Image(), img2 = new window.Image();
+            img1.crossOrigin = img2.crossOrigin = 'anonymous';
+            let loaded1 = false, loaded2 = false;
 
-      // Custom tile class
-      class DiffTile extends ol.source.TileImage {
-        constructor(baseUrl, compareUrl, options = {}) {
-          super(Object.assign({
-            tileUrlFunction: ol.TileUrlFunction.createFromTemplates(['{z}/{x}/{y}'], ol.proj.get('EPSG:3857')),
-            crossOrigin: 'anonymous'
-          }, options));
-          this.baseUrl = baseUrl;
-          this.compareUrl = compareUrl;
-        }
-        getTile(z, x, y, pixelRatio, projection) {
-          const tileCoord = [z, x, y];
-          const key = this.getKey(tileCoord, pixelRatio, projection);
-          let tile = this.tileCache.get(key);
-          if (!tile) {
-            tile = new ol.ImageTile(tileCoord, ol.TileState.IDLE, '', null, this.tileLoadFunction);
-            tile.load = () => {
-              // Load both images
-              const img1 = new window.Image(), img2 = new window.Image();
-              img1.crossOrigin = img2.crossOrigin = 'anonymous';
-              let loaded1 = false, loaded2 = false;
-              img1.onload = () => { loaded1 = true; maybe(); };
-              img2.onload = () => { loaded2 = true; maybe(); };
-              img1.onerror = img2.onerror = () => { tile.state = ol.TileState.ERROR; tile.changed(); };
-              img1.src = this.baseUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
-              img2.src = this.compareUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+            img1.onload = () => { loaded1 = true; maybe(); };
+            img2.onload = () => { loaded2 = true; maybe(); };
 
-              function maybe() {
-                if (!(loaded1 && loaded2)) return;
-                // Draw both images to canvas
-                const w = img1.width, h = img1.height;
-                if (!w || !h) { tile.state = ol.TileState.ERROR; tile.changed(); return; }
+            img1.onerror = () => { loaded1 = -1; maybe(); };
+            img2.onerror = () => { loaded2 = -1; maybe(); };
+
+            // Important: set crossOrigin first, then src
+            img1.crossOrigin = 'anonymous';
+            img2.crossOrigin = 'anonymous';
+            img1.src = this.baseUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+            img2.src = this.compareUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+
+            function maybe() {
+              if (done) return;
+              // Only run if both images finished (loaded or error)
+              if ((loaded1 === true || loaded1 === -1) && (loaded2 === true || loaded2 === -1)) {
+                done = true;
+                // If either failed, fallback to greyscale base
+                const w = (img1.width || img2.width || 256);
+                const h = (img1.height || img2.height || 256);
                 const c = document.createElement('canvas');
                 c.width = w; c.height = h;
                 const ctx = c.getContext('2d');
+                if (loaded1 !== true) {
+                  // If base failed, blank
+                  tile.getImage = () => c;
+                  tile.state = ol.TileState.ERROR;
+                  tile.changed();
+                  return;
+                }
                 ctx.drawImage(img1, 0, 0, w, h);
-
                 // Greyscale the base
                 const baseImg = ctx.getImageData(0, 0, w, h);
                 for (let i = 0; i < baseImg.data.length; i += 4) {
@@ -197,44 +205,52 @@
                 }
                 ctx.putImageData(baseImg, 0, 0);
 
-                // Overlay changes from compare image
-                ctx.globalAlpha = 1.0;
-                ctx.globalCompositeOperation = 'source-over';
-                // Draw compare image to temp canvas
-                const c2 = document.createElement('canvas');
-                c2.width = w; c2.height = h;
-                const ctx2 = c2.getContext('2d');
-                ctx2.drawImage(img2, 0, 0, w, h);
-                const cmpImg = ctx2.getImageData(0, 0, w, h);
+                if (loaded2 === true) {
+                  // Overlay changes from compare image
+                  ctx.globalAlpha = 1.0;
+                  ctx.globalCompositeOperation = 'source-over';
+                  const c2 = document.createElement('canvas');
+                  c2.width = w; c2.height = h;
+                  const ctx2 = c2.getContext('2d');
+                  ctx2.drawImage(img2, 0, 0, w, h);
+                  const cmpImg = ctx2.getImageData(0, 0, w, h);
 
-                // Simple pixel diff threshold (tuneable)
-                const threshold = 28; // out of 255, tune for \"difference\"
-                for (let i = 0; i < baseImg.data.length; i += 4) {
-                  const dr = Math.abs(baseImg.data[i] - cmpImg.data[i]);
-                  const dg = Math.abs(baseImg.data[i+1] - cmpImg.data[i+1]);
-                  const db = Math.abs(baseImg.data[i+2] - cmpImg.data[i+2]);
-                  if (dr + dg + db > threshold) {
-                    // Show compare image pixel in color
-                    baseImg.data[i] = cmpImg.data[i];
-                    baseImg.data[i+1] = cmpImg.data[i+1];
-                    baseImg.data[i+2] = cmpImg.data[i+2];
+                  // Simple pixel diff threshold
+                  const threshold = 28;
+                  for (let i = 0; i < baseImg.data.length; i += 4) {
+                    const dr = Math.abs(baseImg.data[i] - cmpImg.data[i]);
+                    const dg = Math.abs(baseImg.data[i+1] - cmpImg.data[i+1]);
+                    const db = Math.abs(baseImg.data[i+2] - cmpImg.data[i+2]);
+                    if (dr + dg + db > threshold) {
+                      // Show compare image pixel in color
+                      baseImg.data[i] = cmpImg.data[i];
+                      baseImg.data[i+1] = cmpImg.data[i+1];
+                      baseImg.data[i+2] = cmpImg.data[i+2];
+                    }
                   }
+                  ctx.putImageData(baseImg, 0, 0);
                 }
-                ctx.putImageData(baseImg, 0, 0);
-
                 tile.getImage = () => c;
                 tile.state = ol.TileState.LOADED;
                 tile.changed();
               }
-            };
-            tile.load();
-            this.tileCache.set(key, tile);
-          }
-          return tile;
+            }
+          };
+          tile.load();
+          this.tileCache.set(key, tile);
         }
+        return tile;
       }
+    }
 
-      // Create custom diff tile layer
+    function launchHighlightMode() {
+      mode = 'highlight';
+      toggleBtn.textContent = 'Back to Comparison View';
+      // Remove swipe and layers
+      if (leftLayer) map.removeLayer(leftLayer);
+      if (rightLayer) map.removeLayer(rightLayer);
+      if (highlightLayer) map.removeLayer(highlightLayer);
+
       const leftCode = leftSelect.value, rightCode = rightSelect.value;
       const baseUrl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${leftCode}/{z}/{x}/{y}.jpg`;
       const compareUrl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${rightCode}/{z}/{x}/{y}.jpg`;
