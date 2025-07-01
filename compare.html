@@ -41,7 +41,7 @@
     layers: [],
     view: new ol.View({
       center: ol.proj.fromLonLat([-81.5494, 28.3747]),
-      zoom: 16,
+      zoom: 19,
       minZoom: 0,
       maxZoom: 20,
       extent: disneyWorldExtent
@@ -59,7 +59,7 @@
         const select2 = document.getElementById('date2');
         data.forEach(entry => {
           let opt1 = document.createElement('option');
-          opt1.value = entry.code;
+          opt1.value = entry.code; // Using Disney server ID (code)
           opt1.textContent = entry.label;
           select1.appendChild(opt1);
           let opt2 = opt1.cloneNode(true);
@@ -72,18 +72,17 @@
   }
 
   function compareTiles() {
-    const code1 = document.getElementById('date1').value;
-    const code2 = document.getElementById('date2').value;
+    const server1 = document.getElementById('date1').value;
+    const server2 = document.getElementById('date2').value;
     map.getLayers().clear();
 
     const diffLayer = new ol.layer.Tile({
       source: new ol.source.XYZ({
-        tileLoadFunction: function(imageTile, src) {
-          const coords = imageTile.getTileCoord();
-          const z = coords[0], x = coords[1], y = coords[2];
+        tileLoadFunction(imageTile, src) {
+          const [z, x, y] = imageTile.getTileCoord();
 
-          const url1 = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code1}/${z}/${x}/${y}.jpg`;
-          const url2 = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code2}/${z}/${x}/${y}.jpg`;
+          const url1 = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${server1}/${z}/${x}/${y}.jpg`;
+          const url2 = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${server2}/${z}/${x}/${y}.jpg`;
 
           const img1 = new Image();
           const img2 = new Image();
@@ -96,24 +95,26 @@
             if (++loaded < 2) return;
 
             if (!imgsReady[0].naturalWidth || !imgsReady[1].naturalWidth) {
-              imageTile.getImage().src = url2; // fallback to latest if one failed
+              imageTile.getImage().src = imgsReady[1]?.src || imgsReady[0]?.src;
               return;
             }
 
-            const canvas = document.createElement('canvas');
             const w = imgsReady[0].naturalWidth;
             const h = imgsReady[0].naturalHeight;
+            const canvas = document.createElement('canvas');
             canvas.width = w;
             canvas.height = h;
             const ctx = canvas.getContext('2d');
 
             const c1 = document.createElement('canvas');
-            c1.width = w; c1.height = h;
+            c1.width = w;
+            c1.height = h;
             const ctx1 = c1.getContext('2d');
             ctx1.drawImage(imgsReady[0], 0, 0);
 
             const c2 = document.createElement('canvas');
-            c2.width = w; c2.height = h;
+            c2.width = w;
+            c2.height = h;
             const ctx2 = c2.getContext('2d');
             ctx2.drawImage(imgsReady[1], 0, 0);
 
@@ -128,14 +129,10 @@
               const diff = Math.sqrt((r1 - r2)**2 + (g1 - g2)**2 + (b1 - b2)**2);
 
               if (diff > threshold) {
-                out.data[i] = r2;
-                out.data[i+1] = g2;
-                out.data[i+2] = b2;
-                out.data[i+3] = 255;
+                out.data.set([r2, g2, b2, 255], i);
               } else {
                 const avg = (r2 + g2 + b2) / 3;
-                out.data[i] = out.data[i+1] = out.data[i+2] = avg;
-                out.data[i+3] = 255;
+                out.data.set([avg, avg, avg, 255], i);
               }
             }
             ctx.putImageData(out, 0, 0);
@@ -144,7 +141,6 @@
 
           img1.onload = () => { imgsReady[0] = img1; checkBothLoaded(); };
           img2.onload = () => { imgsReady[1] = img2; checkBothLoaded(); };
-
           img1.onerror = img2.onerror = () => {
             imageTile.getImage().src = url2;
           };
