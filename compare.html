@@ -5,10 +5,6 @@
   <title>Disney Map Comparison Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="icon" type="image/png" sizes="32x32" href="icon-192.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="manifest" href="manifest.webmanifest">
   <style>
     html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
     #map { width: 100vw; height: 100vh; }
@@ -104,14 +100,12 @@
               const cmpImg = new Image();
               cmpImg.crossOrigin = 'anonymous';
               cmpImg.onload = function() {
-                // Compose highlight
                 const w = baseImg.width || cmpImg.width || 256;
                 const h = baseImg.height || cmpImg.height || 256;
                 const canvas = document.createElement('canvas');
                 canvas.width = w; canvas.height = h;
                 const ctx = canvas.getContext('2d');
 
-                // Get pixel data for both images
                 const offCanvas1 = document.createElement('canvas');
                 offCanvas1.width = w; offCanvas1.height = h;
                 const ctx1 = offCanvas1.getContext('2d');
@@ -124,19 +118,18 @@
                 ctx2.drawImage(cmpImg, 0, 0, w, h);
                 const cmpData = ctx2.getImageData(0, 0, w, h);
 
-                // Greyscale base, but overlay colour from compare if changed
                 const outData = ctx.createImageData(w, h);
-                const threshold = 28;
+                const threshold = 80; // LESS sensitive (higher value = less sensitive)
                 for (let i = 0; i < baseData.data.length; i += 4) {
                   const r1 = baseData.data[i],   g1 = baseData.data[i+1], b1 = baseData.data[i+2], a1 = baseData.data[i+3];
                   const r2 = cmpData.data[i],    g2 = cmpData.data[i+1],  b2 = cmpData.data[i+2],  a2 = cmpData.data[i+3];
                   const dr = Math.abs(r1 - r2), dg = Math.abs(g1 - g2), db = Math.abs(b1 - b2);
                   if (dr + dg + db > threshold) {
-                    // changed: use compare (full colour)
-                    outData.data[i] = r2;
-                    outData.data[i+1] = g2;
-                    outData.data[i+2] = b2;
-                    outData.data[i+3] = a2;
+                    // changed: use RED highlight
+                    outData.data[i] = 255;     // R
+                    outData.data[i+1] = 0;     // G
+                    outData.data[i+2] = 0;     // B
+                    outData.data[i+3] = 200;   // alpha (semi-transparent)
                   } else {
                     // no change: greyscale base
                     const gray = 0.3*r1 + 0.59*g1 + 0.11*b1;
