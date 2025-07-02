@@ -29,6 +29,17 @@
       pointer-events: auto;
       display: none;
     }
+    #sensitivity-row {
+      margin-top:10px;
+    }
+    #sensitivity-value {
+      display: inline-block; width: 32px; text-align: right;
+      font-weight: bold; margin-left: 6px;
+    }
+    @media (max-width: 600px) {
+      .controls { left: 4px; top: 4px; padding: 6px; font-size: 14px; }
+      select, button { width: 98vw; font-size: 14px;}
+    }
   </style>
 </head>
 <body>
@@ -41,6 +52,10 @@
       <select id="rightSelect"></select>
     </label><br>
     <button id="toggleModeBtn">Highlight Changes Mode</button>
+    <div id="sensitivity-row" style="display:none; margin-top:10px;">
+      Sensitivity: <span id="sensitivity-value">40</span><br>
+      <input type="range" id="sensitivity-slider" min="5" max="120" value="40" style="width:170px;">
+    </div>
   </div>
   <div id="swipe-thumb"></div>
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
@@ -59,10 +74,15 @@
     let swipeRatio = 0.5;
     let mode = 'swipe';
 
+    // Sensitivity slider variables
+    let currentThreshold = 40; // Default sensitivity
     const leftSelect = document.getElementById('leftSelect');
     const rightSelect = document.getElementById('rightSelect');
     const swipeThumb = document.getElementById('swipe-thumb');
     const toggleBtn = document.getElementById('toggleModeBtn');
+    const sensitivityRow = document.getElementById('sensitivity-row');
+    const sensitivitySlider = document.getElementById('sensitivity-slider');
+    const sensitivityValue = document.getElementById('sensitivity-value');
 
     // --- Layer creators ---
     function makeLayer(code) {
@@ -119,7 +139,7 @@
                 const cmpData = ctx2.getImageData(0, 0, w, h);
 
                 const outData = ctx.createImageData(w, h);
-                const threshold = 80; // LESS sensitive (higher value = less sensitive)
+                const threshold = currentThreshold; // Use user-selected value
                 for (let i = 0; i < baseData.data.length; i += 4) {
                   const r1 = baseData.data[i],   g1 = baseData.data[i+1], b1 = baseData.data[i+2], a1 = baseData.data[i+3];
                   const r2 = cmpData.data[i],    g2 = cmpData.data[i+1],  b2 = cmpData.data[i+2],  a2 = cmpData.data[i+3];
@@ -230,6 +250,7 @@
       });
 
       updateSwipeUI();
+      sensitivityRow.style.display = 'none'; // Hide slider in swipe mode
     }
 
     // --- Highlight Changes Mode ---
@@ -244,6 +265,7 @@
       map.addLayer(highlightLayer);
 
       swipeThumb.style.display = 'none';
+      sensitivityRow.style.display = 'block'; // Show slider
     }
 
     // --- UI Toggle Button ---
@@ -251,6 +273,18 @@
       if (mode === 'swipe') launchHighlightMode();
       else launchSwipeMode();
     };
+
+    // --- Sensitivity Slider logic ---
+    sensitivitySlider.addEventListener('input', () => {
+      currentThreshold = parseInt(sensitivitySlider.value, 10);
+      sensitivityValue.textContent = currentThreshold;
+      // Reload highlight layer with new threshold
+      if (mode === 'highlight') {
+        if (highlightLayer) map.removeLayer(highlightLayer);
+        highlightLayer = makeHighlightLayer(leftSelect.value, rightSelect.value);
+        map.addLayer(highlightLayer);
+      }
+    });
 
     // --- Swipe UI logic ---
     function updateSwipeUI() {
@@ -287,6 +321,9 @@
     swipeThumb.addEventListener('mousedown', startSwipeDrag);
     swipeThumb.addEventListener('touchstart', startSwipeDrag);
     window.addEventListener('resize', updateSwipeUI);
+
+    // --- Initialize the sensitivity display ---
+    sensitivityValue.textContent = currentThreshold;
   </script>
 </body>
 </html>
