@@ -336,22 +336,28 @@
     });
 
     // --- Swipe UI logic ---
-    function updateSwipeUI() {
-      const mapDiv = map.getTargetElement();
-      const w = mapDiv.clientWidth;
-      const h = mapDiv.clientHeight;
-      const x = Math.round(w * swipeRatio);
-      // Center the line
-      swipeThumb.style.left = (x - (swipeThumb.offsetWidth / 2)) + 'px';
-      swipeThumb.style.top = '0px';
-      swipeThumb.style.height = h + 'px';
-      swipeThumb.style.display = 'block';
-      // Center handle over line, using both widths
-      swipeHandle.style.left = (x - (swipeHandle.offsetWidth / 2) + (swipeThumb.offsetWidth / 2) - 2) + 'px';
-      swipeHandle.style.top = (Math.round(h * 0.90) - (swipeHandle.offsetHeight / 2)) + 'px';
-      swipeHandle.style.display = 'block';
-      map.render();
-    }
+function updateSwipeUI() {
+  const mapDiv = map.getTargetElement();
+  const w = mapDiv.clientWidth;
+  const h = mapDiv.clientHeight;
+  const x = Math.round(w * swipeRatio);
+
+  // Center the line
+  swipeThumb.style.left = (x - (swipeThumb.offsetWidth / 2)) + 'px';
+  swipeThumb.style.top = '0px';
+  swipeThumb.style.height = h + 'px';
+  swipeThumb.style.display = 'block';
+
+  // Place handle higher on mobile so it's not under browser UI
+  let handlePos = 0.90; // desktop default
+  if (window.innerWidth <= 600) handlePos = 0.75; // higher for mobile
+
+  // Center handle over line, using both widths, and pixel nudge
+  swipeHandle.style.left = (x - (swipeHandle.offsetWidth / 2) + (swipeThumb.offsetWidth / 2) - 2) + 'px';
+  swipeHandle.style.top = (Math.round(h * handlePos) - (swipeHandle.offsetHeight / 2)) + 'px';
+  swipeHandle.style.display = 'block';
+  map.render();
+}
     function startSwipeDrag(e) {
       e.preventDefault();
       document.body.style.userSelect = 'none';
