@@ -347,7 +347,7 @@
       swipeThumb.style.height = h + 'px';
       swipeThumb.style.display = 'block';
       // Center handle over line, using both widths
-      swipeHandle.style.left = (x - (swipeHandle.offsetWidth / 2) + (swipeThumb.offsetWidth / 2)) + 'px';
+      swipeHandle.style.left = (x - (swipeHandle.offsetWidth / 2) + (swipeThumb.offsetWidth / 2) - 2) + 'px';
       swipeHandle.style.top = (Math.round(h * 0.90) - (swipeHandle.offsetHeight / 2)) + 'px';
       swipeHandle.style.display = 'block';
       map.render();
