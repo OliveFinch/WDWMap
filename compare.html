@@ -245,6 +245,9 @@
         leftSelect.value = servers[0].code;
         rightSelect.value = servers[servers.length - 1].code;
         launchSwipeMode();
+
+        // <-- Fix for initial misalignment
+        setTimeout(updateSwipeUI, 80); // Wait for browser to render DOM
       });
 
     leftSelect.addEventListener('change', () => {
@@ -287,11 +290,16 @@
         });
         map.render();
         source.un('tileloadend', handleTileLoadEnd);
+
+        swipeHandle.style.display = swipeThumb.style.display = 'block';
+        updateSwipeUI();
+        setTimeout(updateSwipeUI, 40); // Just in case handle/line aren't ready
       });
 
-      updateSwipeUI();
-      sensitivityRow.style.display = 'none'; // Hide slider in swipe mode
       swipeHandle.style.display = swipeThumb.style.display = 'block';
+      updateSwipeUI();
+      setTimeout(updateSwipeUI, 40);
+      sensitivityRow.style.display = 'none'; // Hide slider in swipe mode
     }
 
     // --- Highlight Changes Mode ---
@@ -333,12 +341,12 @@
       const w = mapDiv.clientWidth;
       const h = mapDiv.clientHeight;
       const x = Math.round(w * swipeRatio);
+      // Center the line
       swipeThumb.style.left = (x - (swipeThumb.offsetWidth / 2)) + 'px';
       swipeThumb.style.top = '0px';
       swipeThumb.style.height = h + 'px';
       swipeThumb.style.display = 'block';
-
-      // Place the grab handle about 90% down the slider, perfectly centered over the line
+      // Center handle over line, using both widths
       swipeHandle.style.left = (x - (swipeHandle.offsetWidth / 2) + (swipeThumb.offsetWidth / 2)) + 'px';
       swipeHandle.style.top = (Math.round(h * 0.90) - (swipeHandle.offsetHeight / 2)) + 'px';
       swipeHandle.style.display = 'block';
@@ -369,7 +377,8 @@
     swipeThumb.addEventListener('touchstart', startSwipeDrag);
     swipeHandle.addEventListener('mousedown', startSwipeDrag);
     swipeHandle.addEventListener('touchstart', startSwipeDrag);
-    window.addEventListener('resize', updateSwipeUI);
+    window.addEventListener('resize', () => setTimeout(updateSwipeUI, 20));
+    window.addEventListener('load', () => setTimeout(updateSwipeUI, 30));
 
     // --- Initialize the sensitivity display ---
     sensitivityValue.textContent = currentThreshold;
