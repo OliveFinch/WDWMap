@@ -333,14 +333,14 @@
       const w = mapDiv.clientWidth;
       const h = mapDiv.clientHeight;
       const x = Math.round(w * swipeRatio);
-      swipeThumb.style.left = (x - 2) + 'px';
+      swipeThumb.style.left = (x - (swipeThumb.offsetWidth / 2)) + 'px';
       swipeThumb.style.top = '0px';
       swipeThumb.style.height = h + 'px';
       swipeThumb.style.display = 'block';
 
-      // Place the grab handle about 90% down the slider, centered
-      swipeHandle.style.left = (x - 17) + 'px';
-      swipeHandle.style.top = (Math.round(h * 0.90) - 17) + 'px';
+      // Place the grab handle about 90% down the slider, perfectly centered over the line
+      swipeHandle.style.left = (x - (swipeHandle.offsetWidth / 2) + (swipeThumb.offsetWidth / 2)) + 'px';
+      swipeHandle.style.top = (Math.round(h * 0.90) - (swipeHandle.offsetHeight / 2)) + 'px';
       swipeHandle.style.display = 'block';
       map.render();
     }
