@@ -53,13 +53,35 @@
     </label><br>
     <button id="toggleModeBtn">Highlight Changes Mode</button>
     <div id="sensitivity-row" style="display:none; margin-top:10px;">
-      Sensitivity: <span id="sensitivity-value">40</span><br>
-      <input type="range" id="sensitivity-slider" min="5" max="120" value="40" style="width:170px;">
+      Sensitivity: <span id="sensitivity-value">12</span><br>
+      <input type="range" id="sensitivity-slider" min="2" max="30" value="12" style="width:170px;">
     </div>
   </div>
   <div id="swipe-thumb"></div>
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
   <script>
+    // --- Perceptual LAB Delta-E helpers ---
+    function rgb2lab(r, g, b) {
+      r /= 255; g /= 255; b /= 255;
+      r = r > 0.04045 ? Math.pow((r + 0.055)/1.055, 2.4) : r/12.92;
+      g = g > 0.04045 ? Math.pow((g + 0.055)/1.055, 2.4) : g/12.92;
+      b = b > 0.04045 ? Math.pow((b + 0.055)/1.055, 2.4) : b/12.92;
+      let x = r*0.4124 + g*0.3576 + b*0.1805;
+      let y = r*0.2126 + g*0.7152 + b*0.0722;
+      let z = r*0.0193 + g*0.1192 + b*0.9505;
+      [x, y, z] = [x/0.95047, y/1.00000, z/1.08883];
+      x = x > 0.008856 ? Math.pow(x,1/3) : (7.787*x) + 16/116;
+      y = y > 0.008856 ? Math.pow(y,1/3) : (7.787*y) + 16/116;
+      z = z > 0.008856 ? Math.pow(z,1/3) : (7.787*z) + 16/116;
+      return [ (116*y)-16, 500*(x-y), 200*(y-z) ];
+    }
+    function deltaE(labA, labB) {
+      const dL = labA[0] - labB[0];
+      const da = labA[1] - labB[1];
+      const db = labA[2] - labB[2];
+      return Math.sqrt(dL*dL + da*da + db*db);
+    }
+
     // === Disney bounds and global state ===
     const extent = ol.proj.transformExtent(
       [-81.9200, 28.1772, -81.2244, 28.6390],
@@ -75,7 +97,7 @@
     let mode = 'swipe';
 
     // Sensitivity slider variables
-    let currentThreshold = 40; // Default sensitivity
+    let currentThreshold = 12; // Default sensitivity for Delta-E
     const leftSelect = document.getElementById('leftSelect');
     const rightSelect = document.getElementById('rightSelect');
     const swipeThumb = document.getElementById('swipe-thumb');
@@ -98,7 +120,7 @@
       });
     }
 
-    // --- HighlightLayer using a robust custom tileLoadFunction ---
+    // --- HighlightLayer using Delta-E ---
     function makeHighlightLayer(baseCode, compareCode) {
       const baseUrlTpl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${baseCode}/{z}/{x}/{y}.jpg`;
       const compareUrlTpl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${compareCode}/{z}/{x}/{y}.jpg`;
@@ -143,13 +165,14 @@
                 for (let i = 0; i < baseData.data.length; i += 4) {
                   const r1 = baseData.data[i],   g1 = baseData.data[i+1], b1 = baseData.data[i+2], a1 = baseData.data[i+3];
                   const r2 = cmpData.data[i],    g2 = cmpData.data[i+1],  b2 = cmpData.data[i+2],  a2 = cmpData.data[i+3];
-                  const dr = Math.abs(r1 - r2), dg = Math.abs(g1 - g2), db = Math.abs(b1 - b2);
-                  if (dr + dg + db > threshold) {
+                  const lab1 = rgb2lab(r1, g1, b1);
+                  const lab2 = rgb2lab(r2, g2, b2);
+                  if (deltaE(lab1, lab2) > threshold) {
                     // changed: use RED highlight
-                    outData.data[i] = 255;     // R
-                    outData.data[i+1] = 0;     // G
-                    outData.data[i+2] = 0;     // B
-                    outData.data[i+3] = 200;   // alpha (semi-transparent)
+                    outData.data[i] = 255;
+                    outData.data[i+1] = 0;
+                    outData.data[i+2] = 0;
+                    outData.data[i+3] = 200; // semi-transparent
                   } else {
                     // no change: greyscale base
                     const gray = 0.3*r1 + 0.59*g1 + 0.11*b1;
