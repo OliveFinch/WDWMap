@@ -49,15 +49,26 @@
     }
     #sensitivity-row {
       margin-top:10px;
+      width: 170px;
+      position: relative;
     }
     #sensitivity-value {
       display: inline-block; width: 32px; text-align: right;
       font-weight: bold; margin-left: 6px;
     }
+    .slider-label {
+      position: absolute;
+      top: 40px;
+      font-size: 13px;
+      color: #555;
+    }
+    #label-left { left: 0; }
+    #label-right { right: 0; }
     @media (max-width: 600px) {
       .controls { left: 4px; top: 4px; padding: 6px; font-size: 14px; }
       select, button { width: 98vw; font-size: 14px;}
       #swipe-handle { width: 40px; height: 40px; }
+      #sensitivity-row { width: 98vw; }
     }
   </style>
 </head>
@@ -72,8 +83,10 @@
     </label><br>
     <button id="toggleModeBtn">Highlight Changes Mode</button>
     <div id="sensitivity-row" style="display:none; margin-top:10px;">
-      Sensitivity: <span id="sensitivity-value">12</span><br>
-      <input type="range" id="sensitivity-slider" min="2" max="30" value="12" style="width:170px;">
+      Sensitivity: <span id="sensitivity-value">20</span><br>
+      <input type="range" id="sensitivity-slider" min="10" max="30" value="20" style="width:140px; direction: rtl;">
+      <span class="slider-label" id="label-left">30</span>
+      <span class="slider-label" id="label-right">10</span>
     </div>
   </div>
   <div id="swipe-thumb"></div>
@@ -117,7 +130,7 @@
     let mode = 'swipe';
 
     // Sensitivity slider variables
-    let currentThreshold = 12; // Default sensitivity for Delta-E
+    let currentThreshold = 20; // Default sensitivity for Delta-E
     const leftSelect = document.getElementById('leftSelect');
     const rightSelect = document.getElementById('rightSelect');
     const swipeThumb = document.getElementById('swipe-thumb');
@@ -246,8 +259,8 @@
         rightSelect.value = servers[servers.length - 1].code;
         launchSwipeMode();
 
-        // <-- Fix for initial misalignment
-        setTimeout(updateSwipeUI, 80); // Wait for browser to render DOM
+        // Fix for initial misalignment
+        setTimeout(updateSwipeUI, 80);
       });
 
     leftSelect.addEventListener('change', () => {
@@ -293,13 +306,13 @@
 
         swipeHandle.style.display = swipeThumb.style.display = 'block';
         updateSwipeUI();
-        setTimeout(updateSwipeUI, 40); // Just in case handle/line aren't ready
+        setTimeout(updateSwipeUI, 40);
       });
 
       swipeHandle.style.display = swipeThumb.style.display = 'block';
       updateSwipeUI();
       setTimeout(updateSwipeUI, 40);
-      sensitivityRow.style.display = 'none'; // Hide slider in swipe mode
+      sensitivityRow.style.display = 'none';
     }
 
     // --- Highlight Changes Mode ---
@@ -315,7 +328,7 @@
 
       swipeThumb.style.display = 'none';
       swipeHandle.style.display = 'none';
-      sensitivityRow.style.display = 'block'; // Show slider
+      sensitivityRow.style.display = 'block';
     }
 
     // --- UI Toggle Button ---
@@ -336,28 +349,25 @@
     });
 
     // --- Swipe UI logic ---
-function updateSwipeUI() {
-  const mapDiv = map.getTargetElement();
-  const w = mapDiv.clientWidth;
-  const h = mapDiv.clientHeight;
-  const x = Math.round(w * swipeRatio);
+    function updateSwipeUI() {
+      const mapDiv = map.getTargetElement();
+      const w = mapDiv.clientWidth;
+      const h = mapDiv.clientHeight;
+      const x = Math.round(w * swipeRatio);
 
-  // Center the line
-  swipeThumb.style.left = (x - (swipeThumb.offsetWidth / 2)) + 'px';
-  swipeThumb.style.top = '0px';
-  swipeThumb.style.height = h + 'px';
-  swipeThumb.style.display = 'block';
+      swipeThumb.style.left = (x - (swipeThumb.offsetWidth / 2)) + 'px';
+      swipeThumb.style.top = '0px';
+      swipeThumb.style.height = h + 'px';
+      swipeThumb.style.display = 'block';
 
-  // Place handle higher on mobile so it's not under browser UI
-  let handlePos = 0.90; // desktop default
-  if (window.innerWidth <= 600) handlePos = 0.75; // higher for mobile
+      let handlePos = 0.90;
+      if (window.innerWidth <= 600) handlePos = 0.75; // higher on mobile
 
-  // Center handle over line, using both widths, and pixel nudge
-  swipeHandle.style.left = (x - (swipeHandle.offsetWidth / 2) + (swipeThumb.offsetWidth / 2) - 2) + 'px';
-  swipeHandle.style.top = (Math.round(h * handlePos) - (swipeHandle.offsetHeight / 2)) + 'px';
-  swipeHandle.style.display = 'block';
-  map.render();
-}
+      swipeHandle.style.left = (x - (swipeHandle.offsetWidth / 2) + (swipeThumb.offsetWidth / 2) - 2) + 'px';
+      swipeHandle.style.top = (Math.round(h * handlePos) - (swipeHandle.offsetHeight / 2)) + 'px';
+      swipeHandle.style.display = 'block';
+      map.render();
+    }
     function startSwipeDrag(e) {
       e.preventDefault();
       document.body.style.userSelect = 'none';
