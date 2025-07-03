@@ -52,15 +52,13 @@
       width: 170px;
       position: relative;
     }
-    #sensitivity-value {
-      display: inline-block; width: 32px; text-align: right;
-      font-weight: bold; margin-left: 6px;
-    }
     .slider-label {
       position: absolute;
       top: 40px;
       font-size: 13px;
       color: #555;
+      text-align: center;
+      width: 40px;
     }
     #label-left { left: 0; }
     #label-right { right: 0; }
@@ -83,10 +81,10 @@
     </label><br>
     <button id="toggleModeBtn">Highlight Changes Mode</button>
     <div id="sensitivity-row" style="display:none; margin-top:10px;">
-      Sensitivity: <span id="sensitivity-value">20</span><br>
+      Sensitivity<br>
+      <span class="slider-label" id="label-left"><small>Less</small></span>
       <input type="range" id="sensitivity-slider" min="10" max="30" value="20" style="width:140px; direction: rtl;">
-      <span class="slider-label" id="label-left">30</span>
-      <span class="slider-label" id="label-right">10</span>
+      <span class="slider-label" id="label-right"><small>More</small></span>
     </div>
   </div>
   <div id="swipe-thumb"></div>
@@ -138,7 +136,6 @@
     const toggleBtn = document.getElementById('toggleModeBtn');
     const sensitivityRow = document.getElementById('sensitivity-row');
     const sensitivitySlider = document.getElementById('sensitivity-slider');
-    const sensitivityValue = document.getElementById('sensitivity-value');
 
     // --- Layer creators ---
     function makeLayer(code) {
@@ -258,8 +255,6 @@
         leftSelect.value = servers[0].code;
         rightSelect.value = servers[servers.length - 1].code;
         launchSwipeMode();
-
-        // Fix for initial misalignment
         setTimeout(updateSwipeUI, 80);
       });
 
@@ -340,7 +335,6 @@
     // --- Sensitivity Slider logic ---
     sensitivitySlider.addEventListener('input', () => {
       currentThreshold = parseInt(sensitivitySlider.value, 10);
-      sensitivityValue.textContent = currentThreshold;
       if (mode === 'highlight') {
         if (highlightLayer) map.removeLayer(highlightLayer);
         highlightLayer = makeHighlightLayer(leftSelect.value, rightSelect.value);
@@ -395,9 +389,6 @@
     swipeHandle.addEventListener('touchstart', startSwipeDrag);
     window.addEventListener('resize', () => setTimeout(updateSwipeUI, 20));
     window.addEventListener('load', () => setTimeout(updateSwipeUI, 30));
-
-    // --- Initialize the sensitivity display ---
-    sensitivityValue.textContent = currentThreshold;
   </script>
 </body>
 </html>
