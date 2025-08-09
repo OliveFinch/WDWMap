@@ -46,20 +46,15 @@
     #findme-message { display: none; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 2000; background: rgba(255,255,255,0.92); color: #d62525; font-size: 17px; font-weight: bold; text-align: center; opacity: 0; padding: 7px 20px; border-radius: 16px; box-shadow: 0 2px 8px #0001; transition: opacity 0.4s; pointer-events: none;}
 
     /* Hide-by-default buttons (logic will toggle) */
-    #compare-btn, #highlight-btn, #left-date-btn, #settings-btn { display: none; }
+    #compare-btn, #highlight-btn, #left-date-btn { display: none; }
 
     /* === Compare UI === */
     #swipe-thumb { position: absolute; top: 0; bottom: 0; width: 5px; background: #e24141cc; z-index: 1300; cursor: ew-resize; border-radius: 3px; box-shadow: 0 2px 12px #3336; pointer-events: auto; display: none; }
     #swipe-handle { position: absolute; width: 34px; height: 34px; background: #fff; border: 4px solid #e24141cc; border-radius: 50%; box-shadow: 0 2px 12px #2225; z-index: 1400; cursor: grab; touch-action: none; display: none; transition: background 0.1s, border 0.1s; }
     #swipe-handle:active { background: #ffeaea; border-color: #e24141; }
-
-    /* Bottom-center highlight settings panel (toggles via Settings button) */
-    #highlight-settings { position: fixed; left: 50%; transform: translateX(-50%); bottom: 30vh;
-      display: none; background: rgba(255,255,255,.96); padding: 12px 14px 10px; border: 1.5px solid #ccc; border-radius: 10px;
-      box-shadow: 0 6px 24px rgba(0,0,0,.18); z-index: 1350; width: min(520px, 86vw); }
-    #highlight-settings .title { font: 600 14px/1.2 Arial, sans-serif; text-align: center; margin-bottom: 6px; color: #333; }
-    #highlight-sensitivity { width: 100%; }
-    #highlight-settings .labels { display: flex; justify-content: space-between; font: 12px Arial; color: #666; margin-top: 4px; padding: 0 2px; }
+    #sensitivity-row { position: absolute; right: 8px; top: 56px; display: none; background: rgba(255,255,255,0.96); padding: 8px 12px; border: 1.5px solid #ccc; border-radius: 8px; z-index: 1350; }
+    #sensitivity-row label { font-size: 13px; color: #555; display: block; margin-bottom: 6px; }
+    #sensitivity-slider { width: 160px; }
 
     @media (max-width: 600px) {
       .group-top-right { right: 8px; top: 8px; gap: 6px; }
@@ -72,6 +67,7 @@
       #current-date-display { font-size: 16px; padding: 0 10px; top: 10px; }
       #date-popup { min-width: 140px; max-height: 50vh; top: 44px; right: 8px; }
       #left-date-popup { min-width: 140px; max-height: 50vh; top: 44px; left: 50px; }
+      #sensitivity-row { top: 44px; }
       #swipe-handle { width: 40px; height: 40px; }
     }
   </style>
@@ -79,7 +75,7 @@
 <body>
   <div id="map"></div>
 
-  <!-- TOP-RIGHT GROUP: Date, Toggle, Compare, Highlight, Settings -->
+  <!-- TOP-RIGHT GROUP: Date, Toggle, Compare, Highlight -->
   <div class="group-top-right" id="grp-top-right">
     <button id="date-btn" type="button" class="btn-square" title="Choose date">
       <img src="icons/calendar.svg" alt="Date Selector">
@@ -92,10 +88,6 @@
     </button>
     <button id="highlight-btn" class="btn-square" title="Highlight Changes">
       <img src="icons/highlight.svg" alt="Highlight">
-    </button>
-    <!-- New: settings button (only visible in Highlight mode) -->
-    <button id="settings-btn" class="btn-square" title="Highlight Settings">
-      <img src="icons/settings.svg" alt="Settings">
     </button>
   </div>
 
@@ -110,7 +102,7 @@
   </div>
   <div id="left-date-popup"></div>
 
-  <!-- BOTTOM-RIGHT GROUP: Locate Me, Roads -->
+  <!-- BOTTOM-RIGHT GROUP: Locate Me, Roads, Quick Switch -->
   <div class="group-bottom-right" id="grp-bottom-right">
     <button id="findme-btn" class="btn-square" title="Locate Me">
       <img src="icons/locateme.svg" alt="Locate Me">
@@ -118,21 +110,21 @@
     <button id="roads-btn" class="btn-square" title="Roads overlay">
       <img id="roads-icon-img" src="icons/roads.svg" alt="Roads">
     </button>
+    <button id="quick-switch-btn" title="Quick Switch Dates" class="btn-square" style="display:none;">
+      <img src="icons/switch.svg" alt="Switch">
+    </button>
   </div>
 
   <div id="findme-message"></div>
   <div id="logo"><img src="logo.svg" alt="WDW Magic Explorer Logo"></div>
   <div id="current-date-display"></div>
 
-  <!-- === Compare UI Elements (swipe + handle) === -->
+  <!-- === Compare UI Elements (swipe + handle + sensitivity) === -->
   <div id="swipe-thumb"></div>
   <div id="swipe-handle" title="Drag to compare"></div>
-
-  <!-- Bottom-center settings panel -->
-  <div id="highlight-settings">
-    <div class="title">Highlight Sensitivity</div>
-    <input type="range" id="highlight-sensitivity" min="10" max="30" value="20">
-    <div class="labels"><span>Less</span><span>More</span></div>
+  <div id="sensitivity-row">
+    <label for="sensitivity-slider">Highlight Sensitivity</label>
+    <input type="range" id="sensitivity-slider" min="10" max="30" value="20">
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
@@ -149,7 +141,6 @@
       let compareMode = false; // when true, render swipe/highlight between leftCode & rightCode
       let highlightMode = false; // when true (and compare), render Delta-E highlight tiles
       let roadsOn = false;
-      let settingsOpen = false;
 
       // Map & layers
       let map, disneyLayer, esriLayer, roadsLayer;
@@ -168,15 +159,15 @@
       const toggleIconImg = document.getElementById('toggle-icon-img');
       const compareBtn = document.getElementById('compare-btn');
       const highlightBtn = document.getElementById('highlight-btn');
-      const settingsBtn = document.getElementById('settings-btn');
+      const quickSwitchBtn = document.getElementById('quick-switch-btn');
       const roadsBtn = document.getElementById('roads-btn');
       const roadsIconImg = document.getElementById('roads-icon-img');
       const findmeBtn = document.getElementById('findme-btn');
       const currentDateDisplay = document.getElementById('current-date-display');
       const swipeThumb = document.getElementById('swipe-thumb');
       const swipeHandle = document.getElementById('swipe-handle');
-      const highlightSettings = document.getElementById('highlight-settings');
-      const highlightSensitivity = document.getElementById('highlight-sensitivity');
+      const sensitivityRow = document.getElementById('sensitivity-row');
+      const sensitivitySlider = document.getElementById('sensitivity-slider');
 
       // Extent bounds
       const disneyWorldExtent = ol.proj.transformExtent(
@@ -196,10 +187,12 @@
         const rec = serverOptions.find(o => o.code === code);
         return rec && rec.esri_label ? rec.esri_label : '';
       }
-function getPreviousCode(code) {
-  const i = serverOptions.findIndex(o => o.code === code);
-  return i > 0 ? serverOptions[i - 1].code : serverOptions[0].code;
-}
+      // NEW: previous-date helper (the item immediately before the given code in serverOptions)
+      function getPreviousCode(code) {
+        const i = serverOptions.findIndex(o => o.code === code);
+        return i > 0 ? serverOptions[i - 1].code : serverOptions[0].code;
+      }
+
       // ===== Layers =====
       function makeDisneyLayer(code) {
         return new ol.layer.Tile({
@@ -336,23 +329,16 @@ function getPreviousCode(code) {
         compareBtn.style.display = showingDisney ? 'flex' : 'none';
         highlightBtn.style.display = (showingDisney && compareMode) ? 'flex' : 'none';
         leftDateBtn.style.display = compareMode ? 'flex' : 'none';
-        // Settings button only in highlight mode
-        settingsBtn.style.display = (compareMode && highlightMode) ? 'flex' : 'none';
+        quickSwitchBtn.style.display = (lastTwoDates[1] && !compareMode) ? 'flex' : 'none';
 
         toggleBtn.disabled = compareMode; // disable satellite toggle while comparing
         toggleIconImg.src = showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
         toggleIconImg.alt = showingDisney ? 'Satellite' : 'Disney Map';
 
         // Compare UI widgets
-        const showSwipe = (compareMode && !highlightMode);
-        swipeThumb.style.display = showSwipe ? 'block' : 'none';
-        swipeHandle.style.display = showSwipe ? 'block' : 'none';
-
-        // Hide settings panel if we left highlight mode
-        if (!(compareMode && highlightMode)) {
-          settingsOpen = false;
-          highlightSettings.style.display = 'none';
-        }
+        swipeThumb.style.display = (compareMode && !highlightMode) ? 'block' : 'none';
+        swipeHandle.style.display = (compareMode && !highlightMode) ? 'block' : 'none';
+        sensitivityRow.style.display = (compareMode && highlightMode) ? 'block' : 'none';
       }
 
       function fillDatePopup(popupEl, selectedCode, onPick) {
@@ -403,8 +389,6 @@ function getPreviousCode(code) {
 
       function launchSwipeMode() {
         highlightMode = false;
-        settingsOpen = false;
-        highlightSettings.style.display = 'none';
         clearCompareLayers();
         leftLayer = makeDisneyLayer(leftCode);
         rightLayer = makeDisneyLayer(rightCode);
@@ -424,8 +408,6 @@ function getPreviousCode(code) {
       }
 
       function launchHighlightMode() {
-        settingsOpen = false;
-        highlightSettings.style.display = 'none';
         clearCompareLayers();
         highlightLayer = makeHighlightLayer(leftCode, rightCode);
         map.addLayer(highlightLayer);
@@ -438,15 +420,11 @@ function getPreviousCode(code) {
         const mapDiv = map.getTargetElement();
         const w = mapDiv.clientWidth; const h = mapDiv.clientHeight;
         const x = Math.round(w * swipeRatio);
-
-        // Center the red line at x
         swipeThumb.style.left = (x - (swipeThumb.offsetWidth / 2)) + 'px';
         swipeThumb.style.top = '0px';
         swipeThumb.style.height = h + 'px';
-
-        // Center the handle exactly on the line (remove previous -2 fudge)
         let handlePos = 0.90; if (window.innerWidth <= 600) handlePos = 0.75;
-        swipeHandle.style.left = (x - (swipeHandle.offsetWidth / 2)) + 'px';
+        swipeHandle.style.left = (x - (swipeHandle.offsetWidth / 2) + (swipeThumb.offsetWidth / 2) - 2) + 'px';
         swipeHandle.style.top = (Math.round(h * handlePos) - (swipeHandle.offsetHeight / 2)) + 'px';
         map.render();
       }
@@ -467,13 +445,13 @@ function getPreviousCode(code) {
         }
         document.addEventListener('mousemove', move);
         document.addEventListener('mouseup', stop);
-        document.addEventListener('touchmove', move, { passive: false });
+        document.addEventListener('touchmove', move);
         document.addEventListener('touchend', stop);
       }
       swipeThumb.addEventListener('mousedown', startSwipeDrag);
-      swipeThumb.addEventListener('touchstart', startSwipeDrag, { passive: false });
+      swipeThumb.addEventListener('touchstart', startSwipeDrag);
       swipeHandle.addEventListener('mousedown', startSwipeDrag);
-      swipeHandle.addEventListener('touchstart', startSwipeDrag, { passive: false });
+      swipeHandle.addEventListener('touchstart', startSwipeDrag);
       window.addEventListener('resize', () => setTimeout(updateSwipeUI, 20));
       window.addEventListener('load', () => setTimeout(updateSwipeUI, 30));
 
@@ -518,21 +496,19 @@ function getPreviousCode(code) {
         updateDateUI();
       });
 
-compareBtn.addEventListener('click', () => {
-  compareMode = !compareMode;
-  if (compareMode) {
-    rightCode = currentCode;
-    leftCode = getPreviousCode(currentCode); // <-- was lastTwoDates[1] || serverOptions[0].code
-    launchSwipeMode();
-  } else {
-    highlightMode = false; 
-    clearCompareLayers();
-    swipeThumb.style.display = 'none';
-    swipeHandle.style.display = 'none';
-    sensitivityRow.style.display = 'none';
-  }
-  updateDateUI();
-});
+      compareBtn.addEventListener('click', () => {
+        compareMode = !compareMode;
+        if (compareMode) {
+          // NEW seeding: right = current; left = previous item in serverOptions relative to current
+          rightCode = currentCode;
+          leftCode = getPreviousCode(currentCode);
+          launchSwipeMode();
+        } else {
+          highlightMode = false; clearCompareLayers();
+          swipeThumb.style.display = 'none'; swipeHandle.style.display = 'none'; sensitivityRow.style.display = 'none';
+        }
+        updateDateUI();
+      });
 
       highlightBtn.addEventListener('click', () => {
         if (!compareMode) return;
@@ -541,20 +517,14 @@ compareBtn.addEventListener('click', () => {
         updateDateUI();
       });
 
-      // Settings button toggles the bottom-center sensitivity panel
-      settingsBtn.addEventListener('click', () => {
-        if (!(compareMode && highlightMode)) return;
-        settingsOpen = !settingsOpen;
-        highlightSettings.style.display = settingsOpen ? 'block' : 'none';
-      });
-
-      // Roads
       roadsBtn.addEventListener('click', () => {
         roadsOn = !roadsOn;
         roadsIconImg.src = roadsOn ? 'icons/no_roads.svg' : 'icons/roads.svg';
         roadsIconImg.alt = roadsOn ? 'No Roads' : 'Roads';
         setRoadsLayerState();
       });
+
+      quickSwitchBtn.addEventListener('click', () => { if (lastTwoDates[1]) setSingleDate(lastTwoDates[1]); });
 
       // Find Me button
       const findmeMessage = document.getElementById('findme-message');
@@ -596,9 +566,9 @@ compareBtn.addEventListener('click', () => {
         mapDiv.addEventListener('touchend', function() { if (isHoldZoom) { isHoldZoom = false; mapDiv.removeEventListener('touchmove', moveHandler, { passive: false }); } if (holdTimeout) clearTimeout(holdTimeout); });
       })();
 
-      // Sensitivity (bottom-center) — live update highlight tiles
-      highlightSensitivity.addEventListener('input', () => {
-        currentThreshold = parseInt(highlightSensitivity.value, 10);
+      // Sensitivity Slider
+      sensitivitySlider.addEventListener('input', () => {
+        currentThreshold = parseInt(sensitivitySlider.value, 10);
         if (compareMode && highlightMode) { launchHighlightMode(); }
       });
 
@@ -618,6 +588,7 @@ compareBtn.addEventListener('click', () => {
       console.assert(document.getElementById('grp-top-right'), 'Top-right group should exist');
       console.assert(document.getElementById('grp-bottom-right'), 'Bottom-right group should exist');
       console.assert(document.getElementById('date-btn'), 'Date button should exist');
+      console.assert(typeof window.quickSwitchBtn === 'undefined', 'quickSwitchBtn should not be global');
     })();
   </script>
 </body>
