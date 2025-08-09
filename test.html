@@ -325,7 +325,7 @@
           target: 'map',
           layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
           view: new ol.View({ center: ol.proj.fromLonLat([-81.5494, 28.3747]), zoom: 16, minZoom: 0, maxZoom: 20, extent: disneyWorldExtent }),
-          controls: ol.control.defaults({ zoom: false }) // hide OL zoom UI; gestures still work
+          controls: ol.control.defaults.defaults({ zoom: false }) // hide OL zoom UI; gestures still work
         });
       }
 
