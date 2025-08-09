@@ -196,7 +196,10 @@
         const rec = serverOptions.find(o => o.code === code);
         return rec && rec.esri_label ? rec.esri_label : '';
       }
-
+function getPreviousCode(code) {
+  const i = serverOptions.findIndex(o => o.code === code);
+  return i > 0 ? serverOptions[i - 1].code : serverOptions[0].code;
+}
       // ===== Layers =====
       function makeDisneyLayer(code) {
         return new ol.layer.Tile({
@@ -515,20 +518,21 @@
         updateDateUI();
       });
 
-      compareBtn.addEventListener('click', () => {
-        compareMode = !compareMode;
-        if (compareMode) {
-          // seed left/right: left = previous date if available, otherwise oldest; right = current
-          rightCode = currentCode;
-          leftCode = lastTwoDates[1] || serverOptions[0].code;
-          launchSwipeMode();
-        } else {
-          highlightMode = false; clearCompareLayers();
-          swipeThumb.style.display = 'none'; swipeHandle.style.display = 'none';
-          settingsOpen = false; highlightSettings.style.display = 'none';
-        }
-        updateDateUI();
-      });
+compareBtn.addEventListener('click', () => {
+  compareMode = !compareMode;
+  if (compareMode) {
+    rightCode = currentCode;
+    leftCode = getPreviousCode(currentCode); // <-- was lastTwoDates[1] || serverOptions[0].code
+    launchSwipeMode();
+  } else {
+    highlightMode = false; 
+    clearCompareLayers();
+    swipeThumb.style.display = 'none';
+    swipeHandle.style.display = 'none';
+    sensitivityRow.style.display = 'none';
+  }
+  updateDateUI();
+});
 
       highlightBtn.addEventListener('click', () => {
         if (!compareMode) return;
