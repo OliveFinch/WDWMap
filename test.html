@@ -170,7 +170,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
 
-  <script>
+<script>
 // Completely disable browser zoom everywhere (desktop + mobile)
 (function () {
   // Prevent pinch zoom (desktop trackpads & mobile gestures)
@@ -189,6 +189,16 @@
       e.preventDefault();
     }
   }, { capture: true });
+
+  // Prevent double-click zoom (desktop browsers)
+  window.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+  }, { passive: false, capture: true });
+
+  // Prevent iOS/macOS "smart zoom" (double-tap with trackpad/magic mouse)
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
 })();
 </script>
 
