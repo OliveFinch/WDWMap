@@ -8,8 +8,6 @@
   <style>
     html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
     #map { width: 100vw; height: 100vh; }
-
-    /* Simple testing controls (left) */
     .controls {
       position: absolute;
       top: 10px; left: 10px;
@@ -20,9 +18,10 @@
       font-family: Arial, sans-serif;
       font-size: 15px;
     }
-    select, button { margin: 6px 0 12px 0; width: 200px; font-size: 15px; cursor: pointer; }
+    select, button { margin: 6px 0 12px 0; width: 180px; font-size: 15px; }
+    button { width: 200px; cursor: pointer; }
 
-    /* Swipe UI */
+    /* Swipe rail (red line) */
     #swipe-thumb {
       position: absolute; top: 0; bottom: 0;
       width: 5px; background: #e24141cc;
@@ -32,6 +31,7 @@
       pointer-events: auto;
       display: none;
     }
+    /* Swipe handle (red circle) */
     #swipe-handle {
       position: absolute;
       width: 34px; height: 34px;
@@ -40,59 +40,27 @@
       border-radius: 50%;
       box-shadow: 0 2px 12px #2225;
       z-index: 1400; cursor: grab;
-      touch-action: none;
-      display: none;
+      touch-action: none; display: none;
       transition: background 0.1s, border 0.1s;
     }
-    #swipe-handle:active {
-      background: #ffeaea;
-      border-color: #e24141;
-    }
+    #swipe-handle:active { background: #ffeaea; border-color: #e24141; }
 
-    /* Bottom-center highlight settings panel */
-    #highlightSettings {
-      position: fixed;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: 30vh;                 /* ~30% up from the bottom */
-      background: rgba(255,255,255,0.96);
-      border-radius: 10px;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.18);
-      padding: 12px 14px 10px;
-      z-index: 1200;
-      width: min(520px, 86vw);
-    }
-    #highlightSettings .hs-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 6px;
-      text-align: center;
-    }
-    #highlightSettings #highlight-sensitivity {
-      width: 100%;
-      display: block;
-    }
-    #highlightSettings .hs-scale {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      color: #666;
-      margin-top: 4px;
-      padding: 0 2px;
-    }
+    #sensitivity-row { margin-top:10px; width: 170px; position: relative; }
+    .slider-label { position: absolute; top: 40px; font-size: 13px; color: #555; text-align: center; width: 40px; }
+    #label-left { left: 0; }
+    #label-right { right: 0; }
 
     @media (max-width: 600px) {
       .controls { left: 4px; top: 4px; padding: 6px; font-size: 14px; }
       select, button { width: 98vw; font-size: 14px; }
       #swipe-handle { width: 40px; height: 40px; }
+      #sensitivity-row { width: 98vw; }
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
 
-  <!-- Simple testing controls (kept from your original compare demo) -->
   <div class="controls">
     <label for="leftSelect">Base Map Date:<br />
       <select id="leftSelect"></select>
@@ -102,36 +70,20 @@
     </label><br />
     <button id="toggleModeBtn">Highlight Changes Mode</button>
 
-    <!-- NEW: Settings button (only visible in Highlight mode) -->
-    <button id="settingsBtn" style="display:none;">
-      <img src="icons/settings.svg" alt="Settings" style="height:16px; vertical-align:-3px; margin-right:6px;" />
-      Settings
-    </button>
+    <div id="sensitivity-row" style="display:none; margin-top:10px;">
+      Sensitivity<br />
+      <span class="slider-label" id="label-left"><small>Less</small></span>
+      <input type="range" id="sensitivity-slider" min="10" max="30" value="20" style="width:140px; direction: rtl;" />
+      <span class="slider-label" id="label-right"><small>More</small></span>
+    </div>
   </div>
 
   <div id="swipe-thumb"></div>
   <div id="swipe-handle" title="Drag to compare"></div>
 
-  <!-- NEW: Bottom-center sensitivity panel (toggled by Settings button) -->
-  <div id="highlightSettings" hidden>
-    <div class="hs-title">Highlight Sensitivity</div>
-    <input
-      type="range"
-      id="highlight-sensitivity"
-      min="10"
-      max="30"
-      value="20"
-      aria-label="Highlight Sensitivity"
-    />
-    <div class="hs-scale">
-      <span>Less</span>
-      <span>More</span>
-    </div>
-  </div>
-
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
   <script>
-    // --- Perceptual LAB Delta-E helpers ---
+    // --- Perceptual LAB Delta‑E helpers ---
     function rgb2lab(r, g, b) {
       r /= 255; g /= 255; b /= 255;
       r = r > 0.04045 ? Math.pow((r + 0.055)/1.055, 2.4) : r/12.92;
@@ -163,26 +115,22 @@
       zoom: 16, minZoom: 14, maxZoom: 20, extent
     });
     const map = new ol.Map({ target: 'map', view });
-
     let leftLayer, rightLayer, highlightLayer;
     let swipeRatio = 0.5;
     let mode = 'swipe';
 
-    // Sensitivity (Delta-E threshold)
-    let currentThreshold = 20;
+    // Constants to avoid initial layout jitter
+    const THUMB_W = 5; // must match #swipe-thumb width in CSS
 
-    // UI refs
+    // Sensitivity slider variables
+    let currentThreshold = 20; // Default sensitivity for Delta‑E
     const leftSelect = document.getElementById('leftSelect');
     const rightSelect = document.getElementById('rightSelect');
     const swipeThumb = document.getElementById('swipe-thumb');
     const swipeHandle = document.getElementById('swipe-handle');
     const toggleBtn = document.getElementById('toggleModeBtn');
-
-    // NEW: settings button + panel
-    const settingsBtn = document.getElementById('settingsBtn');
-    const highlightSettings = document.getElementById('highlightSettings');
-    const highlightSensitivity = document.getElementById('highlight-sensitivity');
-    let settingsOpen = false;
+    const sensitivityRow = document.getElementById('sensitivity-row');
+    const sensitivitySlider = document.getElementById('sensitivity-slider');
 
     // --- Layer creators ---
     function makeLayer(code) {
@@ -198,7 +146,7 @@
       });
     }
 
-    // --- HighlightLayer using Delta-E ---
+    // --- HighlightLayer using Delta‑E ---
     function makeHighlightLayer(baseCode, compareCode) {
       const baseUrlTpl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${baseCode}/{z}/{x}/{y}.jpg`;
       const compareUrlTpl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${compareCode}/{z}/{x}/{y}.jpg`;
@@ -214,14 +162,11 @@
               .replace('{z}', zxy[0])
               .replace('{x}', zxy[1])
               .replace('{y}', zxy[2]);
-
             const baseImg = new Image();
             baseImg.crossOrigin = 'anonymous';
-
             baseImg.onload = function() {
               const cmpImg = new Image();
               cmpImg.crossOrigin = 'anonymous';
-
               cmpImg.onload = function() {
                 const w = baseImg.width || cmpImg.width || 256;
                 const h = baseImg.height || cmpImg.height || 256;
@@ -243,32 +188,25 @@
 
                 const outData = ctx.createImageData(w, h);
                 const threshold = currentThreshold;
-
                 for (let i = 0; i < baseData.data.length; i += 4) {
                   const r1 = baseData.data[i],   g1 = baseData.data[i+1], b1 = baseData.data[i+2], a1 = baseData.data[i+3];
                   const r2 = cmpData.data[i],    g2 = cmpData.data[i+1],  b2 = cmpData.data[i+2],  a2 = cmpData.data[i+3];
                   const lab1 = rgb2lab(r1, g1, b1);
                   const lab2 = rgb2lab(r2, g2, b2);
-
                   if (deltaE(lab1, lab2) > threshold) {
-                    outData.data[i]   = 255; // red
+                    outData.data[i] = 255; // RED highlight
                     outData.data[i+1] = 0;
                     outData.data[i+2] = 0;
-                    outData.data[i+3] = 200;
+                    outData.data[i+3] = 200; // semi‑transparent
                   } else {
                     const gray = 0.3*r1 + 0.59*g1 + 0.11*b1;
-                    outData.data[i]   = gray;
-                    outData.data[i+1] = gray;
-                    outData.data[i+2] = gray;
+                    outData.data[i] = outData.data[i+1] = outData.data[i+2] = gray;
                     outData.data[i+3] = a1;
                   }
                 }
-
                 ctx.putImageData(outData, 0, 0);
                 tile.getImage().src = canvas.toDataURL();
               };
-
-              // If compare fails, fallback to grayscale base
               cmpImg.onerror = function() {
                 const canvas = document.createElement('canvas');
                 canvas.width = baseImg.width || 256;
@@ -284,16 +222,13 @@
                 ctx.putImageData(baseData, 0, 0);
                 tile.getImage().src = canvas.toDataURL();
               };
-
               cmpImg.src = compareUrl;
             };
-
             baseImg.onerror = function() {
               const blank = document.createElement('canvas');
               blank.width = blank.height = 256;
               tile.getImage().src = blank.toDataURL();
             };
-
             baseImg.src = src;
           }
         })
@@ -315,6 +250,8 @@
         leftSelect.value = servers[0].code;
         rightSelect.value = servers[servers.length - 1].code;
         launchSwipeMode();
+        // First paint after layers are added
+        requestAnimationFrame(() => updateSwipeUI());
       });
 
     leftSelect.addEventListener('change', () => {
@@ -332,24 +269,17 @@
       if (leftLayer) map.removeLayer(leftLayer);
       if (rightLayer) map.removeLayer(rightLayer);
 
-      // Hide settings button + panel when not in highlight mode
-      settingsBtn.style.display = 'none';
-      settingsOpen = false;
-      highlightSettings.hidden = true;
-
       leftLayer = makeLayer(leftSelect.value);
       map.addLayer(leftLayer);
 
       let rightLoaded = false;
       const source = leftLayer.getSource();
-      const handleTileLoadEnd = function() {
+      source.on('tileloadend', function handleTileLoadEnd() {
         if (rightLoaded) return;
         rightLoaded = true;
-
         rightLayer = makeLayer(rightSelect.value);
         map.addLayer(rightLayer);
 
-        // Clip the right layer based on swipeRatio
         rightLayer.on('prerender', function(event) {
           const ctx = event.context;
           const mapWidth = ctx.canvas.width;
@@ -362,24 +292,18 @@
         rightLayer.on('postrender', function(event) {
           event.context.restore();
         });
-
-        // Ensure the swipe UI starts perfectly aligned on first render
-        map.once('rendercomplete', () => {
-          updateSwipeUI();
-          // Call twice to be extra-safe after layout paint
-          setTimeout(updateSwipeUI, 0);
-        });
-
-        swipeHandle.style.display = swipeThumb.style.display = 'block';
-        updateSwipeUI();
+        map.render();
         source.un('tileloadend', handleTileLoadEnd);
-      };
 
-      source.on('tileloadend', handleTileLoadEnd);
+        // Ensure layout before positioning to avoid initial misalignment
+        swipeThumb.style.display = swipeHandle.style.display = 'block';
+        requestAnimationFrame(() => updateSwipeUI());
+      });
 
-      // Show the swipe UI now (it will be corrected on rendercomplete)
-      swipeHandle.style.display = swipeThumb.style.display = 'block';
-      updateSwipeUI();
+      // Also run a rAF update in case tiles are cached and load instantly
+      swipeThumb.style.display = swipeHandle.style.display = 'block';
+      requestAnimationFrame(() => updateSwipeUI());
+      sensitivityRow.style.display = 'none';
     }
 
     // --- Highlight Changes Mode ---
@@ -393,31 +317,20 @@
       highlightLayer = makeHighlightLayer(leftSelect.value, rightSelect.value);
       map.addLayer(highlightLayer);
 
-      // Hide swipe UI
       swipeThumb.style.display = 'none';
       swipeHandle.style.display = 'none';
-
-      // Show settings button (panel closed by default)
-      settingsBtn.style.display = '';
-      settingsOpen = false;
-      highlightSettings.hidden = true;
+      sensitivityRow.style.display = 'block';
     }
 
-    // --- Toggle Button between modes ---
+    // --- UI Toggle Button ---
     toggleBtn.onclick = () => {
       if (mode === 'swipe') launchHighlightMode();
       else launchSwipeMode();
     };
 
-    // --- Settings: toggle panel ---
-    settingsBtn.addEventListener('click', () => {
-      settingsOpen = !settingsOpen;
-      highlightSettings.hidden = !settingsOpen;
-    });
-
-    // --- Sensitivity slider logic ---
-    highlightSensitivity.addEventListener('input', () => {
-      currentThreshold = parseInt(highlightSensitivity.value, 10);
+    // --- Sensitivity Slider logic ---
+    sensitivitySlider.addEventListener('input', () => {
+      currentThreshold = parseInt(sensitivitySlider.value, 10);
       if (mode === 'highlight') {
         if (highlightLayer) map.removeLayer(highlightLayer);
         highlightLayer = makeHighlightLayer(leftSelect.value, rightSelect.value);
@@ -432,25 +345,30 @@
       const h = mapDiv.clientHeight;
       const x = Math.round(w * swipeRatio);
 
-      swipeThumb.style.left = (x - (swipeThumb.offsetWidth / 2)) + 'px';
+      // Make sure elements are visible before measuring
+      swipeThumb.style.display = 'block';
+      swipeHandle.style.display = 'block';
+
+      const thumbW = THUMB_W; // constant, avoids 0 on first paint
+      const handleW = swipeHandle.offsetWidth || 34; // CSS fallback
+      const handleH = swipeHandle.offsetHeight || 34;
+
+      swipeThumb.style.left = (x - (thumbW / 2)) + 'px';
       swipeThumb.style.top = '0px';
       swipeThumb.style.height = h + 'px';
-      swipeThumb.style.display = 'block';
 
       let handlePos = 0.90;
       if (window.innerWidth <= 600) handlePos = 0.75; // higher on mobile
 
-      swipeHandle.style.left = (x - (swipeHandle.offsetWidth / 2) + (swipeThumb.offsetWidth / 2) - 2) + 'px';
-      swipeHandle.style.top = (Math.round(h * handlePos) - (swipeHandle.offsetHeight / 2)) + 'px';
-      swipeHandle.style.display = 'block';
-
+      // Center the circle exactly on the line
+      swipeHandle.style.left = (x - (handleW / 2)) + 'px';
+      swipeHandle.style.top = (Math.round(h * handlePos) - (handleH / 2)) + 'px';
       map.render();
     }
 
     function startSwipeDrag(e) {
       e.preventDefault();
       document.body.style.userSelect = 'none';
-
       function move(ev) {
         const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
         const rect = map.getTargetElement().getBoundingClientRect();
@@ -475,8 +393,8 @@
     swipeHandle.addEventListener('mousedown', startSwipeDrag);
     swipeHandle.addEventListener('touchstart', startSwipeDrag);
 
-    window.addEventListener('resize', () => setTimeout(updateSwipeUI, 20));
-    window.addEventListener('load', () => setTimeout(updateSwipeUI, 30));
+    window.addEventListener('resize', () => requestAnimationFrame(() => updateSwipeUI()));
+    window.addEventListener('load', () => requestAnimationFrame(() => updateSwipeUI()));
   </script>
 </body>
 </html>
