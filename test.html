@@ -169,9 +169,32 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
+
   <script>
-    (function() {
-      'use strict';
+// Completely disable browser zoom everywhere (desktop + mobile)
+(function () {
+  // Prevent pinch zoom (desktop trackpads & mobile gestures)
+  document.addEventListener('wheel', (e) => {
+    if (e.ctrlKey || e.metaKey) e.preventDefault();
+  }, { passive: false, capture: true });
+
+  // Prevent pinch zoom on mobile Safari
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(type => {
+    window.addEventListener(type, (e) => e.preventDefault(), { passive: false, capture: true });
+  });
+
+  // Prevent Ctrl/Cmd + +/-/0 zoom shortcuts
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && ['+', '=', '-', '0'].includes(e.key)) {
+      e.preventDefault();
+    }
+  }, { capture: true });
+})();
+</script>
+
+<script>
+(function() {
+  'use strict';
 
       // ===== App State =====
       let serverOptions = [];
