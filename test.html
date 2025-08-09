@@ -83,7 +83,7 @@
     <button id="highlight-btn" class="btn-square" title="Highlight Changes">
       <img src="icons/highlight.svg" alt="Highlight">
     </button>
-    <!-- NEW: settings button (only visible in highlight mode) -->
+    <!-- settings button only visible in highlight mode -->
     <button id="settings-btn" class="btn-square" title="Show/Hide Sensitivity">
       <img src="icons/settings.svg" alt="Settings">
     </button>
@@ -135,7 +135,7 @@
       let compareMode = false;
       let highlightMode = false; // only valid in Disney compare
       let roadsOn = false;
-      let showSensitivity = false; // NEW: settings button toggles this
+      let showSensitivity = false; // settings button toggles this
 
       // Map & layers
       let map, disneyLayer, esriLayer, roadsLayer;
@@ -144,14 +144,12 @@
       // Compare UI state
       let swipeRatio = 0.5;
 
-      // Sensitivity (reversed slider mapping)
+      // Sensitivity (slider mapping: right = higher threshold = less sensitive)
       const sensitivitySlider = document.getElementById('sensitivity-slider');
-      let currentThreshold = sliderToThreshold(parseInt(sensitivitySlider.value, 10));
+      let currentThreshold = parseInt(sensitivitySlider.value, 10);
       function sliderToThreshold(val) {
-        const min = parseInt(sensitivitySlider.min, 10);
-        const max = parseInt(sensitivitySlider.max, 10);
-        // reverse: slider right = lower threshold (less sensitive)
-        return (min + max) - val;
+        // direct mapping: larger value -> larger threshold -> fewer changes highlighted
+        return val;
       }
 
       // Controls
@@ -197,13 +195,15 @@
 
       // Layers
       function makeDisneyLayer(code) {
-        return new ol.layer.Tile({
+        const layer = new ol.layer.Tile({
           source: new ol.source.XYZ({
             url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code}/{z}/{x}/{y}.jpg`,
             minZoom: 0, maxZoom: 20
           }),
           visible: true
         });
+        layer.setExtent(disneyWorldExtent);
+        return layer;
       }
       function makeEsriLayer(esri_id) {
         if (!esri_id) return null;
@@ -215,20 +215,24 @@
           visible: false
         });
         lyr.set('esri_id', esri_id);
+        lyr.setExtent(disneyWorldExtent);
         return lyr;
       }
       function makeRoadsLayer() {
-        return new ol.layer.Tile({
+        const layer = new ol.layer.Tile({
           source: new ol.source.XYZ({ url: 'https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}', minZoom: 0, maxZoom: 20 }),
           visible: false, opacity: 0.85
         });
+        layer.setExtent(disneyWorldExtent);
+        layer.setZIndex(9999); // ensure on top
+        return layer;
       }
 
       // Highlight (Disney only)
       function makeHighlightLayer(baseCode, compareCode) {
         const baseUrlTpl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${baseCode}/{z}/{x}/{y}.jpg`;
         const compareUrlTpl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${compareCode}/{z}/{x}/{y}.jpg`;
-        return new ol.layer.Tile({
+        const layer = new ol.layer.Tile({
           source: new ol.source.XYZ({
             url: baseUrlTpl,
             maxZoom: 20,
@@ -278,6 +282,8 @@
             }
           })
         });
+        layer.setExtent(disneyWorldExtent);
+        return layer;
       }
       function rgb2lab(r, g, b) {
         r /= 255; g /= 255; b /= 255;
@@ -300,9 +306,6 @@
         disneyLayer = makeDisneyLayer(currentCode);
         esriLayer = makeEsriLayer(getEsriIdForCode(currentCode));
         roadsLayer = makeRoadsLayer();
-        disneyLayer.getSource().set('extent', disneyWorldExtent);
-        if (esriLayer) esriLayer.getSource().set('extent', disneyWorldExtent);
-        roadsLayer.getSource().set('extent', disneyWorldExtent);
 
         map = new ol.Map({
           target: 'map',
@@ -314,8 +317,12 @@
       function setRoadsLayerState() {
         if (!roadsLayer) return;
         roadsLayer.setVisible(roadsOn);
+        // keep roads on top after any rebuild
         const layers = map.getLayers();
-        if (layers.getArray()[layers.getLength()-1] !== roadsLayer) { map.removeLayer(roadsLayer); map.addLayer(roadsLayer); }
+        if (layers.getArray().indexOf(roadsLayer) === -1) {
+          map.addLayer(roadsLayer);
+        }
+        roadsLayer.setZIndex(9999);
       }
 
       // UI updates
@@ -339,7 +346,7 @@
         leftDateBtn.style.display = compareMode ? 'flex' : 'none';
         quickSwitchBtn.style.display = (lastTwoDates[1] && !compareMode) ? 'flex' : 'none';
 
-        // Keep toggle enabled even during compare mode (changed)
+        // Toggle enabled even during compare
         toggleIconImg.src = showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
         toggleIconImg.alt = showingDisney ? 'Satellite' : 'Disney Map';
 
@@ -374,8 +381,7 @@
         map.removeLayer(disneyLayer);
         disneyLayer = makeDisneyLayer(newCode);
         disneyLayer.setVisible(visD);
-        disneyLayer.getSource().set('extent', disneyWorldExtent);
-        map.getLayers().setAt(0, disneyLayer);
+        map.getLayers().insertAt(0, disneyLayer);
 
         // Swap ESRI layer
         const esri_id = getEsriIdForCode(newCode);
@@ -383,9 +389,9 @@
         if (!esriLayer || esriLayer.get('esri_id') !== esri_id) {
           if (esriLayer) map.removeLayer(esriLayer);
           esriLayer = makeEsriLayer(esri_id);
-          if (esriLayer) { esriLayer.set('esri_id', esri_id); esriLayer.getSource().set('extent', disneyWorldExtent); map.getLayers().setAt(1, esriLayer); }
+          if (esriLayer) { esriLayer.set('esri_id', esri_id); map.addLayer(esriLayer); }
         }
-        if (esriLayer) esriLayer.setVisible(visE);
+        if (esriLayer) esriLayer.setVisible(!!visE);
 
         setRoadsLayerState();
 
@@ -431,13 +437,15 @@
         // Clip right layer during render based on swipeRatio
         rightLayer.on('prerender', function(event) {
           const ctx = event.context;
+          if (!ctx) return; // non-canvas renderer safeguard
           const w = ctx.canvas.width; const h = ctx.canvas.height;
           const swipeX = Math.round(w * swipeRatio);
           ctx.save(); ctx.beginPath(); ctx.rect(swipeX, 0, w - swipeX, h); ctx.clip();
         });
-        rightLayer.on('postrender', function(event) { event.context.restore(); });
+        rightLayer.on('postrender', function(event) { if (event.context) event.context.restore(); });
         map.render();
         updateSwipeUI();
+        setRoadsLayerState();
         updateDateUI();
       }
 
@@ -446,6 +454,7 @@
         clearCompareLayers();
         highlightLayer = makeHighlightLayer(leftCode, rightCode);
         map.addLayer(highlightLayer);
+        setRoadsLayerState();
         updateDateUI();
       }
 
@@ -512,7 +521,7 @@
       });
 
       toggleBtn.addEventListener('click', () => {
-        // Toggle is now allowed even during compare
+        // Toggle is allowed even during compare
         showingDisney = !showingDisney;
 
         if (!compareMode) {
@@ -524,7 +533,7 @@
             if (!esriLayer || esriLayer.get('esri_id') !== esriId) {
               if (esriLayer) map.removeLayer(esriLayer);
               esriLayer = makeEsriLayer(esriId);
-              if (esriLayer) { esriLayer.set('esri_id', esriId); esriLayer.getSource().set('extent', disneyWorldExtent); map.getLayers().setAt(1, esriLayer); }
+              if (esriLayer) { esriLayer.set('esri_id', esriId); map.addLayer(esriLayer); }
             }
             if (esriLayer) esriLayer.setVisible(true);
           }
@@ -560,12 +569,12 @@
       highlightBtn.addEventListener('click', () => {
         if (!compareMode || !showingDisney) return; // Disney-only
         highlightMode = !highlightMode;
-        showSensitivity = highlightMode ? false : false; // reset on entry/exit
+        showSensitivity = false; // reset on entry/exit
         if (highlightMode) launchHighlightMode(); else launchSwipeMode();
         updateDateUI();
       });
 
-      // NEW: settings button toggles slider visibility in highlight mode
+      // settings button toggles slider visibility in highlight mode
       settingsBtn.addEventListener('click', () => {
         if (!(compareMode && highlightMode)) return;
         showSensitivity = !showSensitivity;
@@ -621,7 +630,7 @@
         mapDiv.addEventListener('touchend', function() { if (isHoldZoom) { isHoldZoom = false; mapDiv.removeEventListener('touchmove', moveHandler, { passive: false }); } if (holdTimeout) clearTimeout(holdTimeout); });
       })();
 
-      // Slider input (reversed mapping)
+      // Slider input
       sensitivitySlider.addEventListener('input', () => {
         currentThreshold = sliderToThreshold(parseInt(sensitivitySlider.value, 10));
         if (compareMode && highlightMode) { launchHighlightMode(); }
