@@ -23,6 +23,7 @@
     .ol-control-inner img, .btn-square img { width: 24px; height: 24px; display: block; pointer-events: none; user-select: none; }
     .ol-control-inner:active, .ol-control-inner:focus, .ol-control-inner:hover,
     .btn-square:active, .btn-square:focus, .btn-square:hover { background: #f8f8f8; border-color: #999;}
+    .btn-square[disabled] { opacity: .45; cursor: default; }
 
     /* Group containers */
     .group-top-right { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
@@ -47,6 +48,14 @@
     /* Hide-by-default buttons (logic will toggle) */
     #compare-btn, #highlight-btn, #left-date-btn { display: none; }
 
+    /* === Compare UI === */
+    #swipe-thumb { position: absolute; top: 0; bottom: 0; width: 5px; background: #e24141cc; z-index: 1300; cursor: ew-resize; border-radius: 3px; box-shadow: 0 2px 12px #3336; pointer-events: auto; display: none; }
+    #swipe-handle { position: absolute; width: 34px; height: 34px; background: #fff; border: 4px solid #e24141cc; border-radius: 50%; box-shadow: 0 2px 12px #2225; z-index: 1400; cursor: grab; touch-action: none; display: none; transition: background 0.1s, border 0.1s; }
+    #swipe-handle:active { background: #ffeaea; border-color: #e24141; }
+    #sensitivity-row { position: absolute; right: 8px; top: 56px; display: none; background: rgba(255,255,255,0.96); padding: 8px 12px; border: 1.5px solid #ccc; border-radius: 8px; z-index: 1350; }
+    #sensitivity-row label { font-size: 13px; color: #555; display: block; margin-bottom: 6px; }
+    #sensitivity-slider { width: 160px; }
+
     @media (max-width: 600px) {
       .group-top-right { right: 8px; top: 8px; gap: 6px; }
       .group-bottom-right { right: 8px; bottom: calc(8px + env(safe-area-inset-bottom, 0)); gap: 6px; }
@@ -58,6 +67,8 @@
       #current-date-display { font-size: 16px; padding: 0 10px; top: 10px; }
       #date-popup { min-width: 140px; max-height: 50vh; top: 44px; right: 8px; }
       #left-date-popup { min-width: 140px; max-height: 50vh; top: 44px; left: 50px; }
+      #sensitivity-row { top: 44px; }
+      #swipe-handle { width: 40px; height: 40px; }
     }
   </style>
 </head>
@@ -108,24 +119,36 @@
   <div id="logo"><img src="logo.svg" alt="WDW Magic Explorer Logo"></div>
   <div id="current-date-display"></div>
 
+  <!-- === Compare UI Elements (swipe + handle + sensitivity) === -->
+  <div id="swipe-thumb"></div>
+  <div id="swipe-handle" title="Drag to compare"></div>
+  <div id="sensitivity-row">
+    <label for="sensitivity-slider">Highlight Sensitivity</label>
+    <input type="range" id="sensitivity-slider" min="10" max="30" value="20">
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
   <script>
-    // Wrap everything in an IIFE to avoid polluting the global scope and prevent
-    // duplicate variable declaration errors across multiple script files.
     (function() {
       'use strict';
 
       // ===== App State =====
       let serverOptions = [];
-      let disneyServer = null; // current chosen date code
+      let currentCode = null; // single-date mode
+      let leftCode = null, rightCode = null; // compare mode
       let lastTwoDates = [null, null];
-      let showingDisney = true;
-      let compareMode = false; // UI only — hook your actual compare impl here
-      let highlightMode = false;
+      let showingDisney = true; // Disney vs Satellite toggle (satellite uses ESRI Wayback)
+      let compareMode = false; // when true, render swipe/highlight between leftCode & rightCode
+      let highlightMode = false; // when true (and compare), render Delta-E highlight tiles
       let roadsOn = false;
 
       // Map & layers
       let map, disneyLayer, esriLayer, roadsLayer;
+      let leftLayer = null, rightLayer = null, highlightLayer = null;
+
+      // Compare UI state
+      let swipeRatio = 0.5;
+      let currentThreshold = 20; // Delta-E threshold
 
       // Controls
       const dateBtn = document.getElementById('date-btn');
@@ -141,6 +164,10 @@
       const roadsIconImg = document.getElementById('roads-icon-img');
       const findmeBtn = document.getElementById('findme-btn');
       const currentDateDisplay = document.getElementById('current-date-display');
+      const swipeThumb = document.getElementById('swipe-thumb');
+      const swipeHandle = document.getElementById('swipe-handle');
+      const sensitivityRow = document.getElementById('sensitivity-row');
+      const sensitivitySlider = document.getElementById('sensitivity-slider');
 
       // Extent bounds
       const disneyWorldExtent = ol.proj.transformExtent(
@@ -161,11 +188,11 @@
         return rec && rec.esri_label ? rec.esri_label : '';
       }
 
-      // Layers
-      function makeDisneyLayer(server) {
+      // ===== Layers =====
+      function makeDisneyLayer(code) {
         return new ol.layer.Tile({
           source: new ol.source.XYZ({
-            url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${server}/{z}/{x}/{y}.jpg`,
+            url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code}/{z}/{x}/{y}.jpg`,
             minZoom: 0, maxZoom: 20
           }),
           visible: true
@@ -190,20 +217,82 @@
         });
       }
 
-      function setRoadsLayerState() {
-        if (!roadsLayer) return;
-        roadsLayer.setVisible(roadsOn);
-        const layers = map.getLayers();
-        if (layers.getArray()[layers.getLength()-1] !== roadsLayer) {
-          map.removeLayer(roadsLayer); map.addLayer(roadsLayer);
-        }
+      // ===== Compare rendering =====
+      function makeHighlightLayer(baseCode, compareCode) {
+        const baseUrlTpl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${baseCode}/{z}/{x}/{y}.jpg`;
+        const compareUrlTpl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${compareCode}/{z}/{x}/{y}.jpg`;
+        return new ol.layer.Tile({
+          source: new ol.source.XYZ({
+            url: baseUrlTpl,
+            maxZoom: 20,
+            crossOrigin: 'anonymous',
+            tileLoadFunction: function(tile, src) {
+              const zxy = tile.tileCoord;
+              const compareUrl = compareUrlTpl
+                .replace('{z}', zxy[0])
+                .replace('{x}', zxy[1])
+                .replace('{y}', zxy[2]);
+              const baseImg = new Image();
+              baseImg.crossOrigin = 'anonymous';
+              baseImg.onload = function() {
+                const cmpImg = new Image();
+                cmpImg.crossOrigin = 'anonymous';
+                cmpImg.onload = function() {
+                  const w = baseImg.width || cmpImg.width || 256;
+                  const h = baseImg.height || cmpImg.height || 256;
+                  const canvas = document.createElement('canvas');
+                  canvas.width = w; canvas.height = h;
+                  const ctx = canvas.getContext('2d');
+
+                  const off1 = document.createElement('canvas'); off1.width = w; off1.height = h; const c1 = off1.getContext('2d'); c1.drawImage(baseImg, 0, 0, w, h); const d1 = c1.getImageData(0, 0, w, h);
+                  const off2 = document.createElement('canvas'); off2.width = w; off2.height = h; const c2 = off2.getContext('2d'); c2.drawImage(cmpImg, 0, 0, w, h); const d2 = c2.getImageData(0, 0, w, h);
+
+                  const out = ctx.createImageData(w, h);
+                  const threshold = currentThreshold;
+                  for (let i = 0; i < d1.data.length; i += 4) {
+                    const r1 = d1.data[i], g1 = d1.data[i+1], b1 = d1.data[i+2], a1 = d1.data[i+3];
+                    const r2 = d2.data[i], g2 = d2.data[i+1], b2 = d2.data[i+2];
+                    const lab1 = rgb2lab(r1, g1, b1);
+                    const lab2 = rgb2lab(r2, g2, b2);
+                    if (deltaE(lab1, lab2) > threshold) {
+                      out.data[i] = 255; out.data[i+1] = 0; out.data[i+2] = 0; out.data[i+3] = 200;
+                    } else {
+                      const gray = 0.3*r1 + 0.59*g1 + 0.11*b1; out.data[i] = out.data[i+1] = out.data[i+2] = gray; out.data[i+3] = a1;
+                    }
+                  }
+                  ctx.putImageData(out, 0, 0);
+                  tile.getImage().src = canvas.toDataURL();
+                };
+                cmpImg.onerror = function(){ tile.getImage().src = baseImg.src; };
+                cmpImg.src = compareUrl;
+              };
+              baseImg.onerror = function(){ const blank = document.createElement('canvas'); blank.width = blank.height = 256; tile.getImage().src = blank.toDataURL(); };
+              baseImg.src = src;
+            }
+          })
+        });
       }
 
-      function onBaseLayerChange() { setRoadsLayerState(); }
+      function rgb2lab(r, g, b) {
+        r /= 255; g /= 255; b /= 255;
+        r = r > 0.04045 ? Math.pow((r + 0.055)/1.055, 2.4) : r/12.92;
+        g = g > 0.04045 ? Math.pow((g + 0.055)/1.055, 2.4) : g/12.92;
+        b = b > 0.04045 ? Math.pow((b + 0.055)/1.055, 2.4) : b/12.92;
+        let x = r*0.4124 + g*0.3576 + b*0.1805;
+        let y = r*0.2126 + g*0.7152 + b*0.0722;
+        let z = r*0.0193 + g*0.1192 + b*0.9505;
+        [x, y, z] = [x/0.95047, y/1.0, z/1.08883];
+        x = x > 0.008856 ? Math.pow(x,1/3) : (7.787*x) + 16/116;
+        y = y > 0.008856 ? Math.pow(y,1/3) : (7.787*y) + 16/116;
+        z = z > 0.008856 ? Math.pow(z,1/3) : (7.787*z) + 16/116;
+        return [ (116*y)-16, 500*(x-y), 200*(y-z) ];
+      }
+      function deltaE(a, b) { const dL=a[0]-b[0], da=a[1]-b[1], db=a[2]-b[2]; return Math.sqrt(dL*dL+da*da+db*db); }
 
+      // ===== Base map init =====
       function initMap() {
-        disneyLayer = makeDisneyLayer(disneyServer);
-        esriLayer = makeEsriLayer(getEsriIdForCode(disneyServer));
+        disneyLayer = makeDisneyLayer(currentCode);
+        esriLayer = makeEsriLayer(getEsriIdForCode(currentCode));
         roadsLayer = makeRoadsLayer();
         disneyLayer.getSource().set('extent', disneyWorldExtent);
         if (esriLayer) esriLayer.getSource().set('extent', disneyWorldExtent);
@@ -212,136 +301,214 @@
         map = new ol.Map({
           target: 'map',
           layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
-          view: new ol.View({
-            center: ol.proj.fromLonLat([-81.5494, 28.3747]),
-            zoom: 16, minZoom: 0, maxZoom: 20, extent: disneyWorldExtent
-          })
+          view: new ol.View({ center: ol.proj.fromLonLat([-81.5494, 28.3747]), zoom: 16, minZoom: 0, maxZoom: 20, extent: disneyWorldExtent })
         });
       }
 
-      // ===== UI helpers =====
+      function setRoadsLayerState() {
+        if (!roadsLayer) return;
+        roadsLayer.setVisible(roadsOn);
+        const layers = map.getLayers();
+        if (layers.getArray()[layers.getLength()-1] !== roadsLayer) { map.removeLayer(roadsLayer); map.addLayer(roadsLayer); }
+      }
+
+      // ===== UI updates =====
       function updateDateUI() {
-        const isDisney = showingDisney;
-        if (isDisney) {
-          currentDateDisplay.textContent = getLabelForCode(disneyServer);
+        if (!compareMode) {
+          currentDateDisplay.textContent = showingDisney ? getLabelForCode(currentCode) : (getEsriLabelForCode(currentCode) || (getLabelForCode(currentCode) + ' (Satellite)'));
         } else {
-          currentDateDisplay.textContent = getEsriLabelForCode(disneyServer) || (getLabelForCode(disneyServer) + ' (Satellite)');
+          currentDateDisplay.textContent = `${getLabelForCode(leftCode)}  vs  ${getLabelForCode(rightCode)}`;
         }
         currentDateDisplay.style.display = 'block';
 
-        // Button visibility logic
-        // Top-right: date (always), toggle (always), compare (only in Disney mode), highlight (only compare mode)
-        compareBtn.style.display = (showingDisney ? 'flex' : 'none');
-        highlightBtn.style.display = (showingDisney && compareMode ? 'flex' : 'none');
-        // Left date button: only visible in compare mode
-        leftDateBtn.style.display = (compareMode ? 'flex' : 'none');
-        // Bottom-right quick switch visible if we have 2 dates in history
-        quickSwitchBtn.style.display = (lastTwoDates[1] ? 'flex' : 'none');
+        compareBtn.style.display = showingDisney ? 'flex' : 'none';
+        highlightBtn.style.display = (showingDisney && compareMode) ? 'flex' : 'none';
+        leftDateBtn.style.display = compareMode ? 'flex' : 'none';
+        quickSwitchBtn.style.display = (lastTwoDates[1] && !compareMode) ? 'flex' : 'none';
 
-        // Toggle icon imagery
+        toggleBtn.disabled = compareMode; // disable satellite toggle while comparing
         toggleIconImg.src = showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
         toggleIconImg.alt = showingDisney ? 'Satellite' : 'Disney Map';
+
+        // Compare UI widgets
+        swipeThumb.style.display = (compareMode && !highlightMode) ? 'block' : 'none';
+        swipeHandle.style.display = (compareMode && !highlightMode) ? 'block' : 'none';
+        sensitivityRow.style.display = (compareMode && highlightMode) ? 'block' : 'none';
       }
 
-      function fillDatePopupFor(btnEl, popupEl, selectedCode) {
+      function fillDatePopup(popupEl, selectedCode, onPick) {
         popupEl.innerHTML = '';
         const reversed = serverOptions.slice().reverse();
         reversed.forEach(opt => {
           const b = document.createElement('button');
           b.className = 'date-popup-item' + (opt.code === selectedCode ? ' selected' : '');
           b.textContent = showingDisney ? opt.label : (opt.esri_label || opt.label);
-          b.onclick = function() {
-            setMapDate(opt.code);
-            hidePopup(popupEl);
-          };
+          b.onclick = function() { onPick(opt.code); hidePopup(popupEl); };
           popupEl.appendChild(b);
         });
-        // position already handled by CSS (anchored near corners)
       }
       function showPopup(popupEl) { popupEl.style.display = 'block'; setTimeout(()=> popupEl.style.opacity = '1', 10); }
       function hidePopup(popupEl) { popupEl.style.opacity = '0'; setTimeout(()=> popupEl.style.display = 'none', 180); }
 
-      function setMapDate(newCode) {
-        if (disneyServer === newCode) return;
+      function setSingleDate(newCode) {
+        if (currentCode === newCode) return;
         if (lastTwoDates[0] !== newCode) lastTwoDates = [newCode, lastTwoDates[0]];
-        disneyServer = newCode;
-        if (showingDisney) {
-          const vis = disneyLayer.getVisible();
-          map.removeLayer(disneyLayer);
-          disneyLayer = makeDisneyLayer(newCode);
-          disneyLayer.setVisible(vis);
-          disneyLayer.getSource().set('extent', disneyWorldExtent);
-          map.getLayers().setAt(0, disneyLayer);
-        } else {
+        currentCode = newCode;
+        const vis = disneyLayer.getVisible();
+        map.removeLayer(disneyLayer);
+        disneyLayer = makeDisneyLayer(newCode);
+        disneyLayer.setVisible(vis);
+        disneyLayer.getSource().set('extent', disneyWorldExtent);
+        map.getLayers().setAt(0, disneyLayer);
+
+        if (!showingDisney) {
           const esri_id = getEsriIdForCode(newCode);
-          const vis = esriLayer && esriLayer.getVisible();
+          const visE = esriLayer && esriLayer.getVisible();
           if (!esriLayer || esriLayer.get('esri_id') !== esri_id) {
             if (esriLayer) map.removeLayer(esriLayer);
             esriLayer = makeEsriLayer(esri_id);
-            if (esriLayer) {
-              esriLayer.set('esri_id', esri_id);
-              esriLayer.getSource().set('extent', disneyWorldExtent);
-              map.getLayers().setAt(1, esriLayer);
-            }
+            if (esriLayer) { esriLayer.set('esri_id', esri_id); esriLayer.getSource().set('extent', disneyWorldExtent); map.getLayers().setAt(1, esriLayer); }
           }
-          if (esriLayer) esriLayer.setVisible(vis);
+          if (esriLayer) esriLayer.setVisible(visE);
         }
-        onBaseLayerChange();
+        setRoadsLayerState();
         updateDateUI();
       }
+
+      // ===== Compare Mode Wiring =====
+      function clearCompareLayers() {
+        if (leftLayer) { map.removeLayer(leftLayer); leftLayer = null; }
+        if (rightLayer) { map.removeLayer(rightLayer); rightLayer = null; }
+        if (highlightLayer) { map.removeLayer(highlightLayer); highlightLayer = null; }
+      }
+
+      function launchSwipeMode() {
+        highlightMode = false;
+        clearCompareLayers();
+        leftLayer = makeDisneyLayer(leftCode);
+        rightLayer = makeDisneyLayer(rightCode);
+        map.addLayer(leftLayer);
+        map.addLayer(rightLayer);
+
+        // Clip right layer during render based on swipeRatio
+        rightLayer.on('prerender', function(event) {
+          const ctx = event.context;
+          const w = ctx.canvas.width; const h = ctx.canvas.height;
+          const swipeX = Math.round(w * swipeRatio);
+          ctx.save(); ctx.beginPath(); ctx.rect(swipeX, 0, w - swipeX, h); ctx.clip();
+        });
+        rightLayer.on('postrender', function(event) { event.context.restore(); });
+        map.render();
+        updateSwipeUI();
+      }
+
+      function launchHighlightMode() {
+        clearCompareLayers();
+        highlightLayer = makeHighlightLayer(leftCode, rightCode);
+        map.addLayer(highlightLayer);
+        updateDateUI();
+      }
+
+      // Swipe UI
+      function updateSwipeUI() {
+        if (!compareMode || highlightMode) return;
+        const mapDiv = map.getTargetElement();
+        const w = mapDiv.clientWidth; const h = mapDiv.clientHeight;
+        const x = Math.round(w * swipeRatio);
+        swipeThumb.style.left = (x - (swipeThumb.offsetWidth / 2)) + 'px';
+        swipeThumb.style.top = '0px';
+        swipeThumb.style.height = h + 'px';
+        let handlePos = 0.90; if (window.innerWidth <= 600) handlePos = 0.75;
+        swipeHandle.style.left = (x - (swipeHandle.offsetWidth / 2) + (swipeThumb.offsetWidth / 2) - 2) + 'px';
+        swipeHandle.style.top = (Math.round(h * handlePos) - (swipeHandle.offsetHeight / 2)) + 'px';
+        map.render();
+      }
+      function startSwipeDrag(e) {
+        e.preventDefault(); document.body.style.userSelect = 'none';
+        function move(ev) {
+          const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+          const rect = map.getTargetElement().getBoundingClientRect();
+          swipeRatio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+          updateSwipeUI();
+        }
+        function stop() {
+          document.removeEventListener('mousemove', move);
+          document.removeEventListener('mouseup', stop);
+          document.removeEventListener('touchmove', move);
+          document.removeEventListener('touchend', stop);
+          document.body.style.userSelect = '';
+        }
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', stop);
+        document.addEventListener('touchmove', move);
+        document.addEventListener('touchend', stop);
+      }
+      swipeThumb.addEventListener('mousedown', startSwipeDrag);
+      swipeThumb.addEventListener('touchstart', startSwipeDrag);
+      swipeHandle.addEventListener('mousedown', startSwipeDrag);
+      swipeHandle.addEventListener('touchstart', startSwipeDrag);
+      window.addEventListener('resize', () => setTimeout(updateSwipeUI, 20));
+      window.addEventListener('load', () => setTimeout(updateSwipeUI, 30));
 
       // ===== Events (menus & toggles) =====
       dateBtn.addEventListener('click', () => {
         if (datePopup.style.display === 'block') { hidePopup(datePopup); return; }
-        fillDatePopupFor(dateBtn, datePopup, disneyServer);
+        if (!compareMode) {
+          fillDatePopup(datePopup, currentCode, setSingleDate);
+        } else {
+          fillDatePopup(datePopup, rightCode, (code)=>{ rightCode = code; (highlightMode?launchHighlightMode:launchSwipeMode)(); updateDateUI(); });
+        }
         showPopup(datePopup);
         const hide = (e)=>{ if (!datePopup.contains(e.target) && e.target !== dateBtn && !dateBtn.contains(e.target)) { hidePopup(datePopup); document.removeEventListener('mousedown', hide, true); document.removeEventListener('touchstart', hide, true);} };
         setTimeout(()=>{ document.addEventListener('mousedown', hide, true); document.addEventListener('touchstart', hide, true); }, 0);
       });
 
       leftDateBtn.addEventListener('click', () => {
+        if (!compareMode) return;
         if (leftDatePopup.style.display === 'block') { hidePopup(leftDatePopup); return; }
-        // In your real compare mode, this would call your left-date setter; here we reuse setMapDate for demo
-        fillDatePopupFor(leftDateBtn, leftDatePopup, disneyServer);
+        fillDatePopup(leftDatePopup, leftCode, (code)=>{ leftCode = code; (highlightMode?launchHighlightMode:launchSwipeMode)(); updateDateUI(); });
         showPopup(leftDatePopup);
         const hide = (e)=>{ if (!leftDatePopup.contains(e.target) && e.target !== leftDateBtn && !leftDateBtn.contains(e.target)) { hidePopup(leftDatePopup); document.removeEventListener('mousedown', hide, true); document.removeEventListener('touchstart', hide, true);} };
         setTimeout(()=>{ document.addEventListener('mousedown', hide, true); document.addEventListener('touchstart', hide, true); }, 0);
       });
 
       toggleBtn.addEventListener('click', () => {
+        if (compareMode) return; // disabled while comparing
         showingDisney = !showingDisney;
         if (showingDisney) {
-          disneyLayer.setVisible(true);
-          if (esriLayer) esriLayer.setVisible(false);
+          disneyLayer.setVisible(true); if (esriLayer) esriLayer.setVisible(false);
         } else {
           disneyLayer.setVisible(false);
-          const esriId = getEsriIdForCode(disneyServer);
+          const esriId = getEsriIdForCode(currentCode);
           if (!esriLayer || esriLayer.get('esri_id') !== esriId) {
             if (esriLayer) map.removeLayer(esriLayer);
             esriLayer = makeEsriLayer(esriId);
-            if (esriLayer) {
-              esriLayer.set('esri_id', esriId);
-              esriLayer.getSource().set('extent', disneyWorldExtent);
-              map.getLayers().setAt(1, esriLayer);
-            }
+            if (esriLayer) { esriLayer.set('esri_id', esriId); esriLayer.getSource().set('extent', disneyWorldExtent); map.getLayers().setAt(1, esriLayer); }
           }
           if (esriLayer) esriLayer.setVisible(true);
         }
-        onBaseLayerChange();
+        setRoadsLayerState();
         updateDateUI();
       });
 
       compareBtn.addEventListener('click', () => {
-        // Toggle compare mode UI state (hook into your existing compare code here)
         compareMode = !compareMode;
-        if (!compareMode) { highlightMode = false; }
+        if (compareMode) {
+          // seed left/right: left = previous date if available, otherwise oldest; right = current
+          rightCode = currentCode;
+          leftCode = lastTwoDates[1] || serverOptions[0].code;
+          launchSwipeMode();
+        } else {
+          highlightMode = false; clearCompareLayers();
+          swipeThumb.style.display = 'none'; swipeHandle.style.display = 'none'; sensitivityRow.style.display = 'none';
+        }
         updateDateUI();
       });
 
       highlightBtn.addEventListener('click', () => {
-        // Only meaningful when compareMode is on
         if (!compareMode) return;
         highlightMode = !highlightMode;
+        if (highlightMode) launchHighlightMode(); else launchSwipeMode();
         updateDateUI();
       });
 
@@ -352,15 +519,11 @@
         setRoadsLayerState();
       });
 
-      quickSwitchBtn.addEventListener('click', () => { if (lastTwoDates[1]) setMapDate(lastTwoDates[1]); });
+      quickSwitchBtn.addEventListener('click', () => { if (lastTwoDates[1]) setSingleDate(lastTwoDates[1]); });
 
       // Find Me button
       const findmeMessage = document.getElementById('findme-message');
-      function showFindMeMessage(msg) {
-        findmeMessage.textContent = msg; findmeMessage.style.display = 'block';
-        setTimeout(()=> findmeMessage.style.opacity = '1', 10);
-        setTimeout(()=> { findmeMessage.style.opacity = '0'; setTimeout(()=> findmeMessage.style.display = 'none', 400); }, 2200);
-      }
+      function showFindMeMessage(msg) { findmeMessage.textContent = msg; findmeMessage.style.display = 'block'; setTimeout(()=> findmeMessage.style.opacity = '1', 10); setTimeout(()=> { findmeMessage.style.opacity = '0'; setTimeout(()=> findmeMessage.style.display = 'none', 400); }, 2200); }
       findmeBtn.addEventListener('click', () => {
         if (!navigator.geolocation) { showFindMeMessage('Geolocation not supported'); return; }
         navigator.geolocation.getCurrentPosition((pos)=>{
@@ -374,13 +537,11 @@
             style: new ol.style.Style({ image: new ol.style.Circle({ radius: 10, fill: new ol.style.Fill({color: 'rgba(0,116,217,0.35)'}), stroke: new ol.style.Stroke({color: '#0074d9', width: 3}) }) }),
             zIndex: 99
           });
-          map.addLayer(layer);
-          map.getView().animate({ center: projected, zoom: 17, duration: 800 });
-          setTimeout(()=> map.removeLayer(layer), 5000);
+          map.addLayer(layer); map.getView().animate({ center: projected, zoom: 17, duration: 800 }); setTimeout(()=> map.removeLayer(layer), 5000);
         }, ()=> showFindMeMessage('Unable to get location'), { enableHighAccuracy: true });
       });
 
-      // Double-tap and hold zoom helper (kept from your app)
+      // Double-tap-and-hold zoom helper
       (function() {
         let lastTap = 0, isHoldZoom = false, startY = 0, startZoom = 0, holdTimeout = null;
         const mapDiv = document.getElementById('map');
@@ -400,24 +561,29 @@
         mapDiv.addEventListener('touchend', function() { if (isHoldZoom) { isHoldZoom = false; mapDiv.removeEventListener('touchmove', moveHandler, { passive: false }); } if (holdTimeout) clearTimeout(holdTimeout); });
       })();
 
+      // Sensitivity Slider
+      sensitivitySlider.addEventListener('input', () => {
+        currentThreshold = parseInt(sensitivitySlider.value, 10);
+        if (compareMode && highlightMode) { launchHighlightMode(); }
+      });
+
       // ===== Boot =====
       fetch('servers2.json')
         .then(r => r.json())
         .then(json => {
           serverOptions = json;
-          disneyServer = serverOptions[serverOptions.length - 1].code;
-          lastTwoDates = [disneyServer, null];
+          currentCode = serverOptions[serverOptions.length - 1].code; // newest as default
+          lastTwoDates = [currentCode, null];
           initMap();
           updateDateUI();
         })
         .catch(err => alert('Failed to load servers2.json: ' + err));
 
-      // ===== Lightweight self-tests (do not throw) =====
+      // ===== Self-tests =====
       console.assert(document.getElementById('grp-top-right'), 'Top-right group should exist');
       console.assert(document.getElementById('grp-bottom-right'), 'Bottom-right group should exist');
       console.assert(document.getElementById('date-btn'), 'Date button should exist');
-      // Ensure this script did NOT leak variables globally (helps avoid duplicate identifier issues)
-      console.assert(typeof window.quickSwitchBtn === 'undefined', 'quickSwitchBtn should not be global (scoped inside IIFE)');
+      console.assert(typeof window.quickSwitchBtn === 'undefined', 'quickSwitchBtn should not be global');
     })();
   </script>
 </body>
