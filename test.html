@@ -26,7 +26,7 @@
 
     .group-top-right { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
     .group-bottom-right { position: absolute; right: 8px; bottom: calc(18px + env(safe-area-inset-bottom, 0)); display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
-    .group-top-left { position: absolute; top: 8px; left: 56px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
+    .group-top-left { position: absolute; top: 8px; left: 46px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; } /* moved 10px left */
 
     #date-popup, #left-date-popup { display: none; opacity: 0; position: absolute; min-width: 180px; max-height: 70vh; overflow-y: auto; background: rgba(255,255,255,0.96); border: 1.5px solid #ccc; border-radius: 8px; box-shadow: 0 3px 15px #0002; z-index: 1400; font-family: Arial, Helvetica, sans-serif; }
     #date-popup { right: 8px; top: 56px; }
@@ -42,7 +42,7 @@
 
     #findme-message { display: none; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 2000; background: rgba(255,255,255,0.92); color: #d62525; font-size: 17px; font-weight: bold; text-align: center; opacity: 0; padding: 7px 20px; border-radius: 16px; box-shadow: 0 2px 8px #0001; transition: opacity 0.4s; pointer-events: none;}
 
-    #compare-btn, #highlight-btn, #left-date-btn { display: none; }
+    #compare-btn, #highlight-btn, #left-date-btn, #settings-btn { display: none; }
 
     #swipe-thumb { position: absolute; top: 0; bottom: 0; width: 5px; background: #e24141cc; z-index: 1300; cursor: ew-resize; border-radius: 3px; box-shadow: 0 2px 12px #3336; pointer-events: auto; display: none; }
     #swipe-handle { position: absolute; width: 34px; height: 34px; background: #fff; border: 4px solid #e24141cc; border-radius: 50%; box-shadow: 0 2px 12px #2225; z-index: 1400; cursor: grab; touch-action: none; display: none; transition: background 0.1s, border 0.1s; }
@@ -54,7 +54,7 @@
     @media (max-width: 600px) {
       .group-top-right { right: 8px; top: 8px; gap: 6px; }
       .group-bottom-right { right: 8px; bottom: calc(8px + env(safe-area-inset-bottom, 0)); gap: 6px; }
-      .group-top-left { left: 50px; top: 8px; gap: 6px; }
+      .group-top-left { left: 40px; top: 8px; gap: 6px; }
       .ol-control-inner, .btn-square { width: 32px; height: 32px; border-radius: 6px; font-size: 13px; }
       .ol-control-inner img, .btn-square img { width: 18px; height: 18px; }
       #logo { left: 50%; transform: translateX(-50%); bottom: 8px;}
@@ -82,6 +82,10 @@
     </button>
     <button id="highlight-btn" class="btn-square" title="Highlight Changes">
       <img src="icons/highlight.svg" alt="Highlight">
+    </button>
+    <!-- NEW: settings button (only visible in highlight mode) -->
+    <button id="settings-btn" class="btn-square" title="Show/Hide Sensitivity">
+      <img src="icons/settings.svg" alt="Settings">
     </button>
   </div>
 
@@ -131,6 +135,7 @@
       let compareMode = false;
       let highlightMode = false; // only valid in Disney compare
       let roadsOn = false;
+      let showSensitivity = false; // NEW: settings button toggles this
 
       // Map & layers
       let map, disneyLayer, esriLayer, roadsLayer;
@@ -138,7 +143,16 @@
 
       // Compare UI state
       let swipeRatio = 0.5;
-      let currentThreshold = 20;
+
+      // Sensitivity (reversed slider mapping)
+      const sensitivitySlider = document.getElementById('sensitivity-slider');
+      let currentThreshold = sliderToThreshold(parseInt(sensitivitySlider.value, 10));
+      function sliderToThreshold(val) {
+        const min = parseInt(sensitivitySlider.min, 10);
+        const max = parseInt(sensitivitySlider.max, 10);
+        // reverse: slider right = lower threshold (less sensitive)
+        return (min + max) - val;
+      }
 
       // Controls
       const dateBtn = document.getElementById('date-btn');
@@ -149,6 +163,7 @@
       const toggleIconImg = document.getElementById('toggle-icon-img');
       const compareBtn = document.getElementById('compare-btn');
       const highlightBtn = document.getElementById('highlight-btn');
+      const settingsBtn = document.getElementById('settings-btn');
       const quickSwitchBtn = document.getElementById('quick-switch-btn');
       const roadsBtn = document.getElementById('roads-btn');
       const roadsIconImg = document.getElementById('roads-icon-img');
@@ -157,7 +172,6 @@
       const swipeThumb = document.getElementById('swipe-thumb');
       const swipeHandle = document.getElementById('swipe-handle');
       const sensitivityRow = document.getElementById('sensitivity-row');
-      const sensitivitySlider = document.getElementById('sensitivity-slider');
 
       const disneyWorldExtent = ol.proj.transformExtent(
         [-81.9200, 28.1772, -81.2244, 28.6390], 'EPSG:4326', 'EPSG:3857'
@@ -315,22 +329,25 @@
         }
         currentDateDisplay.style.display = 'block';
 
-        // Compare is available for BOTH Disney and Satellite now
+        // Compare is available for BOTH Disney and Satellite
         compareBtn.style.display = 'flex';
         // Highlight remains Disney-only and only inside compare mode
         highlightBtn.style.display = (showingDisney && compareMode) ? 'flex' : 'none';
+        // Settings button only in highlight mode
+        settingsBtn.style.display = (compareMode && highlightMode) ? 'flex' : 'none';
 
         leftDateBtn.style.display = compareMode ? 'flex' : 'none';
         quickSwitchBtn.style.display = (lastTwoDates[1] && !compareMode) ? 'flex' : 'none';
 
-        // Keep toggle disabled during compare to avoid switching mid-mode
-        toggleBtn.disabled = compareMode;
+        // Keep toggle enabled even during compare mode (changed)
         toggleIconImg.src = showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
         toggleIconImg.alt = showingDisney ? 'Satellite' : 'Disney Map';
 
+        // Swipe controls only in swipe mode
         swipeThumb.style.display = (compareMode && !highlightMode) ? 'block' : 'none';
         swipeHandle.style.display = (compareMode && !highlightMode) ? 'block' : 'none';
-        sensitivityRow.style.display = (compareMode && highlightMode) ? 'block' : 'none';
+        // Sensitivity panel only if user toggled settings while in highlight
+        sensitivityRow.style.display = (compareMode && highlightMode && showSensitivity) ? 'block' : 'none';
       }
 
       function fillDatePopup(popupEl, selectedCode, onPick) {
@@ -360,7 +377,7 @@
         disneyLayer.getSource().set('extent', disneyWorldExtent);
         map.getLayers().setAt(0, disneyLayer);
 
-        // Swap ESRI layer if showing satellite or might be toggled later
+        // Swap ESRI layer
         const esri_id = getEsriIdForCode(newCode);
         const visE = esriLayer && esriLayer.getVisible();
         if (!esriLayer || esriLayer.get('esri_id') !== esri_id) {
@@ -371,6 +388,12 @@
         if (esriLayer) esriLayer.setVisible(visE);
 
         setRoadsLayerState();
+
+        // If we're in compare, rebuild current compare mode
+        if (compareMode) {
+          if (highlightMode) launchHighlightMode();
+          else launchSwipeMode();
+        }
         updateDateUI();
       }
 
@@ -381,24 +404,19 @@
         if (highlightLayer) { map.removeLayer(highlightLayer); highlightLayer = null; }
       }
 
-      // === UPDATED: Support Disney OR Satellite in swipe compare ===
+      // Compare builders
       function launchSwipeMode() {
-        // Highlight is Disney-only; turning it off if user switched to Satellite
-        if (!showingDisney) highlightMode = false;
-
         clearCompareLayers();
 
         if (showingDisney) {
           leftLayer  = makeDisneyLayer(leftCode);
           rightLayer = makeDisneyLayer(rightCode);
         } else {
-          // Satellite compare uses ESRI Wayback IDs mapped from codes
           const leftEsri  = getEsriIdForCode(leftCode);
           const rightEsri = getEsriIdForCode(rightCode);
           leftLayer  = makeEsriLayer(leftEsri);
           rightLayer = makeEsriLayer(rightEsri);
           if (!leftLayer || !rightLayer) {
-            // Fallback: if a mapping is missing, silently cancel compare
             compareMode = false;
             updateDateUI();
             return;
@@ -494,20 +512,32 @@
       });
 
       toggleBtn.addEventListener('click', () => {
-        if (compareMode) return; // keep disabled during compare
+        // Toggle is now allowed even during compare
         showingDisney = !showingDisney;
-        if (showingDisney) {
-          disneyLayer.setVisible(true); if (esriLayer) esriLayer.setVisible(false);
-        } else {
-          disneyLayer.setVisible(false);
-          const esriId = getEsriIdForCode(currentCode);
-          if (!esriLayer || esriLayer.get('esri_id') !== esriId) {
-            if (esriLayer) map.removeLayer(esriLayer);
-            esriLayer = makeEsriLayer(esriId);
-            if (esriLayer) { esriLayer.set('esri_id', esriId); esriLayer.getSource().set('extent', disneyWorldExtent); map.getLayers().setAt(1, esriLayer); }
+
+        if (!compareMode) {
+          if (showingDisney) {
+            disneyLayer.setVisible(true); if (esriLayer) esriLayer.setVisible(false);
+          } else {
+            disneyLayer.setVisible(false);
+            const esriId = getEsriIdForCode(currentCode);
+            if (!esriLayer || esriLayer.get('esri_id') !== esriId) {
+              if (esriLayer) map.removeLayer(esriLayer);
+              esriLayer = makeEsriLayer(esriId);
+              if (esriLayer) { esriLayer.set('esri_id', esriId); esriLayer.getSource().set('extent', disneyWorldExtent); map.getLayers().setAt(1, esriLayer); }
+            }
+            if (esriLayer) esriLayer.setVisible(true);
           }
-          if (esriLayer) esriLayer.setVisible(true);
+        } else {
+          // In compare: rebuild the current compare mode
+          if (!showingDisney && highlightMode) {
+            // Leaving Disney while in highlight -> fall back to swipe
+            highlightMode = false;
+            showSensitivity = false;
+          }
+          (highlightMode ? launchHighlightMode : launchSwipeMode)();
         }
+
         setRoadsLayerState();
         updateDateUI();
       });
@@ -517,9 +547,11 @@
         if (compareMode) {
           rightCode = currentCode;
           leftCode = getPreviousCode(currentCode);
+          highlightMode = false; // start in swipe
+          showSensitivity = false;
           launchSwipeMode();
         } else {
-          highlightMode = false; clearCompareLayers();
+          highlightMode = false; showSensitivity = false; clearCompareLayers();
           swipeThumb.style.display = 'none'; swipeHandle.style.display = 'none'; sensitivityRow.style.display = 'none';
         }
         updateDateUI();
@@ -528,7 +560,15 @@
       highlightBtn.addEventListener('click', () => {
         if (!compareMode || !showingDisney) return; // Disney-only
         highlightMode = !highlightMode;
+        showSensitivity = highlightMode ? false : false; // reset on entry/exit
         if (highlightMode) launchHighlightMode(); else launchSwipeMode();
+        updateDateUI();
+      });
+
+      // NEW: settings button toggles slider visibility in highlight mode
+      settingsBtn.addEventListener('click', () => {
+        if (!(compareMode && highlightMode)) return;
+        showSensitivity = !showSensitivity;
         updateDateUI();
       });
 
@@ -581,8 +621,9 @@
         mapDiv.addEventListener('touchend', function() { if (isHoldZoom) { isHoldZoom = false; mapDiv.removeEventListener('touchmove', moveHandler, { passive: false }); } if (holdTimeout) clearTimeout(holdTimeout); });
       })();
 
+      // Slider input (reversed mapping)
       sensitivitySlider.addEventListener('input', () => {
-        currentThreshold = parseInt(sensitivitySlider.value, 10);
+        currentThreshold = sliderToThreshold(parseInt(sensitivitySlider.value, 10));
         if (compareMode && highlightMode) { launchHighlightMode(); }
       });
 
@@ -602,7 +643,6 @@
       console.assert(document.getElementById('grp-top-right'), 'Top-right group should exist');
       console.assert(document.getElementById('grp-bottom-right'), 'Bottom-right group should exist');
       console.assert(document.getElementById('date-btn'), 'Date button should exist');
-      console.assert(typeof window.quickSwitchBtn === 'undefined', 'quickSwitchBtn should not be global');
     })();
   </script>
 </body>
