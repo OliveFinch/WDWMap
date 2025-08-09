@@ -712,7 +712,7 @@
       } else {
         const leftText  = getLabelForCode(disneyServerLeft)  || '';
         const rightText = getLabelForCode(disneyServerRight) || '';
-        currentDateDisplay.textContent = `Left: ${leftText}  |  Right: ${rightText}`;
+        currentDateDisplay.textContent = `${leftText}  |  ${rightText}`;
       }
       currentDateDisplay.style.display = 'block';
       quickSwitchBtn.style.display = (lastTwoDates[1] && !isCompareMode) ? 'flex' : 'none';
