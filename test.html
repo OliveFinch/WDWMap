@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>WDW Magic Explorer</title>
+  <title>WDW Magic Explorer (Grouped Buttons Test)</title>
   <meta id="viewport-meta" name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -18,97 +18,58 @@
     html, body { margin: 0; padding: 0; height: 100%; overscroll-behavior: none; overflow: hidden; font-family: Arial, Helvetica, sans-serif;}
     #map { width: 100vw; height: 100vh; touch-action: none; -webkit-user-select: none; user-select: none; }
 
-    /* Buttons */
-    .ol-control-inner, .btn-square {
-      display: flex; align-items: center; justify-content: center;
-      width: 40px; height: 40px; background: rgba(255,255,255,0.85);
-      border: 1.5px solid #ccc; border-radius: 8px;
-      font-size: 15px; color: #222; cursor: pointer;
-      transition: background 0.2s, border 0.2s; user-select: none; padding: 0;
-      font-family: Arial, Helvetica, sans-serif;
-    }
+    .ol-control-inner, .btn-square { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255,255,255,0.85); border: 1.5px solid #ccc; border-radius: 8px; font-size: 15px; color: #222; cursor: pointer; transition: background 0.2s, border 0.2s; user-select: none; padding: 0; font-family: Arial, Helvetica, sans-serif; }
     .ol-control-inner img, .btn-square img { width: 24px; height: 24px; display: block; pointer-events: none; user-select: none; }
     .ol-control-inner:active, .ol-control-inner:focus, .ol-control-inner:hover,
     .btn-square:active, .btn-square:focus, .btn-square:hover { background: #f8f8f8; border-color: #999;}
     .btn-square[disabled] { opacity: .45; cursor: default; }
 
-    /* Groups */
     .group-top-right { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
     .group-bottom-right { position: absolute; right: 8px; bottom: calc(18px + env(safe-area-inset-bottom, 0)); display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
-    .group-top-left { position: absolute; top: 8px; left: 46px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; } /* nudged 10px left from 56 */
+    .group-top-left { position: absolute; top: 8px; left: 46px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; } /* moved 10px left */
 
-    /* Popups */
-    #date-popup, #left-date-popup {
-      display: none; opacity: 0; position: absolute; min-width: 180px; max-height: 70vh; overflow-y: auto;
-      background: rgba(255,255,255,0.96); border: 1.5px solid #ccc; border-radius: 8px; box-shadow: 0 3px 15px #0002; z-index: 1400;
-      font-family: Arial, Helvetica, sans-serif;
-    }
+    #date-popup, #left-date-popup { display: none; opacity: 0; position: absolute; min-width: 180px; max-height: 70vh; overflow-y: auto; background: rgba(255,255,255,0.96); border: 1.5px solid #ccc; border-radius: 8px; box-shadow: 0 3px 15px #0002; z-index: 1400; font-family: Arial, Helvetica, sans-serif; }
     #date-popup { right: 8px; top: 56px; }
-    #left-date-popup { left: 46px; top: 56px; }
+    #left-date-popup { left: 56px; top: 56px; }
     .date-popup-item { display: block; width: 100%; border: none; background: none; font-size: 15px; text-align: left; padding: 9px 16px; cursor: pointer; font-family: Arial, Helvetica, sans-serif; }
     .date-popup-item.selected { background: #f2f5fa; color: #3761c4; font-weight: bold;}
     .date-popup-item:active, .date-popup-item:hover { background: #f8f8f8;}
 
-    #current-date-display {
-      position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1500;
-      background: none; color: #fff; font-size: 22px; font-weight: bold; text-shadow: 0 3px 16px #222, 0 1px 0 #222; pointer-events: none; opacity: 0.97; padding: 0 22px;
-    }
+    #current-date-display { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1500; background: none; color: #fff; font-size: 22px; font-weight: bold; text-shadow: 0 3px 16px #222, 0 1px 0 #222; pointer-events: none; opacity: 0.97; padding: 0 22px;}
 
     #logo { position: absolute; left: 16px; bottom: 16px; z-index: 1200; pointer-events: auto; opacity: 0.93; cursor: pointer;}
     #logo img { display: block; width: 200px; height: 36px; max-width: 98vw;}
 
-    #findme-message {
-      display: none; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 2000;
-      background: rgba(255,255,255,0.92); color: #d62525; font-size: 17px; font-weight: bold; text-align: center;
-      opacity: 0; padding: 7px 20px; border-radius: 16px; box-shadow: 0 2px 8px #0001; transition: opacity 0.4s; pointer-events: none;
-    }
+    #findme-message { display: none; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 2000; background: rgba(255,255,255,0.92); color: #d62525; font-size: 17px; font-weight: bold; text-align: center; opacity: 0; padding: 7px 20px; border-radius: 16px; box-shadow: 0 2px 8px #0001; transition: opacity 0.4s; pointer-events: none;}
 
-    /* Hide-by-default (logic toggles) */
     #compare-btn, #highlight-btn, #left-date-btn, #settings-btn { display: none; }
 
-    /* Compare UI */
-    #swipe-thumb {
-      position: absolute; top: 0; bottom: 0; width: 5px; background: #e24141cc; z-index: 1300; cursor: ew-resize;
-      border-radius: 3px; box-shadow: 0 2px 12px #3336; pointer-events: auto; display: none;
-    }
-    #swipe-handle {
-      position: absolute; width: 34px; height: 34px; background: #fff; border: 4px solid #e24141cc; border-radius: 50%;
-      box-shadow: 0 2px 12px #2225; z-index: 1400; cursor: grab; touch-action: none; display: none; transition: background 0.1s, border 0.1s;
-    }
+    #swipe-thumb { position: absolute; top: 0; bottom: 0; width: 5px; background: #e24141cc; z-index: 1300; cursor: ew-resize; border-radius: 3px; box-shadow: 0 2px 12px #3336; pointer-events: auto; display: none; }
+    #swipe-handle { position: absolute; width: 34px; height: 34px; background: #fff; border: 4px solid #e24141cc; border-radius: 50%; box-shadow: 0 2px 12px #2225; z-index: 1400; cursor: grab; touch-action: none; display: none; transition: background 0.1s, border 0.1s; }
     #swipe-handle:active { background: #ffeaea; border-color: #e24141; }
-
-    /* Highlight sensitivity panel — bottom center, ~30% up */
-    #sensitivity-row {
-      position: absolute; left: 50%; transform: translateX(-50%);
-      bottom: calc(30% + env(safe-area-inset-bottom, 0));
-      display: none; background: rgba(255,255,255,0.96); padding: 10px 14px;
-      border: 1.5px solid #ccc; border-radius: 10px; z-index: 1350;
-      box-shadow: 0 3px 12px #0002;
-    }
-    #sensitivity-row label { font-size: 13px; color: #555; display: block; margin-bottom: 6px; text-align: center; }
-    #sensitivity-slider { width: 220px; }
+    #sensitivity-row { position: absolute; right: 8px; top: 56px; display: none; background: rgba(255,255,255,0.96); padding: 8px 12px; border: 1.5px solid #ccc; border-radius: 8px; z-index: 1350; }
+    #sensitivity-row label { font-size: 13px; color: #555; display: block; margin-bottom: 6px; }
+    #sensitivity-slider { width: 160px; }
 
     @media (max-width: 600px) {
       .group-top-right { right: 8px; top: 8px; gap: 6px; }
       .group-bottom-right { right: 8px; bottom: calc(8px + env(safe-area-inset-bottom, 0)); gap: 6px; }
-      .group-top-left { left: 40px; top: 8px; gap: 6px; } /* mobile nudge */
+      .group-top-left { left: 40px; top: 8px; gap: 6px; }
       .ol-control-inner, .btn-square { width: 32px; height: 32px; border-radius: 6px; font-size: 13px; }
       .ol-control-inner img, .btn-square img { width: 18px; height: 18px; }
       #logo { left: 50%; transform: translateX(-50%); bottom: 8px;}
       #logo img { width: 180px !important; height: 32px !important; }
       #current-date-display { font-size: 16px; padding: 0 10px; top: 10px; }
       #date-popup { min-width: 140px; max-height: 50vh; top: 44px; right: 8px; }
-      #left-date-popup { min-width: 140px; max-height: 50vh; top: 44px; left: 40px; }
+      #left-date-popup { min-width: 140px; max-height: 50vh; top: 44px; left: 50px; }
+      #sensitivity-row { top: 44px; }
       #swipe-handle { width: 40px; height: 40px; }
-      /* shift the right date button ~5px more to the right on mobile */
-      #date-btn { margin-right: -5px; }
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
 
-  <!-- TOP-RIGHT -->
   <div class="group-top-right" id="grp-top-right">
     <button id="date-btn" type="button" class="btn-square" title="Choose date">
       <img src="icons/calendar.svg" alt="Date Selector">
@@ -122,16 +83,14 @@
     <button id="highlight-btn" class="btn-square" title="Highlight Changes">
       <img src="icons/highlight.svg" alt="Highlight">
     </button>
-    <!-- Appears only during Highlight mode -->
-    <button id="settings-btn" class="btn-square" title="Highlight Settings">
+    <!-- NEW: settings button (only visible in highlight mode) -->
+    <button id="settings-btn" class="btn-square" title="Show/Hide Sensitivity">
       <img src="icons/settings.svg" alt="Settings">
     </button>
   </div>
 
-  <!-- Date popups -->
   <div id="date-popup"></div>
 
-  <!-- TOP-LEFT — only in compare -->
   <div class="group-top-left" id="grp-top-left">
     <button id="left-date-btn" type="button" class="btn-square" title="Choose left date">
       <img src="icons/calendar.svg" alt="Left Date Selector">
@@ -139,7 +98,6 @@
   </div>
   <div id="left-date-popup"></div>
 
-  <!-- BOTTOM-RIGHT -->
   <div class="group-bottom-right" id="grp-bottom-right">
     <button id="findme-btn" class="btn-square" title="Locate Me">
       <img src="icons/locateme.svg" alt="Locate Me">
@@ -147,7 +105,6 @@
     <button id="roads-btn" class="btn-square" title="Roads overlay">
       <img id="roads-icon-img" src="icons/roads.svg" alt="Roads">
     </button>
-    <!-- quick switch intentionally hidden -->
     <button id="quick-switch-btn" title="Quick Switch Dates" class="btn-square" style="display:none;">
       <img src="icons/switch.svg" alt="Switch">
     </button>
@@ -157,14 +114,10 @@
   <div id="logo"><img src="logo.svg" alt="WDW Magic Explorer Logo"></div>
   <div id="current-date-display"></div>
 
-  <!-- Compare UI -->
   <div id="swipe-thumb"></div>
   <div id="swipe-handle" title="Drag to compare"></div>
-
-  <!-- Highlight sensitivity (toggle with settings button) -->
   <div id="sensitivity-row">
     <label for="sensitivity-slider">Highlight Sensitivity</label>
-    <!-- reversed behavior: UI value maps inversely to threshold -->
     <input type="range" id="sensitivity-slider" min="10" max="30" value="20">
   </div>
 
@@ -176,22 +129,30 @@
       // ===== App State =====
       let serverOptions = [];
       let currentCode = null;
-      let leftCode = null, rightCode = null; // compare pair
+      let leftCode = null, rightCode = null;
       let lastTwoDates = [null, null];
-
-      let showingDisney = true;     // true = Disney stylized; false = Satellite (ESRI Wayback)
-      let compareMode = false;      // swipe compare
-      let highlightMode = false;    // only valid for Disney compare
-
+      let showingDisney = true; // false = Satellite (ESRI Wayback)
+      let compareMode = false;
+      let highlightMode = false; // only valid in Disney compare
       let roadsOn = false;
+      let showSensitivity = false; // NEW: settings button toggles this
 
       // Map & layers
       let map, disneyLayer, esriLayer, roadsLayer;
       let leftLayer = null, rightLayer = null, highlightLayer = null;
 
-      // Compare & highlight
+      // Compare UI state
       let swipeRatio = 0.5;
-      let currentThreshold = 20; // Delta-E; computed from slider via reverse mapping
+
+      // Sensitivity (reversed slider mapping)
+      const sensitivitySlider = document.getElementById('sensitivity-slider');
+      let currentThreshold = sliderToThreshold(parseInt(sensitivitySlider.value, 10));
+      function sliderToThreshold(val) {
+        const min = parseInt(sensitivitySlider.min, 10);
+        const max = parseInt(sensitivitySlider.max, 10);
+        // reverse: slider right = lower threshold (less sensitive)
+        return (min + max) - val;
+      }
 
       // Controls
       const dateBtn = document.getElementById('date-btn');
@@ -203,24 +164,20 @@
       const compareBtn = document.getElementById('compare-btn');
       const highlightBtn = document.getElementById('highlight-btn');
       const settingsBtn = document.getElementById('settings-btn');
-
       const quickSwitchBtn = document.getElementById('quick-switch-btn');
       const roadsBtn = document.getElementById('roads-btn');
       const roadsIconImg = document.getElementById('roads-icon-img');
       const findmeBtn = document.getElementById('findme-btn');
-
       const currentDateDisplay = document.getElementById('current-date-display');
       const swipeThumb = document.getElementById('swipe-thumb');
       const swipeHandle = document.getElementById('swipe-handle');
       const sensitivityRow = document.getElementById('sensitivity-row');
-      const sensitivitySlider = document.getElementById('sensitivity-slider');
 
-      // Extent
       const disneyWorldExtent = ol.proj.transformExtent(
         [-81.9200, 28.1772, -81.2244, 28.6390], 'EPSG:4326', 'EPSG:3857'
       );
 
-      // Helpers
+      // Lookups
       function getLabelForCode(code) {
         const rec = serverOptions.find(o => o.code === code);
         return rec ? rec.label : '';
@@ -233,8 +190,12 @@
         const rec = serverOptions.find(o => o.code === code);
         return rec && rec.esri_label ? rec.esri_label : '';
       }
+      function getPreviousCode(code) {
+        const i = serverOptions.findIndex(o => o.code === code);
+        return i > 0 ? serverOptions[i - 1].code : serverOptions[0].code;
+      }
 
-      // ===== Layers =====
+      // Layers
       function makeDisneyLayer(code) {
         return new ol.layer.Tile({
           source: new ol.source.XYZ({
@@ -244,14 +205,14 @@
           visible: true
         });
       }
-      function makeEsriLayer(esri_id, forceVisible = false) {
+      function makeEsriLayer(esri_id) {
         if (!esri_id) return null;
         const lyr = new ol.layer.Tile({
           source: new ol.source.XYZ({
             url: `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${esri_id}/{z}/{y}/{x}`,
             minZoom: 0, maxZoom: 20
           }),
-          visible: !!forceVisible
+          visible: false
         });
         lyr.set('esri_id', esri_id);
         return lyr;
@@ -262,14 +223,8 @@
           visible: false, opacity: 0.85
         });
       }
-      // For compare: pick layer type based on current "showingDisney"
-      function makeCompareLayerForCode(code) {
-        if (showingDisney) return makeDisneyLayer(code);
-        const esriId = getEsriIdForCode(code);
-        return makeEsriLayer(esriId, true);
-      }
 
-      // ===== Highlight layer (Disney only) =====
+      // Highlight (Disney only)
       function makeHighlightLayer(baseCode, compareCode) {
         const baseUrlTpl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${baseCode}/{z}/{x}/{y}.jpg`;
         const compareUrlTpl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${compareCode}/{z}/{x}/{y}.jpg`;
@@ -281,24 +236,23 @@
             tileLoadFunction: function(tile, src) {
               const zxy = tile.tileCoord;
               const compareUrl = compareUrlTpl
-                .replace('{z}', zxy[0]).replace('{x}', zxy[1]).replace('{y}', zxy[2]);
-
-              const baseImg = new Image(); baseImg.crossOrigin = 'anonymous';
+                .replace('{z}', zxy[0])
+                .replace('{x}', zxy[1])
+                .replace('{y}', zxy[2]);
+              const baseImg = new Image();
+              baseImg.crossOrigin = 'anonymous';
               baseImg.onload = function() {
-                const cmpImg = new Image(); cmpImg.crossOrigin = 'anonymous';
+                const cmpImg = new Image();
+                cmpImg.crossOrigin = 'anonymous';
                 cmpImg.onload = function() {
                   const w = baseImg.width || cmpImg.width || 256;
                   const h = baseImg.height || cmpImg.height || 256;
-                  const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+                  const canvas = document.createElement('canvas');
+                  canvas.width = w; canvas.height = h;
                   const ctx = canvas.getContext('2d');
 
-                  const off1 = document.createElement('canvas'); off1.width = w; off1.height = h;
-                  const c1 = off1.getContext('2d'); c1.drawImage(baseImg, 0, 0, w, h);
-                  const d1 = c1.getImageData(0, 0, w, h);
-
-                  const off2 = document.createElement('canvas'); off2.width = w; off2.height = h;
-                  const c2 = off2.getContext('2d'); c2.drawImage(cmpImg, 0, 0, w, h);
-                  const d2 = c2.getImageData(0, 0, w, h);
+                  const off1 = document.createElement('canvas'); off1.width = w; off1.height = h; const c1 = off1.getContext('2d'); c1.drawImage(baseImg, 0, 0, w, h); const d1 = c1.getImageData(0, 0, w, h);
+                  const off2 = document.createElement('canvas'); off2.width = w; off2.height = h; const c2 = off2.getContext('2d'); c2.drawImage(cmpImg, 0, 0, w, h); const d2 = c2.getImageData(0, 0, w, h);
 
                   const out = ctx.createImageData(w, h);
                   const threshold = currentThreshold;
@@ -310,8 +264,7 @@
                     if (deltaE(lab1, lab2) > threshold) {
                       out.data[i] = 255; out.data[i+1] = 0; out.data[i+2] = 0; out.data[i+3] = 200;
                     } else {
-                      const gray = 0.3*r1 + 0.59*g1 + 0.11*b1;
-                      out.data[i] = out.data[i+1] = out.data[i+2] = gray; out.data[i+3] = a1;
+                      const gray = 0.3*r1 + 0.59*g1 + 0.11*b1; out.data[i] = out.data[i+1] = out.data[i+2] = gray; out.data[i+3] = a1;
                     }
                   }
                   ctx.putImageData(out, 0, 0);
@@ -320,37 +273,33 @@
                 cmpImg.onerror = function(){ tile.getImage().src = baseImg.src; };
                 cmpImg.src = compareUrl;
               };
-              baseImg.onerror = function(){
-                const blank = document.createElement('canvas'); blank.width = blank.height = 256;
-                tile.getImage().src = blank.toDataURL();
-              };
+              baseImg.onerror = function(){ const blank = document.createElement('canvas'); blank.width = blank.height = 256; tile.getImage().src = blank.toDataURL(); };
               baseImg.src = src;
             }
           })
         });
       }
-      function rgb2lab(r,g,b){
-        r/=255; g/=255; b/=255;
-        r = r>0.04045 ? Math.pow((r+0.055)/1.055,2.4) : r/12.92;
-        g = g>0.04045 ? Math.pow((g+0.055)/1.055,2.4) : g/12.92;
-        b = b>0.04045 ? Math.pow((b+0.055)/1.055,2.4) : b/12.92;
-        let x=r*0.4124+g*0.3576+b*0.1805, y=r*0.2126+g*0.7152+b*0.0722, z=r*0.0193+g*0.1192+b*0.9505;
-        [x,y,z]=[x/0.95047,y/1.0,z/1.08883];
-        x = x>0.008856 ? Math.pow(x,1/3) : (7.787*x)+16/116;
-        y = y>0.008856 ? Math.pow(y,1/3) : (7.787*y)+16/116;
-        z = z>0.008856 ? Math.pow(z,1/3) : (7.787*z)+16/116;
-        return [(116*y)-16, 500*(x-y), 200*(y-z)];
+      function rgb2lab(r, g, b) {
+        r /= 255; g /= 255; b /= 255;
+        r = r > 0.04045 ? Math.pow((r + 0.055)/1.055, 2.4) : r/12.92;
+        g = g > 0.04045 ? Math.pow((g + 0.055)/1.055, 2.4) : g/12.92;
+        b = b > 0.04045 ? Math.pow((b + 0.055)/1.055, 2.4) : b/12.92;
+        let x = r*0.4124 + g*0.3576 + b*0.1805;
+        let y = r*0.2126 + g*0.7152 + b*0.0722;
+        let z = r*0.0193 + g*0.1192 + b*0.9505;
+        [x, y, z] = [x/0.95047, y/1.0, z/1.08883];
+        x = x > 0.008856 ? Math.pow(x,1/3) : (7.787*x) + 16/116;
+        y = y > 0.008856 ? Math.pow(y,1/3) : (7.787*y) + 16/116;
+        z = z > 0.008856 ? Math.pow(z,1/3) : (7.787*z) + 16/116;
+        return [ (116*y)-16, 500*(x-y), 200*(y-z) ];
       }
-      function deltaE(a,b){ const dL=a[0]-b[0], da=a[1]-b[1], db=a[2]-b[2]; return Math.sqrt(dL*dL+da*da+db*db); }
+      function deltaE(a, b) { const dL=a[0]-b[0], da=a[1]-b[1], db=a[2]-b[2]; return Math.sqrt(dL*dL+da*da+db*db); }
 
-      // ===== Map init (mobile rotation blocked) =====
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (('ontouchstart' in window) && window.matchMedia('(max-width: 800px)').matches);
-
+      // Map init
       function initMap() {
         disneyLayer = makeDisneyLayer(currentCode);
         esriLayer = makeEsriLayer(getEsriIdForCode(currentCode));
         roadsLayer = makeRoadsLayer();
-
         disneyLayer.getSource().set('extent', disneyWorldExtent);
         if (esriLayer) esriLayer.getSource().set('extent', disneyWorldExtent);
         roadsLayer.getSource().set('extent', disneyWorldExtent);
@@ -358,69 +307,47 @@
         map = new ol.Map({
           target: 'map',
           layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
-          view: new ol.View({
-            center: ol.proj.fromLonLat([-81.5494, 28.3747]),
-            zoom: 16, minZoom: 0, maxZoom: 20,
-            extent: disneyWorldExtent,
-            constrainRotation: true,
-            enableRotation: !isMobile // block rotation on mobile
-          }),
-          interactions: ol.interaction.defaults({
-            altShiftDragRotate: !isMobile,
-            pinchRotate: !isMobile
-          })
+          view: new ol.View({ center: ol.proj.fromLonLat([-81.5494, 28.3747]), zoom: 16, minZoom: 0, maxZoom: 20, extent: disneyWorldExtent })
         });
-
-        // Extra guard: if any rotation sneaks in on mobile, snap back
-        if (isMobile) {
-          map.getView().on('change:rotation', () => {
-            const v = map.getView();
-            if (v.getRotation() !== 0) v.setRotation(0);
-          });
-        }
       }
 
       function setRoadsLayerState() {
         if (!roadsLayer) return;
         roadsLayer.setVisible(roadsOn);
         const layers = map.getLayers();
-        if (layers.getArray()[layers.getLength()-1] !== roadsLayer) {
-          map.removeLayer(roadsLayer); map.addLayer(roadsLayer);
-        }
+        if (layers.getArray()[layers.getLength()-1] !== roadsLayer) { map.removeLayer(roadsLayer); map.addLayer(roadsLayer); }
       }
 
-      // ===== UI updates =====
+      // UI updates
       function updateDateUI() {
         if (!compareMode) {
-          currentDateDisplay.textContent = showingDisney
-            ? getLabelForCode(currentCode)
-            : (getEsriLabelForCode(currentCode) || (getLabelForCode(currentCode) + ' (Satellite)'));
+          currentDateDisplay.textContent = showingDisney ? getLabelForCode(currentCode) : (getEsriLabelForCode(currentCode) || (getLabelForCode(currentCode) + ' (Satellite)'));
         } else {
-          currentDateDisplay.textContent = `${getLabelForCode(leftCode)}  vs  ${getLabelForCode(rightCode)}`;
+          const leftLabel  = showingDisney ? getLabelForCode(leftCode) : (getEsriLabelForCode(leftCode)  || getLabelForCode(leftCode));
+          const rightLabel = showingDisney ? getLabelForCode(rightCode): (getEsriLabelForCode(rightCode) || getLabelForCode(rightCode));
+          currentDateDisplay.textContent = `${leftLabel}  vs  ${rightLabel}`;
         }
         currentDateDisplay.style.display = 'block';
 
+        // Compare is available for BOTH Disney and Satellite
         compareBtn.style.display = 'flex';
-        // highlight only available if in compare AND showingDisney
-        const canHighlight = (compareMode && showingDisney);
-        highlightBtn.style.display = canHighlight ? 'flex' : 'none';
-        settingsBtn.style.display = (canHighlight && highlightMode) ? 'flex' : 'none';
-        leftDateBtn.style.display = compareMode ? 'flex' : 'none';
-        quickSwitchBtn.style.display = 'none'; // removed feature
+        // Highlight remains Disney-only and only inside compare mode
+        highlightBtn.style.display = (showingDisney && compareMode) ? 'flex' : 'none';
+        // Settings button only in highlight mode
+        settingsBtn.style.display = (compareMode && highlightMode) ? 'flex' : 'none';
 
-        // Satellite toggle stays enabled even in compare; only disabled during highlight
-        toggleBtn.disabled = (compareMode && highlightMode);
+        leftDateBtn.style.display = compareMode ? 'flex' : 'none';
+        quickSwitchBtn.style.display = (lastTwoDates[1] && !compareMode) ? 'flex' : 'none';
+
+        // Keep toggle enabled even during compare mode (changed)
         toggleIconImg.src = showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
         toggleIconImg.alt = showingDisney ? 'Satellite' : 'Disney Map';
 
-        // Compare widgets
+        // Swipe controls only in swipe mode
         swipeThumb.style.display = (compareMode && !highlightMode) ? 'block' : 'none';
         swipeHandle.style.display = (compareMode && !highlightMode) ? 'block' : 'none';
-
-        // Sensitivity panel visible only if explicitly toggled via settingsBtn; do not auto-hide if already visible
-        if (!(compareMode && highlightMode)) {
-          sensitivityRow.style.display = 'none';
-        }
+        // Sensitivity panel only if user toggled settings while in highlight
+        sensitivityRow.style.display = (compareMode && highlightMode && showSensitivity) ? 'block' : 'none';
       }
 
       function fillDatePopup(popupEl, selectedCode, onPick) {
@@ -442,75 +369,86 @@
         if (lastTwoDates[0] !== newCode) lastTwoDates = [newCode, lastTwoDates[0]];
         currentCode = newCode;
 
-        // Disney layer refresh
-        const vis = disneyLayer.getVisible();
+        // Swap Disney layer
+        const visD = disneyLayer.getVisible();
         map.removeLayer(disneyLayer);
         disneyLayer = makeDisneyLayer(newCode);
-        disneyLayer.setVisible(vis);
+        disneyLayer.setVisible(visD);
         disneyLayer.getSource().set('extent', disneyWorldExtent);
         map.getLayers().setAt(0, disneyLayer);
 
-        // Satellite layer refresh (if visible)
+        // Swap ESRI layer
         const esri_id = getEsriIdForCode(newCode);
+        const visE = esriLayer && esriLayer.getVisible();
         if (!esriLayer || esriLayer.get('esri_id') !== esri_id) {
           if (esriLayer) map.removeLayer(esriLayer);
           esriLayer = makeEsriLayer(esri_id);
-          if (esriLayer) {
-            esriLayer.set('esri_id', esri_id);
-            esriLayer.getSource().set('extent', disneyWorldExtent);
-            map.getLayers().setAt(1, esriLayer);
-          }
+          if (esriLayer) { esriLayer.set('esri_id', esri_id); esriLayer.getSource().set('extent', disneyWorldExtent); map.getLayers().setAt(1, esriLayer); }
         }
-        if (!showingDisney && esriLayer) esriLayer.setVisible(true);
-        if (!showingDisney) disneyLayer.setVisible(false);
+        if (esriLayer) esriLayer.setVisible(visE);
 
         setRoadsLayerState();
+
+        // If we're in compare, rebuild current compare mode
+        if (compareMode) {
+          if (highlightMode) launchHighlightMode();
+          else launchSwipeMode();
+        }
         updateDateUI();
       }
 
-      // ===== Compare Mode =====
+      // Compare layers housekeeping
       function clearCompareLayers() {
         if (leftLayer) { map.removeLayer(leftLayer); leftLayer = null; }
         if (rightLayer) { map.removeLayer(rightLayer); rightLayer = null; }
         if (highlightLayer) { map.removeLayer(highlightLayer); highlightLayer = null; }
       }
 
+      // Compare builders
       function launchSwipeMode() {
-        highlightMode = false;
         clearCompareLayers();
 
-        leftLayer = makeCompareLayerForCode(leftCode);
-        rightLayer = makeCompareLayerForCode(rightCode);
+        if (showingDisney) {
+          leftLayer  = makeDisneyLayer(leftCode);
+          rightLayer = makeDisneyLayer(rightCode);
+        } else {
+          const leftEsri  = getEsriIdForCode(leftCode);
+          const rightEsri = getEsriIdForCode(rightCode);
+          leftLayer  = makeEsriLayer(leftEsri);
+          rightLayer = makeEsriLayer(rightEsri);
+          if (!leftLayer || !rightLayer) {
+            compareMode = false;
+            updateDateUI();
+            return;
+          }
+          leftLayer.setVisible(true);
+          rightLayer.setVisible(true);
+        }
+
         map.addLayer(leftLayer);
         map.addLayer(rightLayer);
 
-        // clip right layer
-        const pre = function(event) {
+        // Clip right layer during render based on swipeRatio
+        rightLayer.on('prerender', function(event) {
           const ctx = event.context;
           const w = ctx.canvas.width; const h = ctx.canvas.height;
           const swipeX = Math.round(w * swipeRatio);
           ctx.save(); ctx.beginPath(); ctx.rect(swipeX, 0, w - swipeX, h); ctx.clip();
-        };
-        const post = function(event) { event.context.restore(); };
-        rightLayer.on('prerender', pre);
-        rightLayer.on('postrender', post);
-
-        map.renderSync();
+        });
+        rightLayer.on('postrender', function(event) { event.context.restore(); });
+        map.render();
         updateSwipeUI();
         updateDateUI();
       }
 
       function launchHighlightMode() {
-        // Disney-only; if user switched to satellite, fall back to swipe
-        if (!showingDisney) { highlightMode = false; launchSwipeMode(); return; }
+        // Only valid for Disney tiles
         clearCompareLayers();
         highlightLayer = makeHighlightLayer(leftCode, rightCode);
         map.addLayer(highlightLayer);
-        map.renderSync();
         updateDateUI();
       }
 
-      // Swipe UI
       function updateSwipeUI() {
         if (!compareMode || highlightMode) return;
         const mapDiv = map.getTargetElement();
@@ -541,18 +479,17 @@
         }
         document.addEventListener('mousemove', move);
         document.addEventListener('mouseup', stop);
-        document.addEventListener('touchmove', move, { passive: false });
+        document.addEventListener('touchmove', move);
         document.addEventListener('touchend', stop);
       }
       swipeThumb.addEventListener('mousedown', startSwipeDrag);
-      swipeThumb.addEventListener('touchstart', startSwipeDrag, { passive: false });
+      swipeThumb.addEventListener('touchstart', startSwipeDrag);
       swipeHandle.addEventListener('mousedown', startSwipeDrag);
-      swipeHandle.addEventListener('touchstart', startSwipeDrag, { passive: false });
+      swipeHandle.addEventListener('touchstart', startSwipeDrag);
       window.addEventListener('resize', () => setTimeout(updateSwipeUI, 20));
       window.addEventListener('load', () => setTimeout(updateSwipeUI, 30));
 
-      // ===== Events =====
-      // Date pickers
+      // Events
       dateBtn.addEventListener('click', () => {
         if (datePopup.style.display === 'block') { hidePopup(datePopup); return; }
         if (!compareMode) {
@@ -574,73 +511,67 @@
         setTimeout(()=>{ document.addEventListener('mousedown', hide, true); document.addEventListener('touchstart', hide, true); }, 0);
       });
 
-      // Toggle Disney/Satellite (enabled even in compare; disabled only in highlight)
       toggleBtn.addEventListener('click', () => {
-        if (compareMode && highlightMode) return; // blocked in highlight
+        // Toggle is now allowed even during compare
         showingDisney = !showingDisney;
 
-        if (showingDisney) {
-          disneyLayer.setVisible(true); if (esriLayer) esriLayer.setVisible(false);
-        } else {
-          disneyLayer.setVisible(false);
-          const esriId = getEsriIdForCode(currentCode);
-          if (!esriLayer || esriLayer.get('esri_id') !== esriId) {
-            if (esriLayer) map.removeLayer(esriLayer);
-            esriLayer = makeEsriLayer(esriId);
-            if (esriLayer) { esriLayer.set('esri_id', esriId); esriLayer.getSource().set('extent', disneyWorldExtent); map.getLayers().setAt(1, esriLayer); }
+        if (!compareMode) {
+          if (showingDisney) {
+            disneyLayer.setVisible(true); if (esriLayer) esriLayer.setVisible(false);
+          } else {
+            disneyLayer.setVisible(false);
+            const esriId = getEsriIdForCode(currentCode);
+            if (!esriLayer || esriLayer.get('esri_id') !== esriId) {
+              if (esriLayer) map.removeLayer(esriLayer);
+              esriLayer = makeEsriLayer(esriId);
+              if (esriLayer) { esriLayer.set('esri_id', esriId); esriLayer.getSource().set('extent', disneyWorldExtent); map.getLayers().setAt(1, esriLayer); }
+            }
+            if (esriLayer) esriLayer.setVisible(true);
           }
-          if (esriLayer) esriLayer.setVisible(true);
-        }
-
-        // If the user switches while comparing:
-        if (compareMode) {
-          // If we were in highlight (shouldn't reach here due to guard), fallback to swipe
-          highlightMode = false;
-          launchSwipeMode();
+        } else {
+          // In compare: rebuild the current compare mode
+          if (!showingDisney && highlightMode) {
+            // Leaving Disney while in highlight -> fall back to swipe
+            highlightMode = false;
+            showSensitivity = false;
+          }
+          (highlightMode ? launchHighlightMode : launchSwipeMode)();
         }
 
         setRoadsLayerState();
         updateDateUI();
       });
 
-      // Compare button
       compareBtn.addEventListener('click', () => {
         compareMode = !compareMode;
         if (compareMode) {
-          // left = previous date to current (helper)
-          leftCode = getPreviousCode(currentCode);
           rightCode = currentCode;
+          leftCode = getPreviousCode(currentCode);
+          highlightMode = false; // start in swipe
+          showSensitivity = false;
           launchSwipeMode();
         } else {
-          highlightMode = false; clearCompareLayers();
+          highlightMode = false; showSensitivity = false; clearCompareLayers();
           swipeThumb.style.display = 'none'; swipeHandle.style.display = 'none'; sensitivityRow.style.display = 'none';
         }
         updateDateUI();
       });
 
-      // Highlight button (Disney-only)
       highlightBtn.addEventListener('click', () => {
-        if (!compareMode || !showingDisney) return;
+        if (!compareMode || !showingDisney) return; // Disney-only
         highlightMode = !highlightMode;
+        showSensitivity = highlightMode ? false : false; // reset on entry/exit
         if (highlightMode) launchHighlightMode(); else launchSwipeMode();
         updateDateUI();
       });
 
-      // Settings (show/hide sensitivity panel)
+      // NEW: settings button toggles slider visibility in highlight mode
       settingsBtn.addEventListener('click', () => {
         if (!(compareMode && highlightMode)) return;
-        if (sensitivityRow.style.display === 'none' || sensitivityRow.style.display === '') {
-          // sync slider with current threshold (reverse mapping)
-          const min = parseInt(sensitivitySlider.min, 10);
-          const max = parseInt(sensitivitySlider.max, 10);
-          sensitivitySlider.value = String((min + max) - currentThreshold);
-          sensitivityRow.style.display = 'block';
-        } else {
-          sensitivityRow.style.display = 'none';
-        }
+        showSensitivity = !showSensitivity;
+        updateDateUI();
       });
 
-      // Roads
       roadsBtn.addEventListener('click', () => {
         roadsOn = !roadsOn;
         roadsIconImg.src = roadsOn ? 'icons/no_roads.svg' : 'icons/roads.svg';
@@ -648,16 +579,11 @@
         setRoadsLayerState();
       });
 
-      // Quick switch (disabled)
-      quickSwitchBtn.addEventListener('click', () => { /* no-op */ });
+      quickSwitchBtn.addEventListener('click', () => { if (lastTwoDates[1]) setSingleDate(lastTwoDates[1]); });
 
       // Find Me
       const findmeMessage = document.getElementById('findme-message');
-      function showFindMeMessage(msg) {
-        findmeMessage.textContent = msg; findmeMessage.style.display = 'block';
-        setTimeout(()=> findmeMessage.style.opacity = '1', 10);
-        setTimeout(()=> { findmeMessage.style.opacity = '0'; setTimeout(()=> findmeMessage.style.display = 'none', 400); }, 2200);
-      }
+      function showFindMeMessage(msg) { findmeMessage.textContent = msg; findmeMessage.style.display = 'block'; setTimeout(()=> findmeMessage.style.opacity = '1', 10); setTimeout(()=> { findmeMessage.style.opacity = '0'; setTimeout(()=> findmeMessage.style.display = 'none', 400); }, 2200); }
       findmeBtn.addEventListener('click', () => {
         if (!navigator.geolocation) { showFindMeMessage('Geolocation not supported'); return; }
         navigator.geolocation.getCurrentPosition((pos)=>{
@@ -671,13 +597,11 @@
             style: new ol.style.Style({ image: new ol.style.Circle({ radius: 10, fill: new ol.style.Fill({color: 'rgba(0,116,217,0.35)'}), stroke: new ol.style.Stroke({color: '#0074d9', width: 3}) }) }),
             zIndex: 99
           });
-          map.addLayer(layer);
-          map.getView().animate({ center: projected, zoom: 17, duration: 800 });
-          setTimeout(()=> map.removeLayer(layer), 5000);
+          map.addLayer(layer); map.getView().animate({ center: projected, zoom: 17, duration: 800 }); setTimeout(()=> map.removeLayer(layer), 5000);
         }, ()=> showFindMeMessage('Unable to get location'), { enableHighAccuracy: true });
       });
 
-      // Touch zoom helper (unchanged)
+      // Touch zoom helper
       (function() {
         let lastTap = 0, isHoldZoom = false, startY = 0, startZoom = 0, holdTimeout = null;
         const mapDiv = document.getElementById('map');
@@ -691,38 +615,19 @@
         }
         mapDiv.addEventListener('touchstart', function(e) {
           if (e.touches.length !== 1) return; const now = Date.now();
-          if (now - lastTap < 350) {
-            e.preventDefault(); startY = e.touches[0].clientY; startZoom = map.getView().getZoom(); isHoldZoom = true;
-            holdTimeout = setTimeout(()=> mapDiv.addEventListener('touchmove', moveHandler, { passive: false }), 100);
-          } else { lastTap = now; isHoldZoom = false; if (holdTimeout) clearTimeout(holdTimeout); }
+          if (now - lastTap < 350) { e.preventDefault(); startY = e.touches[0].clientY; startZoom = map.getView().getZoom(); isHoldZoom = true; holdTimeout = setTimeout(()=> mapDiv.addEventListener('touchmove', moveHandler, { passive: false }), 100); }
+          else { lastTap = now; isHoldZoom = false; if (holdTimeout) clearTimeout(holdTimeout); }
         });
-        mapDiv.addEventListener('touchend', function() {
-          if (isHoldZoom) { isHoldZoom = false; mapDiv.removeEventListener('touchmove', moveHandler, { passive: false }); }
-          if (holdTimeout) clearTimeout(holdTimeout);
-        });
+        mapDiv.addEventListener('touchend', function() { if (isHoldZoom) { isHoldZoom = false; mapDiv.removeEventListener('touchmove', moveHandler, { passive: false }); } if (holdTimeout) clearTimeout(holdTimeout); });
       })();
 
-      // ===== Sensitivity slider (reversed mapping) =====
-      function computeThresholdFromSlider() {
-        const min = parseInt(sensitivitySlider.min, 10);
-        const max = parseInt(sensitivitySlider.max, 10);
-        const v = parseInt(sensitivitySlider.value, 10);
-        // Reverse: higher slider value = LOWER threshold (more sensitive)
-        return (min + max) - v;
-      }
+      // Slider input (reversed mapping)
       sensitivitySlider.addEventListener('input', () => {
-        currentThreshold = computeThresholdFromSlider();
+        currentThreshold = sliderToThreshold(parseInt(sensitivitySlider.value, 10));
         if (compareMode && highlightMode) { launchHighlightMode(); }
       });
 
-      // ===== Previous date helper (left side seeding) =====
-      function getPreviousCode(current) {
-        const idx = serverOptions.findIndex(o => o.code === current);
-        if (idx <= 0) return serverOptions[0].code;
-        return serverOptions[idx - 1].code;
-      }
-
-      // ===== Boot =====
+      // Boot
       fetch('servers2.json')
         .then(r => r.json())
         .then(json => {
