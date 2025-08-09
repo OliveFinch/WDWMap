@@ -64,9 +64,6 @@
       #left-date-popup { min-width: 140px; max-height: 50vh; top: 44px; left: 50px; }
       #sensitivity-row { top: 44px; }
       #swipe-handle { width: 40px; height: 40px; }
-
-      /* Nudge the top-right date button ~5px further right on mobile */
-      .group-top-right #date-btn { transform: translateX(5px); }
     }
   </style>
 </head>
@@ -300,8 +297,6 @@
 
       // Map init
       function initMap() {
-        const isMobile = window.matchMedia('(max-width: 600px)').matches || ('ontouchstart' in window);
-
         disneyLayer = makeDisneyLayer(currentCode);
         esriLayer = makeEsriLayer(getEsriIdForCode(currentCode));
         roadsLayer = makeRoadsLayer();
@@ -312,28 +307,8 @@
         map = new ol.Map({
           target: 'map',
           layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
-          // Disable rotation interactions on mobile; keep them on desktop
-          interactions: ol.interaction.defaults({
-            altShiftDragRotate: !isMobile,
-            pinchRotate: !isMobile
-          }),
-          view: new ol.View({
-            center: ol.proj.fromLonLat([-81.5494, 28.3747]),
-            zoom: 16,
-            minZoom: 0,
-            maxZoom: 20,
-            extent: disneyWorldExtent
-          })
+          view: new ol.View({ center: ol.proj.fromLonLat([-81.5494, 28.3747]), zoom: 16, minZoom: 0, maxZoom: 20, extent: disneyWorldExtent })
         });
-
-        // Hard-enforce north-up on mobile (in case anything tries to rotate)
-        if (isMobile) {
-          const v = map.getView();
-          v.setRotation(0);
-          v.on('change:rotation', function () {
-            if (v.getRotation() !== 0) v.setRotation(0);
-          });
-        }
       }
 
       function setRoadsLayerState() {
