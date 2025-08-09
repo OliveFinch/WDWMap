@@ -325,22 +325,37 @@
       }
       function deltaE(a, b) { const dL=a[0]-b[0], da=a[1]-b[1], db=a[2]-b[2]; return Math.sqrt(dL*dL+da*da+db*db); }
 
-      // Map init
-      function initMap() {
-        disneyLayer = makeDisneyLayer(currentCode);
-        esriLayer = makeEsriLayer(getEsriIdForCode(currentCode));
-        roadsLayer = makeRoadsLayer();
-        disneyLayer.getSource().set('extent', disneyWorldExtent);
-        if (esriLayer) esriLayer.getSource().set('extent', disneyWorldExtent);
-        roadsLayer.getSource().set('extent', disneyWorldExtent);
+function initMap() {
+  disneyLayer = makeDisneyLayer(currentCode);
+  esriLayer = makeEsriLayer(getEsriIdForCode(currentCode));
+  roadsLayer = makeRoadsLayer();
+  disneyLayer.getSource().set('extent', disneyWorldExtent);
+  if (esriLayer) esriLayer.getSource().set('extent', disneyWorldExtent);
+  roadsLayer.getSource().set('extent', disneyWorldExtent);
 
-        map = new ol.Map({
-          target: 'map',
-          layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
-          view: new ol.View({ center: ol.proj.fromLonLat([-81.5494, 28.3747]), zoom: 16, minZoom: 0, maxZoom: 20, extent: disneyWorldExtent }),
-          controls: ol.control.defaults.defaults({ zoom: false }) // hide OL zoom UI; gestures still work
-        });
-      }
+  map = new ol.Map({
+    target: 'map',
+    layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
+
+    // hide OL zoom UI
+    controls: ol.control.defaults.defaults({ zoom: false }),
+
+    // block rotation gestures
+    interactions: ol.interaction.defaults.defaults({
+      altShiftDragRotate: false,
+      pinchRotate: false
+    }),
+
+    view: new ol.View({
+      center: ol.proj.fromLonLat([-81.5494, 28.3747]),
+      zoom: 16,
+      minZoom: 0,
+      maxZoom: 20,
+      extent: disneyWorldExtent,
+      enableRotation: false // prevent rotation entirely
+    })
+  });
+}
 
       function setRoadsLayerState() {
         if (!roadsLayer) return;
