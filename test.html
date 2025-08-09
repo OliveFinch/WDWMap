@@ -18,19 +18,16 @@
     html, body { margin: 0; padding: 0; height: 100%; overscroll-behavior: none; overflow: hidden; font-family: Arial, Helvetica, sans-serif;}
     #map { width: 100vw; height: 100vh; touch-action: none; -webkit-user-select: none; user-select: none; }
 
-    /* Keep the original button visual style */
     .ol-control-inner, .btn-square { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255,255,255,0.85); border: 1.5px solid #ccc; border-radius: 8px; font-size: 15px; color: #222; cursor: pointer; transition: background 0.2s, border 0.2s; user-select: none; padding: 0; font-family: Arial, Helvetica, sans-serif; }
     .ol-control-inner img, .btn-square img { width: 24px; height: 24px; display: block; pointer-events: none; user-select: none; }
     .ol-control-inner:active, .ol-control-inner:focus, .ol-control-inner:hover,
     .btn-square:active, .btn-square:focus, .btn-square:hover { background: #f8f8f8; border-color: #999;}
     .btn-square[disabled] { opacity: .45; cursor: default; }
 
-    /* Group containers */
     .group-top-right { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
     .group-bottom-right { position: absolute; right: 8px; bottom: calc(18px + env(safe-area-inset-bottom, 0)); display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
     .group-top-left { position: absolute; top: 8px; left: 56px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
 
-    /* Popup menus */
     #date-popup, #left-date-popup { display: none; opacity: 0; position: absolute; min-width: 180px; max-height: 70vh; overflow-y: auto; background: rgba(255,255,255,0.96); border: 1.5px solid #ccc; border-radius: 8px; box-shadow: 0 3px 15px #0002; z-index: 1400; font-family: Arial, Helvetica, sans-serif; }
     #date-popup { right: 8px; top: 56px; }
     #left-date-popup { left: 56px; top: 56px; }
@@ -45,10 +42,8 @@
 
     #findme-message { display: none; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 2000; background: rgba(255,255,255,0.92); color: #d62525; font-size: 17px; font-weight: bold; text-align: center; opacity: 0; padding: 7px 20px; border-radius: 16px; box-shadow: 0 2px 8px #0001; transition: opacity 0.4s; pointer-events: none;}
 
-    /* Hide-by-default buttons (logic will toggle) */
     #compare-btn, #highlight-btn, #left-date-btn { display: none; }
 
-    /* === Compare UI === */
     #swipe-thumb { position: absolute; top: 0; bottom: 0; width: 5px; background: #e24141cc; z-index: 1300; cursor: ew-resize; border-radius: 3px; box-shadow: 0 2px 12px #3336; pointer-events: auto; display: none; }
     #swipe-handle { position: absolute; width: 34px; height: 34px; background: #fff; border: 4px solid #e24141cc; border-radius: 50%; box-shadow: 0 2px 12px #2225; z-index: 1400; cursor: grab; touch-action: none; display: none; transition: background 0.1s, border 0.1s; }
     #swipe-handle:active { background: #ffeaea; border-color: #e24141; }
@@ -75,7 +70,6 @@
 <body>
   <div id="map"></div>
 
-  <!-- TOP-RIGHT GROUP: Date, Toggle, Compare, Highlight -->
   <div class="group-top-right" id="grp-top-right">
     <button id="date-btn" type="button" class="btn-square" title="Choose date">
       <img src="icons/calendar.svg" alt="Date Selector">
@@ -91,10 +85,8 @@
     </button>
   </div>
 
-  <!-- POPUP for right-side date picker -->
   <div id="date-popup"></div>
 
-  <!-- TOP-LEFT GROUP: Left-date calendar (shown only in compare mode)  -->
   <div class="group-top-left" id="grp-top-left">
     <button id="left-date-btn" type="button" class="btn-square" title="Choose left date">
       <img src="icons/calendar.svg" alt="Left Date Selector">
@@ -102,7 +94,6 @@
   </div>
   <div id="left-date-popup"></div>
 
-  <!-- BOTTOM-RIGHT GROUP: Locate Me, Roads, Quick Switch -->
   <div class="group-bottom-right" id="grp-bottom-right">
     <button id="findme-btn" class="btn-square" title="Locate Me">
       <img src="icons/locateme.svg" alt="Locate Me">
@@ -119,7 +110,6 @@
   <div id="logo"><img src="logo.svg" alt="WDW Magic Explorer Logo"></div>
   <div id="current-date-display"></div>
 
-  <!-- === Compare UI Elements (swipe + handle + sensitivity) === -->
   <div id="swipe-thumb"></div>
   <div id="swipe-handle" title="Drag to compare"></div>
   <div id="sensitivity-row">
@@ -134,12 +124,12 @@
 
       // ===== App State =====
       let serverOptions = [];
-      let currentCode = null; // single-date mode
-      let leftCode = null, rightCode = null; // compare mode
+      let currentCode = null;
+      let leftCode = null, rightCode = null;
       let lastTwoDates = [null, null];
-      let showingDisney = true; // Disney vs Satellite toggle (satellite uses ESRI Wayback)
-      let compareMode = false; // when true, render swipe/highlight between leftCode & rightCode
-      let highlightMode = false; // when true (and compare), render Delta-E highlight tiles
+      let showingDisney = true; // false = Satellite (ESRI Wayback)
+      let compareMode = false;
+      let highlightMode = false; // only valid in Disney compare
       let roadsOn = false;
 
       // Map & layers
@@ -148,7 +138,7 @@
 
       // Compare UI state
       let swipeRatio = 0.5;
-      let currentThreshold = 20; // Delta-E threshold
+      let currentThreshold = 20;
 
       // Controls
       const dateBtn = document.getElementById('date-btn');
@@ -169,12 +159,11 @@
       const sensitivityRow = document.getElementById('sensitivity-row');
       const sensitivitySlider = document.getElementById('sensitivity-slider');
 
-      // Extent bounds
       const disneyWorldExtent = ol.proj.transformExtent(
         [-81.9200, 28.1772, -81.2244, 28.6390], 'EPSG:4326', 'EPSG:3857'
       );
 
-      // Utility lookups
+      // Lookups
       function getLabelForCode(code) {
         const rec = serverOptions.find(o => o.code === code);
         return rec ? rec.label : '';
@@ -187,13 +176,12 @@
         const rec = serverOptions.find(o => o.code === code);
         return rec && rec.esri_label ? rec.esri_label : '';
       }
-      // NEW: previous-date helper (the item immediately before the given code in serverOptions)
       function getPreviousCode(code) {
         const i = serverOptions.findIndex(o => o.code === code);
         return i > 0 ? serverOptions[i - 1].code : serverOptions[0].code;
       }
 
-      // ===== Layers =====
+      // Layers
       function makeDisneyLayer(code) {
         return new ol.layer.Tile({
           source: new ol.source.XYZ({
@@ -222,7 +210,7 @@
         });
       }
 
-      // ===== Compare rendering =====
+      // Highlight (Disney only)
       function makeHighlightLayer(baseCode, compareCode) {
         const baseUrlTpl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${baseCode}/{z}/{x}/{y}.jpg`;
         const compareUrlTpl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${compareCode}/{z}/{x}/{y}.jpg`;
@@ -277,7 +265,6 @@
           })
         });
       }
-
       function rgb2lab(r, g, b) {
         r /= 255; g /= 255; b /= 255;
         r = r > 0.04045 ? Math.pow((r + 0.055)/1.055, 2.4) : r/12.92;
@@ -294,7 +281,7 @@
       }
       function deltaE(a, b) { const dL=a[0]-b[0], da=a[1]-b[1], db=a[2]-b[2]; return Math.sqrt(dL*dL+da*da+db*db); }
 
-      // ===== Base map init =====
+      // Map init
       function initMap() {
         disneyLayer = makeDisneyLayer(currentCode);
         esriLayer = makeEsriLayer(getEsriIdForCode(currentCode));
@@ -317,25 +304,30 @@
         if (layers.getArray()[layers.getLength()-1] !== roadsLayer) { map.removeLayer(roadsLayer); map.addLayer(roadsLayer); }
       }
 
-      // ===== UI updates =====
+      // UI updates
       function updateDateUI() {
         if (!compareMode) {
           currentDateDisplay.textContent = showingDisney ? getLabelForCode(currentCode) : (getEsriLabelForCode(currentCode) || (getLabelForCode(currentCode) + ' (Satellite)'));
         } else {
-          currentDateDisplay.textContent = `${getLabelForCode(leftCode)}  vs  ${getLabelForCode(rightCode)}`;
+          const leftLabel  = showingDisney ? getLabelForCode(leftCode) : (getEsriLabelForCode(leftCode)  || getLabelForCode(leftCode));
+          const rightLabel = showingDisney ? getLabelForCode(rightCode): (getEsriLabelForCode(rightCode) || getLabelForCode(rightCode));
+          currentDateDisplay.textContent = `${leftLabel}  vs  ${rightLabel}`;
         }
         currentDateDisplay.style.display = 'block';
 
-        compareBtn.style.display = showingDisney ? 'flex' : 'none';
+        // Compare is available for BOTH Disney and Satellite now
+        compareBtn.style.display = 'flex';
+        // Highlight remains Disney-only and only inside compare mode
         highlightBtn.style.display = (showingDisney && compareMode) ? 'flex' : 'none';
+
         leftDateBtn.style.display = compareMode ? 'flex' : 'none';
         quickSwitchBtn.style.display = (lastTwoDates[1] && !compareMode) ? 'flex' : 'none';
 
-        toggleBtn.disabled = compareMode; // disable satellite toggle while comparing
+        // Keep toggle disabled during compare to avoid switching mid-mode
+        toggleBtn.disabled = compareMode;
         toggleIconImg.src = showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
         toggleIconImg.alt = showingDisney ? 'Satellite' : 'Disney Map';
 
-        // Compare UI widgets
         swipeThumb.style.display = (compareMode && !highlightMode) ? 'block' : 'none';
         swipeHandle.style.display = (compareMode && !highlightMode) ? 'block' : 'none';
         sensitivityRow.style.display = (compareMode && highlightMode) ? 'block' : 'none';
@@ -359,39 +351,62 @@
         if (currentCode === newCode) return;
         if (lastTwoDates[0] !== newCode) lastTwoDates = [newCode, lastTwoDates[0]];
         currentCode = newCode;
-        const vis = disneyLayer.getVisible();
+
+        // Swap Disney layer
+        const visD = disneyLayer.getVisible();
         map.removeLayer(disneyLayer);
         disneyLayer = makeDisneyLayer(newCode);
-        disneyLayer.setVisible(vis);
+        disneyLayer.setVisible(visD);
         disneyLayer.getSource().set('extent', disneyWorldExtent);
         map.getLayers().setAt(0, disneyLayer);
 
-        if (!showingDisney) {
-          const esri_id = getEsriIdForCode(newCode);
-          const visE = esriLayer && esriLayer.getVisible();
-          if (!esriLayer || esriLayer.get('esri_id') !== esri_id) {
-            if (esriLayer) map.removeLayer(esriLayer);
-            esriLayer = makeEsriLayer(esri_id);
-            if (esriLayer) { esriLayer.set('esri_id', esri_id); esriLayer.getSource().set('extent', disneyWorldExtent); map.getLayers().setAt(1, esriLayer); }
-          }
-          if (esriLayer) esriLayer.setVisible(visE);
+        // Swap ESRI layer if showing satellite or might be toggled later
+        const esri_id = getEsriIdForCode(newCode);
+        const visE = esriLayer && esriLayer.getVisible();
+        if (!esriLayer || esriLayer.get('esri_id') !== esri_id) {
+          if (esriLayer) map.removeLayer(esriLayer);
+          esriLayer = makeEsriLayer(esri_id);
+          if (esriLayer) { esriLayer.set('esri_id', esri_id); esriLayer.getSource().set('extent', disneyWorldExtent); map.getLayers().setAt(1, esriLayer); }
         }
+        if (esriLayer) esriLayer.setVisible(visE);
+
         setRoadsLayerState();
         updateDateUI();
       }
 
-      // ===== Compare Mode Wiring =====
+      // Compare layers housekeeping
       function clearCompareLayers() {
         if (leftLayer) { map.removeLayer(leftLayer); leftLayer = null; }
         if (rightLayer) { map.removeLayer(rightLayer); rightLayer = null; }
         if (highlightLayer) { map.removeLayer(highlightLayer); highlightLayer = null; }
       }
 
+      // === UPDATED: Support Disney OR Satellite in swipe compare ===
       function launchSwipeMode() {
-        highlightMode = false;
+        // Highlight is Disney-only; turning it off if user switched to Satellite
+        if (!showingDisney) highlightMode = false;
+
         clearCompareLayers();
-        leftLayer = makeDisneyLayer(leftCode);
-        rightLayer = makeDisneyLayer(rightCode);
+
+        if (showingDisney) {
+          leftLayer  = makeDisneyLayer(leftCode);
+          rightLayer = makeDisneyLayer(rightCode);
+        } else {
+          // Satellite compare uses ESRI Wayback IDs mapped from codes
+          const leftEsri  = getEsriIdForCode(leftCode);
+          const rightEsri = getEsriIdForCode(rightCode);
+          leftLayer  = makeEsriLayer(leftEsri);
+          rightLayer = makeEsriLayer(rightEsri);
+          if (!leftLayer || !rightLayer) {
+            // Fallback: if a mapping is missing, silently cancel compare
+            compareMode = false;
+            updateDateUI();
+            return;
+          }
+          leftLayer.setVisible(true);
+          rightLayer.setVisible(true);
+        }
+
         map.addLayer(leftLayer);
         map.addLayer(rightLayer);
 
@@ -405,16 +420,17 @@
         rightLayer.on('postrender', function(event) { event.context.restore(); });
         map.render();
         updateSwipeUI();
+        updateDateUI();
       }
 
       function launchHighlightMode() {
+        // Only valid for Disney tiles
         clearCompareLayers();
         highlightLayer = makeHighlightLayer(leftCode, rightCode);
         map.addLayer(highlightLayer);
         updateDateUI();
       }
 
-      // Swipe UI
       function updateSwipeUI() {
         if (!compareMode || highlightMode) return;
         const mapDiv = map.getTargetElement();
@@ -455,7 +471,7 @@
       window.addEventListener('resize', () => setTimeout(updateSwipeUI, 20));
       window.addEventListener('load', () => setTimeout(updateSwipeUI, 30));
 
-      // ===== Events (menus & toggles) =====
+      // Events
       dateBtn.addEventListener('click', () => {
         if (datePopup.style.display === 'block') { hidePopup(datePopup); return; }
         if (!compareMode) {
@@ -478,7 +494,7 @@
       });
 
       toggleBtn.addEventListener('click', () => {
-        if (compareMode) return; // disabled while comparing
+        if (compareMode) return; // keep disabled during compare
         showingDisney = !showingDisney;
         if (showingDisney) {
           disneyLayer.setVisible(true); if (esriLayer) esriLayer.setVisible(false);
@@ -499,7 +515,6 @@
       compareBtn.addEventListener('click', () => {
         compareMode = !compareMode;
         if (compareMode) {
-          // NEW seeding: right = current; left = previous item in serverOptions relative to current
           rightCode = currentCode;
           leftCode = getPreviousCode(currentCode);
           launchSwipeMode();
@@ -511,7 +526,7 @@
       });
 
       highlightBtn.addEventListener('click', () => {
-        if (!compareMode) return;
+        if (!compareMode || !showingDisney) return; // Disney-only
         highlightMode = !highlightMode;
         if (highlightMode) launchHighlightMode(); else launchSwipeMode();
         updateDateUI();
@@ -526,7 +541,7 @@
 
       quickSwitchBtn.addEventListener('click', () => { if (lastTwoDates[1]) setSingleDate(lastTwoDates[1]); });
 
-      // Find Me button
+      // Find Me
       const findmeMessage = document.getElementById('findme-message');
       function showFindMeMessage(msg) { findmeMessage.textContent = msg; findmeMessage.style.display = 'block'; setTimeout(()=> findmeMessage.style.opacity = '1', 10); setTimeout(()=> { findmeMessage.style.opacity = '0'; setTimeout(()=> findmeMessage.style.display = 'none', 400); }, 2200); }
       findmeBtn.addEventListener('click', () => {
@@ -546,7 +561,7 @@
         }, ()=> showFindMeMessage('Unable to get location'), { enableHighAccuracy: true });
       });
 
-      // Double-tap-and-hold zoom helper
+      // Touch zoom helper
       (function() {
         let lastTap = 0, isHoldZoom = false, startY = 0, startZoom = 0, holdTimeout = null;
         const mapDiv = document.getElementById('map');
@@ -566,25 +581,24 @@
         mapDiv.addEventListener('touchend', function() { if (isHoldZoom) { isHoldZoom = false; mapDiv.removeEventListener('touchmove', moveHandler, { passive: false }); } if (holdTimeout) clearTimeout(holdTimeout); });
       })();
 
-      // Sensitivity Slider
       sensitivitySlider.addEventListener('input', () => {
         currentThreshold = parseInt(sensitivitySlider.value, 10);
         if (compareMode && highlightMode) { launchHighlightMode(); }
       });
 
-      // ===== Boot =====
+      // Boot
       fetch('servers2.json')
         .then(r => r.json())
         .then(json => {
           serverOptions = json;
-          currentCode = serverOptions[serverOptions.length - 1].code; // newest as default
+          currentCode = serverOptions[serverOptions.length - 1].code; // newest default
           lastTwoDates = [currentCode, null];
           initMap();
           updateDateUI();
         })
         .catch(err => alert('Failed to load servers2.json: ' + err));
 
-      // ===== Self-tests =====
+      // Self-tests
       console.assert(document.getElementById('grp-top-right'), 'Top-right group should exist');
       console.assert(document.getElementById('grp-bottom-right'), 'Bottom-right group should exist');
       console.assert(document.getElementById('date-btn'), 'Date button should exist');
