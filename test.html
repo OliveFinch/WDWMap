@@ -38,13 +38,18 @@
     .group-bottom-right { position: absolute; right: 8px; bottom: calc(18px + env(safe-area-inset-bottom, 0)); display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
     .group-top-left { position: absolute; top: 8px; left: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
 
+    /* NEW: small row to place the two date buttons side-by-side */
+    .date-row { display: flex; gap: 8px; }
+
     #date-popup, #left-date-popup {
       display: none; opacity: 0; position: absolute; min-width: 180px; max-height: 70vh; overflow-y: auto;
       background: rgba(255,255,255,0.96); border: 1.5px solid #ccc; border-radius: 8px; box-shadow: 0 3px 15px #0002;
       z-index: 1400; font-family: Arial, Helvetica, sans-serif;
     }
     #date-popup { right: 8px; top: 56px; }
-    #left-date-popup { left: 56px; top: 56px; }
+    /* MOVED: left date popup now lives under the top-right cluster as well */
+    #left-date-popup { right: 56px; top: 56px; }
+
     .date-popup-item { display: block; width: 100%; border: none; background: none; font-size: 15px; text-align: left; padding: 9px 16px; cursor: pointer; font-family: Arial, Helvetica, sans-serif; }
     .date-popup-item.selected { background: #f2f5fa; color: #3761c4; font-weight: bold;}
     .date-popup-item:active, .date-popup-item:hover { background: #f8f8f8;}
@@ -98,7 +103,8 @@
       #logo img { width: 180px !important; height: 32px !important; }
       #current-date-display { font-size: 16px; padding: 0 10px; top: 10px; }
       #date-popup { min-width: 140px; max-height: 50vh; top: 44px; right: 8px; }
-      #left-date-popup { min-width: 140px; max-height: 50vh; top: 44px; left: 50px; }
+      /* Adjust for mobile as well */
+      #left-date-popup { min-width: 140px; max-height: 50vh; top: 44px; right: 50px; }
       #swipe-handle { width: 40px; height: 40px; }
       #sensitivity-slider { width: 160px; }
     }
@@ -109,9 +115,16 @@
 
   <!-- TOP RIGHT -->
   <div class="group-top-right" id="grp-top-right">
-    <button id="date-btn" type="button" class="btn-square" title="Choose date">
-      <img src="icons/calendar.svg" alt="Date Selector">
-    </button>
+    <!-- NEW: side-by-side date buttons (left date on the LEFT, main date on the RIGHT) -->
+    <div class="date-row">
+      <button id="left-date-btn" type="button" class="btn-square" title="Choose left date">
+        <img src="icons/calendar.svg" alt="Left Date Selector">
+      </button>
+      <button id="date-btn" type="button" class="btn-square" title="Choose date">
+        <img src="icons/calendar.svg" alt="Date Selector">
+      </button>
+    </div>
+
     <button id="toggle-btn" class="btn-square" title="Switch Disney/Satellite">
       <img id="toggle-icon-img" src="icons/satellite.svg" alt="Satellite">
     </button>
@@ -126,6 +139,8 @@
     </button>
   </div>
 
+  <!-- Popups under the top-right cluster -->
+  <div id="left-date-popup"></div>
   <div id="date-popup"></div>
 
   <!-- TOP LEFT -->
@@ -138,11 +153,7 @@
         <img src="icons/zoom_out.svg" alt="Zoom out">
       </button>
     </div>
-    <button id="left-date-btn" type="button" class="btn-square" title="Choose left date">
-      <img src="icons/calendar.svg" alt="Left Date Selector">
-    </button>
   </div>
-  <div id="left-date-popup"></div>
 
   <!-- BOTTOM RIGHT -->
   <div class="group-bottom-right" id="grp-bottom-right">
@@ -518,8 +529,8 @@
         });
         rightLayer.on('postrender', function(event) { event.context.restore(); });
         map.render();
-updateDateUI();                    // toggles swipe UI to display:block
-requestAnimationFrame(updateSwipeUI); // measure after layout is applied
+        updateSwipeUI();
+        updateDateUI();
       }
 
       function launchHighlightMode() {
@@ -529,47 +540,36 @@ requestAnimationFrame(updateSwipeUI); // measure after layout is applied
         updateDateUI();
       }
 
-function updateSwipeUI() {
-  if (!map || !compareMode || highlightMode) return;
+      // FIXED: keep handle centered on the red line at all times (initial render + resize + drag)
+      function updateSwipeUI() {
+        if (!compareMode || highlightMode) return;
+        const mapDiv = map.getTargetElement();
+        const w = mapDiv.clientWidth;
+        const h = mapDiv.clientHeight;
+        const x = Math.round(w * swipeRatio);
 
-  const mapDiv = map.getTargetElement();
-  if (!mapDiv) return;
+        // Position the red divider line (thumb) centered on x
+        const thumbHalf = Math.floor(swipeThumb.offsetWidth / 2) || 2;
+        swipeThumb.style.left = (x - thumbHalf) + 'px';
+        swipeThumb.style.top = '0px';
+        swipeThumb.style.height = h + 'px';
 
-  // If the UI just became visible, widths may still be 0 — measure next frame.
-  if (
-    swipeThumb.style.display === 'none' || swipeHandle.style.display === 'none' ||
-    swipeThumb.offsetWidth === 0 || swipeHandle.offsetWidth === 0
-  ) {
-    requestAnimationFrame(updateSwipeUI);
-    return;
-  }
+        // Place the circular handle centered exactly on the red line
+        const handleHalf = Math.floor(swipeHandle.offsetWidth / 2) || 17;
+        const handleVerticalRatio = (window.innerWidth <= 600) ? 0.75 : 0.90;
+        swipeHandle.style.left = (x - handleHalf) + 'px';
+        swipeHandle.style.top = (Math.round(h * handleVerticalRatio) - (swipeHandle.offsetHeight / 2)) + 'px';
 
-  const w = mapDiv.clientWidth;
-  const h = mapDiv.clientHeight;
-  const x = Math.round(w * swipeRatio);
+        map.render();
+      }
 
-  // Position the red line (thumb)
-  const thumbHalf = (swipeThumb.offsetWidth || 5) / 2;
-  swipeThumb.style.left = (x - thumbHalf) + 'px';
-  swipeThumb.style.top = '0px';
-  swipeThumb.style.height = h + 'px';
-
-  // Position the circle handle centered on the line
-  const handleHalfW = (swipeHandle.offsetWidth || 34) / 2;
-  const handleHalfH = (swipeHandle.offsetHeight || 34) / 2;
-  const handlePos = window.innerWidth <= 600 ? 0.75 : 0.90; // vertical anchor
-  swipeHandle.style.left = (x - handleHalfW) + 'px';
-  swipeHandle.style.top = (Math.round(h * handlePos) - handleHalfH) + 'px';
-
-  map.render();
-}
-
-  
       function startSwipeDrag(e) {
-        e.preventDefault(); document.body.style.userSelect = 'none';
+        e.preventDefault();
+        document.body.style.userSelect = 'none';
+        const rect = map.getTargetElement().getBoundingClientRect();
+
         function move(ev) {
           const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-          const rect = map.getTargetElement().getBoundingClientRect();
           swipeRatio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
           updateSwipeUI();
         }
