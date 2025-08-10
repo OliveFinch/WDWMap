@@ -26,7 +26,7 @@
       border: 1.5px solid #ccc; border-radius: 8px; font-size: 15px; color: #222;
       cursor: pointer; transition: background 0.2s, border 0.2s; user-select: none; padding: 0;
       font-family: Arial, Helvetica, sans-serif;
-      touch-action: manipulation;                  /* stop iOS double‑tap smart zoom on buttons */
+      touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
     .ol-control-inner img, .btn-square img { width: 24px; height: 24px; display: block; pointer-events: none; user-select: none; }
@@ -34,17 +34,29 @@
     .btn-square:active, .btn-square:focus, .btn-square:hover { background: #f8f8f8; border-color: #999;}
     .btn-square[disabled] { opacity: .45; cursor: default; }
 
-    .group-top-right { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
+    .group-top-right {
+      position: absolute; top: 8px; right: 8px;
+      display: flex; flex-direction: column; gap: 8px; z-index: 1100;
+      align-items: flex-end; /* keep everything anchored to the right edge */
+    }
     .group-bottom-right { position: absolute; right: 8px; bottom: calc(18px + env(safe-area-inset-bottom, 0)); display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
     .group-top-left { position: absolute; top: 8px; left: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
 
+    /* Row for the two date buttons at the top-right */
+    .date-row {
+      display: flex; flex-direction: row; gap: 8px;
+      justify-content: flex-end;   /* right-justify inside the row */
+      width: 100%;
+    }
+
+    /* Popups: position will be set next to their buttons via JS */
     #date-popup, #left-date-popup {
-      display: none; opacity: 0; position: absolute; min-width: 180px; max-height: 70vh; overflow-y: auto;
+      display: none; opacity: 0; position: fixed; min-width: 180px; max-height: 70vh; overflow-y: auto;
       background: rgba(255,255,255,0.96); border: 1.5px solid #ccc; border-radius: 8px; box-shadow: 0 3px 15px #0002;
       z-index: 1400; font-family: Arial, Helvetica, sans-serif;
+      transition: opacity .18s ease;
     }
-    #date-popup { right: 8px; top: 56px; }
-    #left-date-popup { left: 56px; top: 56px; }
+
     .date-popup-item { display: block; width: 100%; border: none; background: none; font-size: 15px; text-align: left; padding: 9px 16px; cursor: pointer; font-family: Arial, Helvetica, sans-serif; }
     .date-popup-item.selected { background: #f2f5fa; color: #3761c4; font-weight: bold;}
     .date-popup-item:active, .date-popup-item:hover { background: #f8f8f8;}
@@ -61,7 +73,7 @@
       background: rgba(255,255,255,0.92); color: #d62525; font-size: 17px; font-weight: bold; text-align: center; opacity: 0;
       padding: 7px 20px; border-radius: 16px; box-shadow: 0 2px 8px #0001; transition: opacity 0.4s; pointer-events: none; }
 
-    #compare-btn, #highlight-btn, #left-date-btn, #settings-btn { display: none; }
+    #compare-btn, #highlight-btn, #settings-btn { display: none; }
 
     #swipe-thumb { position: absolute; top: 0; bottom: 0; width: 5px; background: #e24141cc; z-index: 1300; cursor: ew-resize; border-radius: 3px; box-shadow: 0 2px 12px #3336; pointer-events: auto; display: none; }
     #swipe-handle { position: absolute; width: 34px; height: 34px; background: #fff; border: 4px solid #e24141cc; border-radius: 50%; box-shadow: 0 2px 12px #2225; z-index: 1400; cursor: grab; touch-action: none; display: none; transition: background 0.1s, border 0.1s; }
@@ -97,9 +109,6 @@
       #logo { left: 50%; transform: translateX(-50%); bottom: 8px;}
       #logo img { width: 180px !important; height: 32px !important; }
       #current-date-display { font-size: 16px; padding: 0 10px; top: 10px; }
-      #date-popup { min-width: 140px; max-height: 50vh; top: 44px; right: 8px; }
-      #left-date-popup { min-width: 140px; max-height: 50vh; top: 44px; left: 50px; }
-      #swipe-handle { width: 40px; height: 40px; }
       #sensitivity-slider { width: 160px; }
     }
   </style>
@@ -109,9 +118,16 @@
 
   <!-- TOP RIGHT -->
   <div class="group-top-right" id="grp-top-right">
-    <button id="date-btn" type="button" class="btn-square" title="Choose date">
-      <img src="icons/calendar.svg" alt="Date Selector">
-    </button>
+    <!-- Row with left date (only in compare) and right date -->
+    <div class="date-row">
+      <button id="left-date-btn" type="button" class="btn-square" title="Choose left date" style="display:none;">
+        <img src="icons/calendar.svg" alt="Left Date Selector">
+      </button>
+      <button id="date-btn" type="button" class="btn-square" title="Choose date">
+        <img src="icons/calendar.svg" alt="Date Selector">
+      </button>
+    </div>
+
     <button id="toggle-btn" class="btn-square" title="Switch Disney/Satellite">
       <img id="toggle-icon-img" src="icons/satellite.svg" alt="Satellite">
     </button>
@@ -126,7 +142,9 @@
     </button>
   </div>
 
+  <!-- Popups positioned by JS next to their respective buttons -->
   <div id="date-popup"></div>
+  <div id="left-date-popup"></div>
 
   <!-- TOP LEFT -->
   <div class="group-top-left" id="grp-top-left">
@@ -138,11 +156,7 @@
         <img src="icons/zoom_out.svg" alt="Zoom out">
       </button>
     </div>
-    <button id="left-date-btn" type="button" class="btn-square" title="Choose left date">
-      <img src="icons/calendar.svg" alt="Left Date Selector">
-    </button>
   </div>
-  <div id="left-date-popup"></div>
 
   <!-- BOTTOM RIGHT -->
   <div class="group-bottom-right" id="grp-bottom-right">
@@ -392,12 +406,19 @@
             center: ol.proj.fromLonLat([-81.5494, 28.3747]),
             zoom: 16, minZoom: 0, maxZoom: 20, extent: disneyWorldExtent
           }),
-          controls: ol.control.defaults.defaults({ zoom: false }), // hide OL zoom UI; gestures still work
+          controls: ol.control.defaults.defaults({ zoom: false }),
           interactions: ol.interaction.defaults.defaults({
             altShiftDragRotate: false,
             pinchRotate: false
           })
         });
+
+        // Keep handle/line synced when map renders or layout changes
+        map.on('rendercomplete', updateSwipeUI);
+        const ro = new ResizeObserver(updateSwipeUI);
+        ro.observe(document.getElementById('map'));
+        window.addEventListener('resize', updateSwipeUI);
+        window.addEventListener('scroll', updateSwipeUI, { passive: true });
       }
 
       function setRoadsLayerState() {
@@ -434,6 +455,9 @@
         swipeHandle.style.display = (compareMode && !highlightMode) ? 'block' : 'none';
 
         sensitivityRow.style.display = (compareMode && highlightMode && showSensitivity) ? 'block' : 'none';
+
+        // Keep the compare UI aligned if it becomes visible/hidden
+        updateSwipeUI();
       }
 
       function fillDatePopup(popupEl, selectedCode, onPick) {
@@ -447,7 +471,16 @@
           popupEl.appendChild(b);
         });
       }
-      function showPopup(popupEl) { popupEl.style.display = 'block'; setTimeout(()=> popupEl.style.opacity = '1', 10); }
+
+      // Anchor a popup next to a button
+      function positionPopupForButton(popupEl, btnEl) {
+        const r = btnEl.getBoundingClientRect();
+        const gap = 8;
+        popupEl.style.left = (r.left) + 'px';
+        popupEl.style.top  = (r.bottom + gap) + 'px';
+      }
+
+      function showPopup(popupEl) { popupEl.style.display = 'block'; requestAnimationFrame(()=> popupEl.style.opacity = '1'); }
       function hidePopup(popupEl) { popupEl.style.opacity = '0'; setTimeout(()=> popupEl.style.display = 'none', 180); }
 
       function setSingleDate(newCode) {
@@ -518,8 +551,12 @@
         });
         rightLayer.on('postrender', function(event) { event.context.restore(); });
         map.render();
-updateDateUI();                    // toggles swipe UI to display:block
-requestAnimationFrame(updateSwipeUI); // measure after layout is applied
+
+        // Ensure UI aligns immediately after layers render
+        updateSwipeUI();
+        requestAnimationFrame(updateSwipeUI);
+
+        updateDateUI();
       }
 
       function launchHighlightMode() {
@@ -529,42 +566,33 @@ requestAnimationFrame(updateSwipeUI); // measure after layout is applied
         updateDateUI();
       }
 
-function updateSwipeUI() {
-  if (!map || !compareMode || highlightMode) return;
+      // ========= FIXED: keep handle exactly centered on the line =========
+      function updateSwipeUI() {
+        if (!compareMode || highlightMode) return;
 
-  const mapDiv = map.getTargetElement();
-  if (!mapDiv) return;
+        const mapEl = map.getTargetElement();
+        const mapRect = mapEl.getBoundingClientRect();
+        const w = mapRect.width;
+        const h = mapRect.height;
+        const x = Math.round(w * swipeRatio);
 
-  // If the UI just became visible, widths may still be 0 — measure next frame.
-  if (
-    swipeThumb.style.display === 'none' || swipeHandle.style.display === 'none' ||
-    swipeThumb.offsetWidth === 0 || swipeHandle.offsetWidth === 0
-  ) {
-    requestAnimationFrame(updateSwipeUI);
-    return;
-  }
+        // Vertical red line (use its actual width)
+        const lineHalf = (swipeThumb.offsetWidth || 5) / 2;
+        swipeThumb.style.left = (mapRect.left + x - lineHalf) + 'px';
+        swipeThumb.style.top = mapRect.top + 'px';
+        swipeThumb.style.height = h + 'px';
 
-  const w = mapDiv.clientWidth;
-  const h = mapDiv.clientHeight;
-  const x = Math.round(w * swipeRatio);
+        // Circle handle (use offset sizes so we always get real numbers)
+        const handleW = swipeHandle.offsetWidth || 34;
+        const handleH = swipeHandle.offsetHeight || 34;
 
-  // Position the red line (thumb)
-  const thumbHalf = (swipeThumb.offsetWidth || 5) / 2;
-  swipeThumb.style.left = (x - thumbHalf) + 'px';
-  swipeThumb.style.top = '0px';
-  swipeThumb.style.height = h + 'px';
+        let handlePos = 0.90;
+        if (window.innerWidth <= 600) handlePos = 0.75;
 
-  // Position the circle handle centered on the line
-  const handleHalfW = (swipeHandle.offsetWidth || 34) / 2;
-  const handleHalfH = (swipeHandle.offsetHeight || 34) / 2;
-  const handlePos = window.innerWidth <= 600 ? 0.75 : 0.90; // vertical anchor
-  swipeHandle.style.left = (x - handleHalfW) + 'px';
-  swipeHandle.style.top = (Math.round(h * handlePos) - handleHalfH) + 'px';
+        swipeHandle.style.left = (mapRect.left + x - (handleW / 2)) + 'px';
+        swipeHandle.style.top  = (mapRect.top + Math.round(h * handlePos) - (handleH / 2)) + 'px';
+      }
 
-  map.render();
-}
-
-  
       function startSwipeDrag(e) {
         e.preventDefault(); document.body.style.userSelect = 'none';
         function move(ev) {
@@ -579,20 +607,19 @@ function updateSwipeUI() {
           document.removeEventListener('touchmove', move);
           document.removeEventListener('touchend', stop);
           document.body.style.userSelect = '';
+          updateSwipeUI(); // final snap
         }
         document.addEventListener('mousemove', move);
         document.addEventListener('mouseup', stop);
-        document.addEventListener('touchmove', move);
+        document.addEventListener('touchmove', move, { passive: false });
         document.addEventListener('touchend', stop);
       }
       swipeThumb.addEventListener('mousedown', startSwipeDrag);
-      swipeThumb.addEventListener('touchstart', startSwipeDrag);
+      swipeThumb.addEventListener('touchstart', startSwipeDrag, { passive: false });
       swipeHandle.addEventListener('mousedown', startSwipeDrag);
-      swipeHandle.addEventListener('touchstart', startSwipeDrag);
-      window.addEventListener('resize', () => setTimeout(updateSwipeUI, 20));
-      window.addEventListener('load', () => setTimeout(updateSwipeUI, 30));
+      swipeHandle.addEventListener('touchstart', startSwipeDrag, { passive: false });
 
-      // Events
+      // Events: right date popup
       dateBtn.addEventListener('click', () => {
         if (datePopup.style.display === 'block') { hidePopup(datePopup); return; }
         if (!compareMode) {
@@ -600,18 +627,21 @@ function updateSwipeUI() {
         } else {
           fillDatePopup(datePopup, rightCode, (code)=>{ rightCode = code; (highlightMode?launchHighlightMode:launchSwipeMode)(); updateDateUI(); });
         }
+        positionPopupForButton(datePopup, dateBtn);
         showPopup(datePopup);
-        const hide = (e)=>{ if (!datePopup.contains(e.target) && e.target !== dateBtn && !dateBtn.contains(e.target)) { hidePopup(datePopup); document.removeEventListener('mousedown', hide, true); document.removeEventListener('touchstart', hide, true);} };
-        setTimeout(()=>{ document.addEventListener('mousedown', hide, true); document.addEventListener('touchstart', hide, true); }, 0);
+        const close = (e)=>{ if (!datePopup.contains(e.target) && e.target !== dateBtn && !dateBtn.contains(e.target)) { hidePopup(datePopup); document.removeEventListener('mousedown', close, true); document.removeEventListener('touchstart', close, true);} };
+        setTimeout(()=>{ document.addEventListener('mousedown', close, true); document.addEventListener('touchstart', close, true); }, 0);
       });
 
+      // Events: left date popup
       leftDateBtn.addEventListener('click', () => {
         if (!compareMode) return;
         if (leftDatePopup.style.display === 'block') { hidePopup(leftDatePopup); return; }
         fillDatePopup(leftDatePopup, leftCode, (code)=>{ leftCode = code; (highlightMode?launchHighlightMode:launchSwipeMode)(); updateDateUI(); });
+        positionPopupForButton(leftDatePopup, leftDateBtn);
         showPopup(leftDatePopup);
-        const hide = (e)=>{ if (!leftDatePopup.contains(e.target) && e.target !== leftDateBtn && !leftDateBtn.contains(e.target)) { hidePopup(leftDatePopup); document.removeEventListener('mousedown', hide, true); document.removeEventListener('touchstart', hide, true);} };
-        setTimeout(()=>{ document.addEventListener('mousedown', hide, true); document.addEventListener('touchstart', hide, true); }, 0);
+        const close = (e)=>{ if (!leftDatePopup.contains(e.target) && e.target !== leftDateBtn && !leftDateBtn.contains(e.target)) { hidePopup(leftDatePopup); document.removeEventListener('mousedown', close, true); document.removeEventListener('touchstart', close, true);} };
+        setTimeout(()=>{ document.addEventListener('mousedown', close, true); document.addEventListener('touchstart', close, true); }, 0);
       });
 
       toggleBtn.addEventListener('click', () => {
@@ -646,10 +676,12 @@ function updateSwipeUI() {
           leftCode = getPreviousCode(currentCode);
           highlightMode = false; // start in swipe
           showSensitivity = false;
+          leftDateBtn.style.display = 'flex';
           launchSwipeMode();
         } else {
           highlightMode = false; showSensitivity = false; clearCompareLayers();
           swipeThumb.style.display = 'none'; swipeHandle.style.display = 'none'; sensitivityRow.style.display = 'none';
+          leftDateBtn.style.display = 'none';
         }
         updateDateUI();
       });
@@ -717,7 +749,7 @@ function updateSwipeUI() {
           if (e.touches.length !== 1) return; const now = Date.now();
           if (now - lastTap < 350) { e.preventDefault(); startY = e.touches[0].clientY; startZoom = map.getView().getZoom(); isHoldZoom = true; holdTimeout = setTimeout(()=> mapDiv.addEventListener('touchmove', moveHandler, { passive: false }), 100); }
           else { lastTap = now; isHoldZoom = false; if (holdTimeout) clearTimeout(holdTimeout); }
-        });
+        }, { passive: false });
         mapDiv.addEventListener('touchend', function() { if (isHoldZoom) { isHoldZoom = false; mapDiv.removeEventListener('touchmove', moveHandler, { passive: false }); } if (holdTimeout) clearTimeout(holdTimeout); });
       })();
 
