@@ -593,27 +593,41 @@
         swipeHandle.style.top  = (mapRect.top + Math.round(h * handlePos) - (handleH / 2)) + 'px';
       }
 
-      function startSwipeDrag(e) {
-        e.preventDefault(); document.body.style.userSelect = 'none';
-        function move(ev) {
-          const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-          const rect = map.getTargetElement().getBoundingClientRect();
-          swipeRatio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-          updateSwipeUI();
-        }
-        function stop() {
-          document.removeEventListener('mousemove', move);
-          document.removeEventListener('mouseup', stop);
-          document.removeEventListener('touchmove', move);
-          document.removeEventListener('touchend', stop);
-          document.body.style.userSelect = '';
-          updateSwipeUI(); // final snap
-        }
-        document.addEventListener('mousemove', move);
-        document.addEventListener('mouseup', stop);
-        document.addEventListener('touchmove', move, { passive: false });
-        document.addEventListener('touchend', stop);
-      }
+function startSwipeDrag(e) {
+  e.preventDefault();
+  document.body.style.userSelect = 'none';
+
+  const move = (ev) => {
+    const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+    const rect = map.getTargetElement().getBoundingClientRect();
+    swipeRatio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+
+    // keep the UI elements aligned
+    updateSwipeUI();
+
+    // *** force the map to re-render so the clip updates immediately ***
+    if (rightLayer) rightLayer.changed(); // mark layer dirty
+    map.render();                         // request a frame
+  };
+
+  const stop = () => {
+    document.removeEventListener('mousemove', move);
+    document.removeEventListener('mouseup', stop);
+    document.removeEventListener('touchmove', move);
+    document.removeEventListener('touchend', stop);
+    document.body.style.userSelect = '';
+
+    // final snap & one last render
+    updateSwipeUI();
+    if (rightLayer) rightLayer.changed();
+    map.render();
+  };
+
+  document.addEventListener('mousemove', move);
+  document.addEventListener('mouseup', stop);
+  document.addEventListener('touchmove', move, { passive: false });
+  document.addEventListener('touchend', stop);
+}
       swipeThumb.addEventListener('mousedown', startSwipeDrag);
       swipeThumb.addEventListener('touchstart', startSwipeDrag, { passive: false });
       swipeHandle.addEventListener('mousedown', startSwipeDrag);
