@@ -26,7 +26,7 @@
       border: 1.5px solid #ccc; border-radius: 8px; font-size: 15px; color: #222;
       cursor: pointer; transition: background 0.2s, border 0.2s; user-select: none; padding: 0;
       font-family: Arial, Helvetica, sans-serif;
-      touch-action: manipulation;                  /* stop iOS double‑tap smart zoom on buttons */
+      touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
     .ol-control-inner img, .btn-square img { width: 24px; height: 24px; display: block; pointer-events: none; user-select: none; }
@@ -34,21 +34,24 @@
     .btn-square:active, .btn-square:focus, .btn-square:hover { background: #f8f8f8; border-color: #999;}
     .btn-square[disabled] { opacity: .45; cursor: default; }
 
+    /* Button groups */
     .group-top-right { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
     .group-bottom-right { position: absolute; right: 8px; bottom: calc(18px + env(safe-area-inset-bottom, 0)); display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
     .group-top-left { position: absolute; top: 8px; left: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
 
-    /* NEW: small row to place the two date buttons side-by-side */
-    .date-row { display: flex; gap: 8px; }
+    /* Row for the two date buttons on the top-right */
+    .date-row { display: flex; gap: 8px; align-items: center; }
 
+    /* Popups */
     #date-popup, #left-date-popup {
       display: none; opacity: 0; position: absolute; min-width: 180px; max-height: 70vh; overflow-y: auto;
       background: rgba(255,255,255,0.96); border: 1.5px solid #ccc; border-radius: 8px; box-shadow: 0 3px 15px #0002;
       z-index: 1400; font-family: Arial, Helvetica, sans-serif;
     }
+    /* Main right-side date popup drops under the rightmost date button */
     #date-popup { right: 8px; top: 56px; }
-    /* MOVED: left date popup now lives under the top-right cluster as well */
-    #left-date-popup { right: 56px; top: 56px; }
+    /* Left date popup drops under the left date button (one button width + gap from right edge) */
+    #left-date-popup { right: calc(8px + 40px + 8px); top: 56px; }
 
     .date-popup-item { display: block; width: 100%; border: none; background: none; font-size: 15px; text-align: left; padding: 9px 16px; cursor: pointer; font-family: Arial, Helvetica, sans-serif; }
     .date-popup-item.selected { background: #f2f5fa; color: #3761c4; font-weight: bold;}
@@ -66,7 +69,7 @@
       background: rgba(255,255,255,0.92); color: #d62525; font-size: 17px; font-weight: bold; text-align: center; opacity: 0;
       padding: 7px 20px; border-radius: 16px; box-shadow: 0 2px 8px #0001; transition: opacity 0.4s; pointer-events: none; }
 
-    #compare-btn, #highlight-btn, #left-date-btn, #settings-btn { display: none; }
+    #compare-btn, #highlight-btn, #settings-btn { display: none; }
 
     #swipe-thumb { position: absolute; top: 0; bottom: 0; width: 5px; background: #e24141cc; z-index: 1300; cursor: ew-resize; border-radius: 3px; box-shadow: 0 2px 12px #3336; pointer-events: auto; display: none; }
     #swipe-handle { position: absolute; width: 34px; height: 34px; background: #fff; border: 4px solid #e24141cc; border-radius: 50%; box-shadow: 0 2px 12px #2225; z-index: 1400; cursor: grab; touch-action: none; display: none; transition: background 0.1s, border 0.1s; }
@@ -102,9 +105,11 @@
       #logo { left: 50%; transform: translateX(-50%); bottom: 8px;}
       #logo img { width: 180px !important; height: 32px !important; }
       #current-date-display { font-size: 16px; padding: 0 10px; top: 10px; }
+
       #date-popup { min-width: 140px; max-height: 50vh; top: 44px; right: 8px; }
-      /* Adjust for mobile as well */
-      #left-date-popup { min-width: 140px; max-height: 50vh; top: 44px; right: 50px; }
+      /* 32px button + 6px gap from the right */
+      #left-date-popup { min-width: 140px; max-height: 50vh; top: 44px; right: calc(8px + 32px + 6px); }
+
       #swipe-handle { width: 40px; height: 40px; }
       #sensitivity-slider { width: 160px; }
     }
@@ -115,9 +120,9 @@
 
   <!-- TOP RIGHT -->
   <div class="group-top-right" id="grp-top-right">
-    <!-- NEW: side-by-side date buttons (left date on the LEFT, main date on the RIGHT) -->
+    <!-- Date buttons row (Left Date, then Main Date) -->
     <div class="date-row">
-      <button id="left-date-btn" type="button" class="btn-square" title="Choose left date">
+      <button id="left-date-btn" type="button" class="btn-square" title="Choose left date" style="display:none;">
         <img src="icons/calendar.svg" alt="Left Date Selector">
       </button>
       <button id="date-btn" type="button" class="btn-square" title="Choose date">
@@ -125,6 +130,7 @@
       </button>
     </div>
 
+    <!-- The rest of the top-right controls under the date row -->
     <button id="toggle-btn" class="btn-square" title="Switch Disney/Satellite">
       <img id="toggle-icon-img" src="icons/satellite.svg" alt="Satellite">
     </button>
@@ -139,11 +145,10 @@
     </button>
   </div>
 
-  <!-- Popups under the top-right cluster -->
-  <div id="left-date-popup"></div>
   <div id="date-popup"></div>
+  <div id="left-date-popup"></div>
 
-  <!-- TOP LEFT -->
+  <!-- TOP LEFT (zoom only now) -->
   <div class="group-top-left" id="grp-top-left">
     <div class="zoom-stack">
       <button id="zoom-in-btn" class="btn-square" title="Zoom in">
@@ -403,7 +408,7 @@
             center: ol.proj.fromLonLat([-81.5494, 28.3747]),
             zoom: 16, minZoom: 0, maxZoom: 20, extent: disneyWorldExtent
           }),
-          controls: ol.control.defaults.defaults({ zoom: false }), // hide OL zoom UI; gestures still work
+          controls: ol.control.defaults.defaults({ zoom: false }),
           interactions: ol.interaction.defaults.defaults({
             altShiftDragRotate: false,
             pinchRotate: false
@@ -540,36 +545,38 @@
         updateDateUI();
       }
 
-      // FIXED: keep handle centered on the red line at all times (initial render + resize + drag)
+      // Fixed version: keep handle centered on the red line regardless of line width/positioning
       function updateSwipeUI() {
         if (!compareMode || highlightMode) return;
-        const mapDiv = map.getTargetElement();
-        const w = mapDiv.clientWidth;
-        const h = mapDiv.clientHeight;
+        const mapEl = map.getTargetElement();
+        const mapRect = mapEl.getBoundingClientRect();
+        const w = mapRect.width;
+        const h = mapRect.height;
         const x = Math.round(w * swipeRatio);
 
-        // Position the red divider line (thumb) centered on x
-        const thumbHalf = Math.floor(swipeThumb.offsetWidth / 2) || 2;
-        swipeThumb.style.left = (x - thumbHalf) + 'px';
-        swipeThumb.style.top = '0px';
+        // Position the vertical red line
+        const lineHalf = (swipeThumb.offsetWidth || 5) / 2;
+        swipeThumb.style.left = (mapRect.left + x - lineHalf) + 'px';
+        swipeThumb.style.top = mapRect.top + 'px';
         swipeThumb.style.height = h + 'px';
 
-        // Place the circular handle centered exactly on the red line
-        const handleHalf = Math.floor(swipeHandle.offsetWidth / 2) || 17;
-        const handleVerticalRatio = (window.innerWidth <= 600) ? 0.75 : 0.90;
-        swipeHandle.style.left = (x - handleHalf) + 'px';
-        swipeHandle.style.top = (Math.round(h * handleVerticalRatio) - (swipeHandle.offsetHeight / 2)) + 'px';
+        // Position the circular handle so its center sits on the line center
+        const handleRect = swipeHandle.getBoundingClientRect();
+        const handleW = handleRect.width || 34;
+        const handleH = handleRect.height || 34;
+        let handlePos = 0.90;
+        if (window.innerWidth <= 600) handlePos = 0.75;
+        swipeHandle.style.left = (mapRect.left + x - (handleW / 2)) + 'px';
+        swipeHandle.style.top  = (mapRect.top + Math.round(h * handlePos) - (handleH / 2)) + 'px';
 
         map.render();
       }
 
       function startSwipeDrag(e) {
-        e.preventDefault();
-        document.body.style.userSelect = 'none';
-        const rect = map.getTargetElement().getBoundingClientRect();
-
+        e.preventDefault(); document.body.style.userSelect = 'none';
         function move(ev) {
           const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+          const rect = map.getTargetElement().getBoundingClientRect();
           swipeRatio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
           updateSwipeUI();
         }
