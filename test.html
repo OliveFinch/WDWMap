@@ -518,8 +518,8 @@
         });
         rightLayer.on('postrender', function(event) { event.context.restore(); });
         map.render();
-        updateSwipeUI();
-        updateDateUI();
+updateDateUI();                    // toggles swipe UI to display:block
+requestAnimationFrame(updateSwipeUI); // measure after layout is applied
       }
 
       function launchHighlightMode() {
@@ -529,19 +529,42 @@
         updateDateUI();
       }
 
-      function updateSwipeUI() {
-        if (!compareMode || highlightMode) return;
-        const mapDiv = map.getTargetElement();
-        const w = mapDiv.clientWidth; const h = mapDiv.clientHeight;
-        const x = Math.round(w * swipeRatio);
-        swipeThumb.style.left = (x - (swipeThumb.offsetWidth / 2)) + 'px';
-        swipeThumb.style.top = '0px';
-        swipeThumb.style.height = h + 'px';
-        let handlePos = 0.90; if (window.innerWidth <= 600) handlePos = 0.75;
-        swipeHandle.style.left = (x - (swipeHandle.offsetWidth / 2) + (swipeThumb.offsetWidth / 2) - 2) + 'px';
-        swipeHandle.style.top = (Math.round(h * handlePos) - (swipeHandle.offsetHeight / 2)) + 'px';
-        map.render();
-      }
+function updateSwipeUI() {
+  if (!map || !compareMode || highlightMode) return;
+
+  const mapDiv = map.getTargetElement();
+  if (!mapDiv) return;
+
+  // If the UI just became visible, widths may still be 0 — measure next frame.
+  if (
+    swipeThumb.style.display === 'none' || swipeHandle.style.display === 'none' ||
+    swipeThumb.offsetWidth === 0 || swipeHandle.offsetWidth === 0
+  ) {
+    requestAnimationFrame(updateSwipeUI);
+    return;
+  }
+
+  const w = mapDiv.clientWidth;
+  const h = mapDiv.clientHeight;
+  const x = Math.round(w * swipeRatio);
+
+  // Position the red line (thumb)
+  const thumbHalf = (swipeThumb.offsetWidth || 5) / 2;
+  swipeThumb.style.left = (x - thumbHalf) + 'px';
+  swipeThumb.style.top = '0px';
+  swipeThumb.style.height = h + 'px';
+
+  // Position the circle handle centered on the line
+  const handleHalfW = (swipeHandle.offsetWidth || 34) / 2;
+  const handleHalfH = (swipeHandle.offsetHeight || 34) / 2;
+  const handlePos = window.innerWidth <= 600 ? 0.75 : 0.90; // vertical anchor
+  swipeHandle.style.left = (x - handleHalfW) + 'px';
+  swipeHandle.style.top = (Math.round(h * handlePos) - handleHalfH) + 'px';
+
+  map.render();
+}
+
+  
       function startSwipeDrag(e) {
         e.preventDefault(); document.body.style.userSelect = 'none';
         function move(ev) {
