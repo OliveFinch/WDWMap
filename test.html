@@ -34,20 +34,29 @@
     .btn-square:active, .btn-square:focus, .btn-square:hover { background: #f8f8f8; border-color: #999;}
     .btn-square[disabled] { opacity: .45; cursor: default; }
 
-    .group-top-right { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
+    .group-top-right {
+      position: absolute; top: 8px; right: 8px;
+      display: flex; flex-direction: column; gap: 8px; z-index: 1100;
+      align-items: flex-end; /* keep everything anchored to the right edge */
+    }
     .group-bottom-right { position: absolute; right: 8px; bottom: calc(18px + env(safe-area-inset-bottom, 0)); display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
     .group-top-left { position: absolute; top: 8px; left: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
 
-    /* Row for the two date pickers (shown in top-right group) */
-    .dates-row { display: flex; gap: 8px; }
+    /* Row for the two date buttons at the top-right */
+    .date-row {
+      display: flex; flex-direction: row; gap: 8px;
+      justify-content: flex-end;   /* right-justify inside the row */
+      width: 100%;
+    }
 
+    /* Popups: position will be set next to their buttons via JS */
     #date-popup, #left-date-popup {
-      display: none; opacity: 0; position: absolute; min-width: 180px; max-height: 70vh; overflow-y: auto;
+      display: none; opacity: 0; position: fixed; min-width: 180px; max-height: 70vh; overflow-y: auto;
       background: rgba(255,255,255,0.96); border: 1.5px solid #ccc; border-radius: 8px; box-shadow: 0 3px 15px #0002;
       z-index: 1400; font-family: Arial, Helvetica, sans-serif;
+      transition: opacity .18s ease;
     }
-    #date-popup { right: 8px; top: 56px; }
-    #left-date-popup { right: 56px; top: 56px; } /* pop to the left of the right-side menu */
+
     .date-popup-item { display: block; width: 100%; border: none; background: none; font-size: 15px; text-align: left; padding: 9px 16px; cursor: pointer; font-family: Arial, Helvetica, sans-serif; }
     .date-popup-item.selected { background: #f2f5fa; color: #3761c4; font-weight: bold;}
     .date-popup-item:active, .date-popup-item:hover { background: #f8f8f8;}
@@ -64,7 +73,7 @@
       background: rgba(255,255,255,0.92); color: #d62525; font-size: 17px; font-weight: bold; text-align: center; opacity: 0;
       padding: 7px 20px; border-radius: 16px; box-shadow: 0 2px 8px #0001; transition: opacity 0.4s; pointer-events: none; }
 
-    #compare-btn, #highlight-btn, #left-date-btn, #settings-btn { display: none; }
+    #compare-btn, #highlight-btn, #settings-btn { display: none; }
 
     #swipe-thumb { position: absolute; top: 0; bottom: 0; width: 5px; background: #e24141cc; z-index: 1300; cursor: ew-resize; border-radius: 3px; box-shadow: 0 2px 12px #3336; pointer-events: auto; display: none; }
     #swipe-handle { position: absolute; width: 34px; height: 34px; background: #fff; border: 4px solid #e24141cc; border-radius: 50%; box-shadow: 0 2px 12px #2225; z-index: 1400; cursor: grab; touch-action: none; display: none; transition: background 0.1s, border 0.1s; }
@@ -100,9 +109,6 @@
       #logo { left: 50%; transform: translateX(-50%); bottom: 8px;}
       #logo img { width: 180px !important; height: 32px !important; }
       #current-date-display { font-size: 16px; padding: 0 10px; top: 10px; }
-      #date-popup { min-width: 140px; max-height: 50vh; top: 44px; right: 8px; }
-      #left-date-popup { min-width: 140px; max-height: 50vh; top: 44px; right: 56px; }
-      #swipe-handle { width: 40px; height: 40px; }
       #sensitivity-slider { width: 160px; }
     }
   </style>
@@ -112,11 +118,14 @@
 
   <!-- TOP RIGHT -->
   <div class="group-top-right" id="grp-top-right">
-    <div class="dates-row" id="dates-row">
+    <!-- Row with left date (only in compare) and right date -->
+    <div class="date-row">
       <button id="left-date-btn" type="button" class="btn-square" title="Choose left date" style="display:none;">
+        <!-- CHANGED ICON -->
         <img src="icons/date_left.svg" alt="Left Date Selector">
       </button>
       <button id="date-btn" type="button" class="btn-square" title="Choose date">
+        <!-- CHANGED ICON -->
         <img src="icons/date_right.svg" alt="Right Date Selector">
       </button>
     </div>
@@ -135,6 +144,7 @@
     </button>
   </div>
 
+  <!-- Popups positioned by JS next to their respective buttons -->
   <div id="date-popup"></div>
   <div id="left-date-popup"></div>
 
@@ -179,24 +189,29 @@
 <script>
 // Completely disable browser zoom everywhere (desktop + mobile)
 (function () {
+  // Prevent pinch zoom (desktop trackpads & mobile gestures)
   document.addEventListener('wheel', (e) => {
     if (e.ctrlKey || e.metaKey) e.preventDefault();
   }, { passive: false, capture: true });
 
+  // Prevent pinch zoom on mobile Safari
   ['gesturestart', 'gesturechange', 'gestureend'].forEach(type => {
     window.addEventListener(type, (e) => e.preventDefault(), { passive: false, capture: true });
   });
 
+  // Prevent Ctrl/Cmd + +/-/0 zoom shortcuts
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && ['+', '=', '-', '0'].includes(e.key)) {
       e.preventDefault();
     }
   }, { capture: true });
 
+  // Prevent double-click zoom (desktop browsers)
   window.addEventListener('dblclick', (e) => {
     e.preventDefault();
   }, { passive: false, capture: true });
 
+  // Prevent iOS/macOS "smart zoom" (double-tap with trackpad/magic mouse)
   document.addEventListener('touchstart', (e) => {
     if (e.touches.length > 1) e.preventDefault();
   }, { passive: false });
@@ -239,7 +254,6 @@
       const datePopup = document.getElementById('date-popup');
       const leftDateBtn = document.getElementById('left-date-btn');
       const leftDatePopup = document.getElementById('left-date-popup');
-      const datesRow = document.getElementById('dates-row');
       const toggleBtn = document.getElementById('toggle-btn');
       const toggleIconImg = document.getElementById('toggle-icon-img');
       const compareBtn = document.getElementById('compare-btn');
@@ -260,21 +274,46 @@
         [-81.9200, 28.1772, -81.2244, 28.6390], 'EPSG:4326', 'EPSG:3857'
       );
 
-      // Tile placeholder (neutral "Loading…")
-      function loadingTileDataURL() {
-        const canvas = document.createElement('canvas');
-        canvas.width = 256; canvas.height = 256;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#f0f0f0';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#666';
-        ctx.font = 'bold 20px Arial';
+      // ===== PLACEHOLDER TILES (for loading/error) =====
+      const LOADING_URL = makePlaceholderDataURL('Loading tile…');
+      const ERROR_URL   = makePlaceholderDataURL('Tile error');
+
+      function makePlaceholderDataURL(text) {
+        const w = 256, h = 256;
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        // background
+        ctx.fillStyle = '#f3f6fb';
+        ctx.fillRect(0, 0, w, h);
+        // border
+        ctx.strokeStyle = '#d0d7e2';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0.5, 0.5, w-1, h-1);
+        // text
+        ctx.fillStyle = '#6b7a90';
+        ctx.font = '16px Arial, Helvetica, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('Loading…', canvas.width / 2, canvas.height / 2);
-        return canvas.toDataURL();
+        ctx.fillText(text, w/2, h/2);
+        return c.toDataURL();
       }
-      const LOADING_TILE = loadingTileDataURL();
+
+      function withPlaceholderTileLoadFunction() {
+        return function(tile, src) {
+          const img = tile.getImage();
+          // show placeholder immediately
+          img.src = LOADING_URL;
+
+          // load the real image off-DOM
+          const loader = new Image();
+          // allow CORS if server sends headers; safe for normal image draw
+          loader.crossOrigin = 'anonymous';
+          loader.onload = function() { img.src = src; };
+          loader.onerror = function() { img.src = ERROR_URL; };
+          loader.src = src;
+        };
+      }
 
       // Lookups
       function getLabelForCode(code) {
@@ -299,16 +338,9 @@
         return new ol.layer.Tile({
           source: new ol.source.XYZ({
             url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code}/{z}/{x}/{y}.jpg`,
-            minZoom: 0, maxZoom: 20, crossOrigin: 'anonymous',
-            tileLoadFunction: function(tile, src) {
-              const img = tile.getImage();
-              img.src = LOADING_TILE; // neutral placeholder instead of flashing previous layer
-              const real = new Image();
-              real.crossOrigin = 'anonymous';
-              real.onload = () => { img.src = src; };
-              real.onerror = () => { img.src = LOADING_TILE; };
-              real.src = src;
-            }
+            minZoom: 0, maxZoom: 20,
+            transition: 0, // avoid cross-fade artifacts
+            tileLoadFunction: withPlaceholderTileLoadFunction()
           }),
           visible: true
         });
@@ -318,16 +350,9 @@
         const lyr = new ol.layer.Tile({
           source: new ol.source.XYZ({
             url: `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${esri_id}/{z}/{y}/{x}`,
-            minZoom: 0, maxZoom: 20, crossOrigin: 'anonymous',
-            tileLoadFunction: function(tile, src) {
-              const img = tile.getImage();
-              img.src = LOADING_TILE; // neutral placeholder while satellite tiles load
-              const real = new Image();
-              real.crossOrigin = 'anonymous';
-              real.onload = () => { img.src = src; };
-              real.onerror = () => { img.src = LOADING_TILE; };
-              real.src = src;
-            }
+            minZoom: 0, maxZoom: 20,
+            transition: 0, // avoid cross-fade artifacts
+            tileLoadFunction: withPlaceholderTileLoadFunction()
           }),
           visible: false
         });
@@ -336,7 +361,12 @@
       }
       function makeRoadsLayer() {
         return new ol.layer.Tile({
-          source: new ol.source.XYZ({ url: 'https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}', minZoom: 0, maxZoom: 20 }),
+          source: new ol.source.XYZ({
+            url: 'https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}',
+            minZoom: 0, maxZoom: 20,
+            transition: 0,
+            tileLoadFunction: withPlaceholderTileLoadFunction()
+          }),
           visible: false, opacity: 0.85
         });
       }
@@ -350,7 +380,11 @@
             url: baseUrlTpl,
             maxZoom: 20,
             crossOrigin: 'anonymous',
+            transition: 0,
             tileLoadFunction: function(tile, src) {
+              // While we compute, show a placeholder
+              tile.getImage().src = LOADING_URL;
+
               const zxy = tile.tileCoord;
               const compareUrl = compareUrlTpl
                 .replace('{z}', zxy[0])
@@ -387,10 +421,10 @@
                   ctx.putImageData(out, 0, 0);
                   tile.getImage().src = canvas.toDataURL();
                 };
-                cmpImg.onerror = function(){ tile.getImage().src = baseImg.src; };
+                cmpImg.onerror = function(){ tile.getImage().src = ERROR_URL; };
                 cmpImg.src = compareUrl;
               };
-              baseImg.onerror = function(){ const blank = document.createElement('canvas'); blank.width = blank.height = 256; tile.getImage().src = blank.toDataURL(); };
+              baseImg.onerror = function(){ tile.getImage().src = ERROR_URL; };
               baseImg.src = src;
             }
           })
@@ -434,6 +468,13 @@
             pinchRotate: false
           })
         });
+
+        // Keep handle/line synced when map renders or layout changes
+        map.on('rendercomplete', updateSwipeUI);
+        const ro = new ResizeObserver(updateSwipeUI);
+        ro.observe(document.getElementById('map'));
+        window.addEventListener('resize', updateSwipeUI);
+        window.addEventListener('scroll', updateSwipeUI, { passive: true });
       }
 
       function setRoadsLayerState() {
@@ -470,6 +511,9 @@
         swipeHandle.style.display = (compareMode && !highlightMode) ? 'block' : 'none';
 
         sensitivityRow.style.display = (compareMode && highlightMode && showSensitivity) ? 'block' : 'none';
+
+        // Keep the compare UI aligned if it becomes visible/hidden
+        updateSwipeUI();
       }
 
       function fillDatePopup(popupEl, selectedCode, onPick) {
@@ -483,7 +527,16 @@
           popupEl.appendChild(b);
         });
       }
-      function showPopup(popupEl) { popupEl.style.display = 'block'; setTimeout(()=> popupEl.style.opacity = '1', 10); }
+
+      // Anchor a popup next to a button
+      function positionPopupForButton(popupEl, btnEl) {
+        const r = btnEl.getBoundingClientRect();
+        const gap = 8;
+        popupEl.style.left = (r.left) + 'px';
+        popupEl.style.top  = (r.bottom + gap) + 'px';
+      }
+
+      function showPopup(popupEl) { popupEl.style.display = 'block'; requestAnimationFrame(()=> popupEl.style.opacity = '1'); }
       function hidePopup(popupEl) { popupEl.style.opacity = '0'; setTimeout(()=> popupEl.style.display = 'none', 180); }
 
       function setSingleDate(newCode) {
@@ -553,9 +606,12 @@
           ctx.save(); ctx.beginPath(); ctx.rect(swipeX, 0, w - swipeX, h); ctx.clip();
         });
         rightLayer.on('postrender', function(event) { event.context.restore(); });
-
         map.render();
+
+        // Ensure UI aligns immediately after layers render
         updateSwipeUI();
+        requestAnimationFrame(updateSwipeUI);
+
         updateDateUI();
       }
 
@@ -566,50 +622,74 @@
         updateDateUI();
       }
 
-      // Keep handle centered on the red line at all times
+      // ========= keep handle exactly centered on the line =========
       function updateSwipeUI() {
         if (!compareMode || highlightMode) return;
-        const mapDiv = map.getTargetElement();
-        const w = mapDiv.clientWidth; const h = mapDiv.clientHeight;
+
+        const mapEl = map.getTargetElement();
+        const mapRect = mapEl.getBoundingClientRect();
+        const w = mapRect.width;
+        const h = mapRect.height;
         const x = Math.round(w * swipeRatio);
-        // center the red line
-        swipeThumb.style.left = (x - (swipeThumb.offsetWidth / 2)) + 'px';
-        swipeThumb.style.top = '0px';
+
+        // Vertical red line (use its actual width)
+        const lineHalf = (swipeThumb.offsetWidth || 5) / 2;
+        swipeThumb.style.left = (mapRect.left + x - lineHalf) + 'px';
+        swipeThumb.style.top = mapRect.top + 'px';
         swipeThumb.style.height = h + 'px';
-        // place the circular handle centered on the line
-        let handlePos = 0.90; if (window.innerWidth <= 600) handlePos = 0.75;
-        swipeHandle.style.left = (x - (swipeHandle.offsetWidth / 2)) + 'px';
-        swipeHandle.style.top = (Math.round(h * handlePos) - (swipeHandle.offsetHeight / 2)) + 'px';
-        map.render();
+
+        // Circle handle (use offset sizes so we always get real numbers)
+        const handleW = swipeHandle.offsetWidth || 34;
+        const handleH = swipeHandle.offsetHeight || 34;
+
+        let handlePos = 0.90;
+        if (window.innerWidth <= 600) handlePos = 0.75;
+
+        swipeHandle.style.left = (mapRect.left + x - (handleW / 2)) + 'px';
+        swipeHandle.style.top  = (mapRect.top + Math.round(h * handlePos) - (handleH / 2)) + 'px';
       }
-      function startSwipeDrag(e) {
-        e.preventDefault(); document.body.style.userSelect = 'none';
-        function move(ev) {
-          const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-          const rect = map.getTargetElement().getBoundingClientRect();
-          swipeRatio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-          updateSwipeUI();
-        }
-        function stop() {
-          document.removeEventListener('mousemove', move);
-          document.removeEventListener('mouseup', stop);
-          document.removeEventListener('touchmove', move);
-          document.removeEventListener('touchend', stop);
-          document.body.style.userSelect = '';
-        }
-        document.addEventListener('mousemove', move);
-        document.addEventListener('mouseup', stop);
-        document.addEventListener('touchmove', move, { passive: false });
-        document.addEventListener('touchend', stop);
-      }
+
+function startSwipeDrag(e) {
+  e.preventDefault();
+  document.body.style.userSelect = 'none';
+
+  const move = (ev) => {
+    const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+    const rect = map.getTargetElement().getBoundingClientRect();
+    swipeRatio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+
+    // keep the UI elements aligned
+    updateSwipeUI();
+
+    // *** force the map to re-render so the clip updates immediately ***
+    if (rightLayer) rightLayer.changed(); // mark layer dirty
+    map.render();                         // request a frame
+  };
+
+  const stop = () => {
+    document.removeEventListener('mousemove', move);
+    document.removeEventListener('mouseup', stop);
+    document.removeEventListener('touchmove', move);
+    document.removeEventListener('touchend', stop);
+    document.body.style.userSelect = '';
+
+    // final snap & one last render
+    updateSwipeUI();
+    if (rightLayer) rightLayer.changed();
+    map.render();
+  };
+
+  document.addEventListener('mousemove', move);
+  document.addEventListener('mouseup', stop);
+  document.addEventListener('touchmove', move, { passive: false });
+  document.addEventListener('touchend', stop);
+}
       swipeThumb.addEventListener('mousedown', startSwipeDrag);
       swipeThumb.addEventListener('touchstart', startSwipeDrag, { passive: false });
       swipeHandle.addEventListener('mousedown', startSwipeDrag);
       swipeHandle.addEventListener('touchstart', startSwipeDrag, { passive: false });
-      window.addEventListener('resize', () => setTimeout(updateSwipeUI, 20));
-      window.addEventListener('load', () => setTimeout(updateSwipeUI, 30));
 
-      // Events
+      // Events: right date popup
       dateBtn.addEventListener('click', () => {
         if (datePopup.style.display === 'block') { hidePopup(datePopup); return; }
         if (!compareMode) {
@@ -617,18 +697,21 @@
         } else {
           fillDatePopup(datePopup, rightCode, (code)=>{ rightCode = code; (highlightMode?launchHighlightMode:launchSwipeMode)(); updateDateUI(); });
         }
+        positionPopupForButton(datePopup, dateBtn);
         showPopup(datePopup);
-        const hide = (e)=>{ if (!datePopup.contains(e.target) && e.target !== dateBtn && !dateBtn.contains(e.target)) { hidePopup(datePopup); document.removeEventListener('mousedown', hide, true); document.removeEventListener('touchstart', hide, true);} };
-        setTimeout(()=>{ document.addEventListener('mousedown', hide, true); document.addEventListener('touchstart', hide, true); }, 0);
+        const close = (e)=>{ if (!datePopup.contains(e.target) && e.target !== dateBtn && !dateBtn.contains(e.target)) { hidePopup(datePopup); document.removeEventListener('mousedown', close, true); document.removeEventListener('touchstart', close, true);} };
+        setTimeout(()=>{ document.addEventListener('mousedown', close, true); document.addEventListener('touchstart', close, true); }, 0);
       });
 
+      // Events: left date popup
       leftDateBtn.addEventListener('click', () => {
         if (!compareMode) return;
         if (leftDatePopup.style.display === 'block') { hidePopup(leftDatePopup); return; }
         fillDatePopup(leftDatePopup, leftCode, (code)=>{ leftCode = code; (highlightMode?launchHighlightMode:launchSwipeMode)(); updateDateUI(); });
+        positionPopupForButton(leftDatePopup, leftDateBtn);
         showPopup(leftDatePopup);
-        const hide = (e)=>{ if (!leftDatePopup.contains(e.target) && e.target !== leftDateBtn && !leftDateBtn.contains(e.target)) { hidePopup(leftDatePopup); document.removeEventListener('mousedown', hide, true); document.removeEventListener('touchstart', hide, true);} };
-        setTimeout(()=>{ document.addEventListener('mousedown', hide, true); document.addEventListener('touchstart', hide, true); }, 0);
+        const close = (e)=>{ if (!leftDatePopup.contains(e.target) && e.target !== leftDateBtn && !leftDateBtn.contains(e.target)) { hidePopup(leftDatePopup); document.removeEventListener('mousedown', close, true); document.removeEventListener('touchstart', close, true);} };
+        setTimeout(()=>{ document.addEventListener('mousedown', close, true); document.addEventListener('touchstart', close, true); }, 0);
       });
 
       toggleBtn.addEventListener('click', () => {
@@ -663,10 +746,7 @@
           leftCode = getPreviousCode(currentCode);
           highlightMode = false; // start in swipe
           showSensitivity = false;
-          // show left date button (already positioned left of right date)
           leftDateBtn.style.display = 'flex';
-          // ensure the left button is the first in the dates row
-          datesRow.insertBefore(leftDateBtn, dateBtn);
           launchSwipeMode();
         } else {
           highlightMode = false; showSensitivity = false; clearCompareLayers();
@@ -723,7 +803,7 @@
         }, ()=> showFindMeMessage('Unable to get location'), { enableHighAccuracy: true });
       });
 
-      // Touch zoom helper (double‑tap & hold to zoom)
+      // Touch zoom helper (your custom hold-to-zoom still works)
       (function() {
         let lastTap = 0, isHoldZoom = false, startY = 0, startZoom = 0, holdTimeout = null;
         const mapDiv = document.getElementById('map');
@@ -739,7 +819,7 @@
           if (e.touches.length !== 1) return; const now = Date.now();
           if (now - lastTap < 350) { e.preventDefault(); startY = e.touches[0].clientY; startZoom = map.getView().getZoom(); isHoldZoom = true; holdTimeout = setTimeout(()=> mapDiv.addEventListener('touchmove', moveHandler, { passive: false }), 100); }
           else { lastTap = now; isHoldZoom = false; if (holdTimeout) clearTimeout(holdTimeout); }
-        });
+        }, { passive: false });
         mapDiv.addEventListener('touchend', function() { if (isHoldZoom) { isHoldZoom = false; mapDiv.removeEventListener('touchmove', moveHandler, { passive: false }); } if (holdTimeout) clearTimeout(holdTimeout); });
       })();
 
