@@ -120,14 +120,12 @@
   <div class="group-top-right" id="grp-top-right">
     <!-- Row with left date (only in compare) and right date -->
     <div class="date-row">
-      <button id="left-date-btn" type="button" class="btn-square" title="Choose left date" style="display:none;">
-        <!-- CHANGED ICON -->
-        <img src="icons/date_left.svg" alt="Left Date Selector">
-      </button>
-      <button id="date-btn" type="button" class="btn-square" title="Choose date">
-        <!-- CHANGED ICON -->
-        <img src="icons/date_right.svg" alt="Right Date Selector">
-      </button>
+<button id="left-date-btn" type="button" class="btn-square" title="Choose left date" style="display:none;">
+  <img src="icons/date_left.svg" alt="Left Date Selector">
+</button>
+<button id="date-btn" type="button" class="btn-square" title="Choose date">
+  <img src="icons/date_right.svg" alt="Right Date Selector">
+</button>
     </div>
 
     <button id="toggle-btn" class="btn-square" title="Switch Disney/Satellite">
@@ -274,47 +272,6 @@
         [-81.9200, 28.1772, -81.2244, 28.6390], 'EPSG:4326', 'EPSG:3857'
       );
 
-      // ===== PLACEHOLDER TILES (for loading/error) =====
-      const LOADING_URL = makePlaceholderDataURL('Loading tile…');
-      const ERROR_URL   = makePlaceholderDataURL('Tile error');
-
-      function makePlaceholderDataURL(text) {
-        const w = 256, h = 256;
-        const c = document.createElement('canvas');
-        c.width = w; c.height = h;
-        const ctx = c.getContext('2d');
-        // background
-        ctx.fillStyle = '#f3f6fb';
-        ctx.fillRect(0, 0, w, h);
-        // border
-        ctx.strokeStyle = '#d0d7e2';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(0.5, 0.5, w-1, h-1);
-        // text
-        ctx.fillStyle = '#6b7a90';
-        ctx.font = '16px Arial, Helvetica, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(text, w/2, h/2);
-        return c.toDataURL();
-      }
-
-      function withPlaceholderTileLoadFunction() {
-        return function(tile, src) {
-          const img = tile.getImage();
-          // show placeholder immediately
-          img.src = LOADING_URL;
-
-          // load the real image off-DOM
-          const loader = new Image();
-          // allow CORS if server sends headers; safe for normal image draw
-          loader.crossOrigin = 'anonymous';
-          loader.onload = function() { img.src = src; };
-          loader.onerror = function() { img.src = ERROR_URL; };
-          loader.src = src;
-        };
-      }
-
       // Lookups
       function getLabelForCode(code) {
         const rec = serverOptions.find(o => o.code === code);
@@ -338,9 +295,7 @@
         return new ol.layer.Tile({
           source: new ol.source.XYZ({
             url: `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code}/{z}/{x}/{y}.jpg`,
-            minZoom: 0, maxZoom: 20,
-            transition: 0, // avoid cross-fade artifacts
-            tileLoadFunction: withPlaceholderTileLoadFunction()
+            minZoom: 0, maxZoom: 20
           }),
           visible: true
         });
@@ -350,9 +305,7 @@
         const lyr = new ol.layer.Tile({
           source: new ol.source.XYZ({
             url: `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${esri_id}/{z}/{y}/{x}`,
-            minZoom: 0, maxZoom: 20,
-            transition: 0, // avoid cross-fade artifacts
-            tileLoadFunction: withPlaceholderTileLoadFunction()
+            minZoom: 0, maxZoom: 20
           }),
           visible: false
         });
@@ -361,12 +314,7 @@
       }
       function makeRoadsLayer() {
         return new ol.layer.Tile({
-          source: new ol.source.XYZ({
-            url: 'https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}',
-            minZoom: 0, maxZoom: 20,
-            transition: 0,
-            tileLoadFunction: withPlaceholderTileLoadFunction()
-          }),
+          source: new ol.source.XYZ({ url: 'https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}', minZoom: 0, maxZoom: 20 }),
           visible: false, opacity: 0.85
         });
       }
@@ -380,11 +328,7 @@
             url: baseUrlTpl,
             maxZoom: 20,
             crossOrigin: 'anonymous',
-            transition: 0,
             tileLoadFunction: function(tile, src) {
-              // While we compute, show a placeholder
-              tile.getImage().src = LOADING_URL;
-
               const zxy = tile.tileCoord;
               const compareUrl = compareUrlTpl
                 .replace('{z}', zxy[0])
@@ -421,10 +365,10 @@
                   ctx.putImageData(out, 0, 0);
                   tile.getImage().src = canvas.toDataURL();
                 };
-                cmpImg.onerror = function(){ tile.getImage().src = ERROR_URL; };
+                cmpImg.onerror = function(){ tile.getImage().src = baseImg.src; };
                 cmpImg.src = compareUrl;
               };
-              baseImg.onerror = function(){ tile.getImage().src = ERROR_URL; };
+              baseImg.onerror = function(){ const blank = document.createElement('canvas'); blank.width = blank.height = 256; tile.getImage().src = blank.toDataURL(); };
               baseImg.src = src;
             }
           })
@@ -528,13 +472,45 @@
         });
       }
 
-      // Anchor a popup next to a button
-      function positionPopupForButton(popupEl, btnEl) {
-        const r = btnEl.getBoundingClientRect();
-        const gap = 8;
-        popupEl.style.left = (r.left) + 'px';
-        popupEl.style.top  = (r.bottom + gap) + 'px';
-      }
+// Anchor a popup so its TOP-RIGHT corner lines up with the button's RIGHT edge.
+// Also keep it inside the viewport.
+function positionPopupForButton(popupEl, btnEl) {
+  const r = btnEl.getBoundingClientRect();
+  const gap = 8;
+
+  // Prepare to measure the popup’s natural size
+  popupEl.style.left = 'auto';
+  popupEl.style.right = 'auto';
+  popupEl.style.top = '-9999px';
+  popupEl.style.display = 'block';
+  popupEl.style.visibility = 'hidden';
+
+  // Constrain max width a bit for tiny screens
+  const maxW = Math.min(340, window.innerWidth - 16);
+  popupEl.style.maxWidth = maxW + 'px';
+
+  // Measure
+  const ph = popupEl.offsetHeight;
+  const pw = popupEl.offsetWidth;
+
+  // Decide vertical placement (prefer below; flip above if needed)
+  let top = r.bottom + gap;
+  if (top + ph > window.innerHeight - 8) {
+    top = Math.max(8, r.top - gap - ph);
+  }
+
+  // Align right edge of popup to the button’s right edge
+  const rightPx = Math.max(8, window.innerWidth - r.right);
+
+  // Apply final position
+  popupEl.style.top = top + 'px';
+  popupEl.style.right = rightPx + 'px';
+  popupEl.style.left = 'auto';
+
+  // Restore visibility (caller will fade opacity in)
+  popupEl.style.visibility = '';
+  popupEl.style.display = 'none';
+}
 
       function showPopup(popupEl) { popupEl.style.display = 'block'; requestAnimationFrame(()=> popupEl.style.opacity = '1'); }
       function hidePopup(popupEl) { popupEl.style.opacity = '0'; setTimeout(()=> popupEl.style.display = 'none', 180); }
@@ -622,7 +598,7 @@
         updateDateUI();
       }
 
-      // ========= keep handle exactly centered on the line =========
+      // ========= FIXED: keep handle exactly centered on the line =========
       function updateSwipeUI() {
         if (!compareMode || highlightMode) return;
 
