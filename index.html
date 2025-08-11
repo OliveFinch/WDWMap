@@ -34,6 +34,15 @@
     .btn-square:active, .btn-square:focus, .btn-square:hover { background: #f8f8f8; border-color: #999;}
     .btn-square[disabled] { opacity: .45; cursor: default; }
 
+    /* Active-state styling for toggle buttons (compare / highlight / settings) */
+    .btn-square.active-btn {
+      background: rgba(55, 97, 196, 0.15);
+      border-color: #3761c4;
+    }
+    .btn-square.active-btn img {
+      filter: brightness(0) saturate(100%) invert(27%) sepia(72%) saturate(3440%) hue-rotate(210deg) brightness(92%) contrast(91%);
+    }
+
     .group-top-right {
       position: absolute; top: 8px; right: 8px;
       display: flex; flex-direction: column; gap: 8px; z-index: 1100;
@@ -120,12 +129,12 @@
   <div class="group-top-right" id="grp-top-right">
     <!-- Row with left date (only in compare) and right date -->
     <div class="date-row">
-<button id="left-date-btn" type="button" class="btn-square" title="Choose left date" style="display:none;">
-  <img src="icons/date_left.svg" alt="Left Date Selector">
-</button>
-<button id="date-btn" type="button" class="btn-square" title="Choose date">
-  <img src="icons/date_right.svg" alt="Right Date Selector">
-</button>
+      <button id="left-date-btn" type="button" class="btn-square" title="Choose left date" style="display:none;">
+        <img src="icons/date_left.svg" alt="Left Date Selector">
+      </button>
+      <button id="date-btn" type="button" class="btn-square" title="Choose date">
+        <img src="icons/date_right.svg" alt="Date Selector">
+      </button>
     </div>
 
     <button id="toggle-btn" class="btn-square" title="Switch Disney/Satellite">
@@ -456,6 +465,11 @@
 
         sensitivityRow.style.display = (compareMode && highlightMode && showSensitivity) ? 'block' : 'none';
 
+        /* Active state toggles */
+        compareBtn.classList.toggle('active-btn', compareMode);
+        highlightBtn.classList.toggle('active-btn', compareMode && showingDisney && highlightMode);
+        settingsBtn.classList.toggle('active-btn', compareMode && highlightMode && showSensitivity);
+
         // Keep the compare UI aligned if it becomes visible/hidden
         updateSwipeUI();
       }
@@ -472,45 +486,27 @@
         });
       }
 
-// Anchor a popup so its TOP-RIGHT corner lines up with the button's RIGHT edge.
-// Also keep it inside the viewport.
-function positionPopupForButton(popupEl, btnEl) {
-  const r = btnEl.getBoundingClientRect();
-  const gap = 8;
+      // Anchor a popup next to a button (align popup's RIGHT edge to button's RIGHT edge)
+      function positionPopupForButton(popupEl, btnEl) {
+        const r = btnEl.getBoundingClientRect();
+        const gap = 8;
 
-  // Prepare to measure the popup’s natural size
-  popupEl.style.left = 'auto';
-  popupEl.style.right = 'auto';
-  popupEl.style.top = '-9999px';
-  popupEl.style.display = 'block';
-  popupEl.style.visibility = 'hidden';
+        // Show invisibly to measure width
+        const prevDisplay = popupEl.style.display;
+        const prevVisibility = popupEl.style.visibility;
+        popupEl.style.display = 'block';
+        popupEl.style.visibility = 'hidden';
+        const width = popupEl.offsetWidth;
+        popupEl.style.display = prevDisplay;
+        popupEl.style.visibility = prevVisibility;
 
-  // Constrain max width a bit for tiny screens
-  const maxW = Math.min(340, window.innerWidth - 16);
-  popupEl.style.maxWidth = maxW + 'px';
+        // Align right edges, clamp to viewport with 8px margin
+        const left = Math.max(8, Math.min(window.innerWidth - width - 8, r.right - width));
+        const top  = Math.max(8, r.bottom + gap);
 
-  // Measure
-  const ph = popupEl.offsetHeight;
-  const pw = popupEl.offsetWidth;
-
-  // Decide vertical placement (prefer below; flip above if needed)
-  let top = r.bottom + gap;
-  if (top + ph > window.innerHeight - 8) {
-    top = Math.max(8, r.top - gap - ph);
-  }
-
-  // Align right edge of popup to the button’s right edge
-  const rightPx = Math.max(8, window.innerWidth - r.right);
-
-  // Apply final position
-  popupEl.style.top = top + 'px';
-  popupEl.style.right = rightPx + 'px';
-  popupEl.style.left = 'auto';
-
-  // Restore visibility (caller will fade opacity in)
-  popupEl.style.visibility = '';
-  popupEl.style.display = 'none';
-}
+        popupEl.style.left = left + 'px';
+        popupEl.style.top  = top + 'px';
+      }
 
       function showPopup(popupEl) { popupEl.style.display = 'block'; requestAnimationFrame(()=> popupEl.style.opacity = '1'); }
       function hidePopup(popupEl) { popupEl.style.opacity = '0'; setTimeout(()=> popupEl.style.display = 'none', 180); }
