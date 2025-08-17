@@ -474,28 +474,29 @@
         window.addEventListener('resize', updateSwipeUI);
         window.addEventListener('scroll', updateSwipeUI, { passive: true });
 
-// Dock buttons: center + optional zoom
+// inside initMap(), right after map is created
 const dock = document.getElementById('location-dock');
-dock.querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const [lonStr, latStr] = (btn.dataset.coords || '').split(',');
-    const lon = parseFloat(lonStr);
-    const lat = parseFloat(latStr);
-    if (Number.isFinite(lon) && Number.isFinite(lat)) {
-      const target = ol.proj.fromLonLat([lon, lat]);
-      const targetZoom = Number.isFinite(parseFloat(btn.dataset.zoom))
-        ? parseFloat(btn.dataset.zoom)
-        : 16; // <- default zoom if data-zoom not set
-      map.getView().animate({
-        center: target,
-        zoom: targetZoom,
-        duration: 600  // tweak if you want faster/slower
-      });
-    } else {
-      console.warn('Invalid data-coords on dock button:', btn);
-    }
+if (dock) {
+  dock.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const coordsAttr = (btn.dataset.coords || '').trim();
+      if (!coordsAttr.includes(',')) {
+        console.warn('Dock button missing valid data-coords:', btn);
+        return;
+      }
+      const [lonStr, latStr] = coordsAttr.split(',').map(s => s.trim());
+      const lon = Number(lonStr), lat = Number(latStr);
+      if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
+        console.warn('Invalid lon/lat in data-coords:', coordsAttr);
+        return;
+      }
+      const targetZoom = Number.isFinite(Number(btn.dataset.zoom)) ? Number(btn.dataset.zoom) : 16;
+      map.getView().animate({ center: ol.proj.fromLonLat([lon, lat]), zoom: targetZoom, duration: 600 });
+    });
   });
-});
+} else {
+  console.warn('#location-dock not found (safe to ignore if hidden/removed).');
+}
 
       function setRoadsLayerState() {
         if (!roadsLayer) return;
