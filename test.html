@@ -2,10 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>WDW Magic Explorer</title>
-  <!-- Prevent page zoom / smart zoom while keeping map gestures -->
-  <meta id="viewport-meta" name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>WDW Magic Explorer (Grouped Buttons Test)</title>
+  <meta id="viewport-meta" name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="icon-192.png">
@@ -20,123 +18,114 @@
     html, body { margin: 0; padding: 0; height: 100%; overscroll-behavior: none; overflow: hidden; font-family: Arial, Helvetica, sans-serif;}
     #map { width: 100vw; height: 100vh; touch-action: none; -webkit-user-select: none; user-select: none; }
 
+    /* Keep the original button visual style */
     .ol-control-inner, .btn-square {
       display: flex; align-items: center; justify-content: center;
       width: 40px; height: 40px; background: rgba(255,255,255,0.85);
       border: 1.5px solid #ccc; border-radius: 8px; font-size: 15px; color: #222;
-      cursor: pointer; transition: background 0.2s, border 0.2s; user-select: none; padding: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
+      cursor: pointer; transition: background 0.2s, border 0.2s; user-select: none; padding: 0; font-family: Arial, Helvetica, sans-serif;
     }
     .ol-control-inner img, .btn-square img { width: 24px; height: 24px; display: block; pointer-events: none; user-select: none; }
     .ol-control-inner:active, .ol-control-inner:focus, .ol-control-inner:hover,
     .btn-square:active, .btn-square:focus, .btn-square:hover { background: #f8f8f8; border-color: #999;}
     .btn-square[disabled] { opacity: .45; cursor: default; }
 
-    /* Active-state styling for toggle buttons (compare / highlight / settings) */
-    .btn-square.active-btn {
-      background: rgba(55, 97, 196, 0.15);
-      border-color: #3761c4;
-    }
-    .btn-square.active-btn img {
-      filter: brightness(0) saturate(100%) invert(27%) sepia(72%) saturate(3440%) hue-rotate(210deg) brightness(92%) contrast(91%);
-    }
-
-    .group-top-right {
-      position: absolute; top: 8px; right: 8px;
-      display: flex; flex-direction: column; gap: 8px; z-index: 1100;
-      align-items: flex-end; /* keep everything anchored to the right edge */
-    }
+    /* Group containers */
+    .group-top-right { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
     .group-bottom-right { position: absolute; right: 8px; bottom: calc(18px + env(safe-area-inset-bottom, 0)); display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
-    .group-top-left { position: absolute; top: 8px; left: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
+    .group-top-left { position: absolute; top: 8px; left: 56px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
 
-    /* Row for the two date buttons at the top-right */
-    .date-row {
-      display: flex; flex-direction: row; gap: 8px;
-      justify-content: flex-end;   /* right-justify inside the row */
-      width: 100%;
-    }
-
-    /* Popups: position will be set next to their buttons via JS */
+    /* Popup menus */
     #date-popup, #left-date-popup {
-      display: none; opacity: 0; position: fixed; min-width: 180px; max-height: 70vh; overflow-y: auto;
-      background: rgba(255,255,255,0.96); border: 1.5px solid #ccc; border-radius: 8px; box-shadow: 0 3px 15px #0002;
-      z-index: 1400; font-family: Arial, Helvetica, sans-serif;
-      transition: opacity .18s ease;
+      display: none; opacity: 0; position: absolute; min-width: 180px; max-height: 70vh; overflow-y: auto;
+      background: rgba(255,255,255,0.96); border: 1.5px solid #ccc; border-radius: 8px; box-shadow: 0 3px 15px #0002; z-index: 1400; font-family: Arial, Helvetica, sans-serif;
     }
-
+    #date-popup { right: 8px; top: 56px; }
+    #left-date-popup { left: 56px; top: 56px; }
     .date-popup-item { display: block; width: 100%; border: none; background: none; font-size: 15px; text-align: left; padding: 9px 16px; cursor: pointer; font-family: Arial, Helvetica, sans-serif; }
     .date-popup-item.selected { background: #f2f5fa; color: #3761c4; font-weight: bold;}
     .date-popup-item:active, .date-popup-item:hover { background: #f8f8f8;}
 
-    #current-date-display {
-      position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1500; background: none;
-      color: #fff; font-size: 22px; font-weight: bold; text-shadow: 0 3px 16px #222, 0 1px 0 #222; pointer-events: none; opacity: 0.97; padding: 0 22px;
-    }
+    #current-date-display { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1500; background: none; color: #fff; font-size: 22px; font-weight: bold; text-shadow: 0 3px 16px #222, 0 1px 0 #222; pointer-events: none; opacity: 0.97; padding: 0 22px;}
 
-    #logo { position: absolute; left: 16px; bottom: 16px; z-index: 1200; pointer-events: auto; opacity: 0.93; cursor: pointer;}
-    #logo img { display: block; width: 200px; height: 36px; max-width: 98vw;}
+    /* Removed logo element (kept styles harmlessly unused) */
+    /* #logo { position: absolute; left: 16px; bottom: 16px; z-index: 1200; pointer-events: auto; opacity: 0.93; cursor: pointer;}
+    #logo img { display: block; width: 200px; height: 36px; max-width: 98vw;} */
 
-    #findme-message { display: none; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 2000;
-      background: rgba(255,255,255,0.92); color: #d62525; font-size: 17px; font-weight: bold; text-align: center; opacity: 0;
-      padding: 7px 20px; border-radius: 16px; box-shadow: 0 2px 8px #0001; transition: opacity 0.4s; pointer-events: none; }
+    #findme-message { display: none; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 2000; background: rgba(255,255,255,0.92); color: #d62525; font-size: 17px; font-weight: bold; text-align: center; opacity: 0; padding: 7px 20px; border-radius: 16px; box-shadow: 0 2px 8px #0001; transition: opacity 0.4s; pointer-events: none;}
 
-    #compare-btn, #highlight-btn, #settings-btn { display: none; }
+    /* Hide-by-default buttons (logic will toggle) */
+    #compare-btn, #highlight-btn, #left-date-btn { display: none; }
 
+    /* === Compare UI === */
     #swipe-thumb { position: absolute; top: 0; bottom: 0; width: 5px; background: #e24141cc; z-index: 1300; cursor: ew-resize; border-radius: 3px; box-shadow: 0 2px 12px #3336; pointer-events: auto; display: none; }
     #swipe-handle { position: absolute; width: 34px; height: 34px; background: #fff; border: 4px solid #e24141cc; border-radius: 50%; box-shadow: 0 2px 12px #2225; z-index: 1400; cursor: grab; touch-action: none; display: none; transition: background 0.1s, border 0.1s; }
     #swipe-handle:active { background: #ffeaea; border-color: #e24141; }
+    #sensitivity-row { position: absolute; right: 8px; top: 56px; display: none; background: rgba(255,255,255,0.96); padding: 8px 12px; border: 1.5px solid #ccc; border-radius: 8px; z-index: 1350; }
+    #sensitivity-row label { font-size: 13px; color: #555; display: block; margin-bottom: 6px; }
+    #sensitivity-slider { width: 160px; }
 
-    /* Centered sensitivity panel (bottom middle) */
-    #sensitivity-row {
-      position: fixed;
+    /* === NEW: Bottom-center location dock === */
+    .location-dock {
+      position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      bottom: calc(18px + env(safe-area-inset-bottom, 0));
-      display: none;
-      background: rgba(255,255,255,0.96);
-      padding: 10px 14px;
+      bottom: calc(14px + env(safe-area-inset-bottom, 0));
+      z-index: 1250;
+      display: flex;
+      gap: 8px;
+      padding: 8px;
+      background: rgba(255,255,255,0.92);
       border: 1.5px solid #ccc;
-      border-radius: 10px;
-      z-index: 1600;
-      box-shadow: 0 4px 16px #0002;
+      border-radius: 14px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.16);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+    }
+    .location-dock .dock-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 9px;
+      border: 1.5px solid #ccc;
+      background: rgba(255,255,255,0.96);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform .08s ease, background .2s ease, border-color .2s ease;
       touch-action: manipulation;
     }
-    #sensitivity-row label { font-size: 13px; color: #555; display: block; margin-bottom: 6px; text-align: center; }
-    #sensitivity-slider { width: 200px; }
-
-    /* Zoom buttons stack (always visible, top-left) */
-    .zoom-stack { display: flex; flex-direction: column; gap: 8px; }
+    .location-dock .dock-btn:hover { background: #f7f7f7; border-color: #aaa; }
+    .location-dock .dock-btn:active { transform: translateY(1px) scale(0.98); }
+    .location-dock .dock-btn img {
+      width: 26px; height: 26px; display: block; pointer-events: none; user-select: none;
+    }
 
     @media (max-width: 600px) {
       .group-top-right { right: 8px; top: 8px; gap: 6px; }
       .group-bottom-right { right: 8px; bottom: calc(8px + env(safe-area-inset-bottom, 0)); gap: 6px; }
-      .group-top-left { left: 8px; top: 8px; gap: 6px; }
+      .group-top-left { left: 50px; top: 8px; gap: 6px; }
       .ol-control-inner, .btn-square { width: 32px; height: 32px; border-radius: 6px; font-size: 13px; }
       .ol-control-inner img, .btn-square img { width: 18px; height: 18px; }
-      #logo { left: 50%; transform: translateX(-50%); bottom: 8px;}
-      #logo img { width: 180px !important; height: 32px !important; }
       #current-date-display { font-size: 16px; padding: 0 10px; top: 10px; }
-      #sensitivity-slider { width: 160px; }
+      #date-popup { min-width: 140px; max-height: 50vh; top: 44px; right: 8px; }
+      #left-date-popup { min-width: 140px; max-height: 50vh; top: 44px; left: 50px; }
+      #sensitivity-row { top: 44px; }
+      #swipe-handle { width: 40px; height: 40px; }
+      .location-dock { gap: 6px; padding: 6px; border-radius: 12px; }
+      .location-dock .dock-btn { width: 38px; height: 38px; }
+      .location-dock .dock-btn img { width: 22px; height: 22px; }
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
 
-  <!-- TOP RIGHT -->
+  <!-- TOP-RIGHT GROUP: Date, Toggle, Compare, Highlight -->
   <div class="group-top-right" id="grp-top-right">
-    <!-- Row with left date (only in compare) and right date -->
-    <div class="date-row">
-      <button id="left-date-btn" type="button" class="btn-square" title="Choose left date" style="display:none;">
-        <img src="icons/date_left.svg" alt="Left Date Selector">
-      </button>
-      <button id="date-btn" type="button" class="btn-square" title="Choose date">
-        <img src="icons/date_right.svg" alt="Date Selector">
-      </button>
-    </div>
-
+    <button id="date-btn" type="button" class="btn-square" title="Choose date">
+      <img src="icons/calendar.svg" alt="Date Selector">
+    </button>
     <button id="toggle-btn" class="btn-square" title="Switch Disney/Satellite">
       <img id="toggle-icon-img" src="icons/satellite.svg" alt="Satellite">
     </button>
@@ -146,28 +135,20 @@
     <button id="highlight-btn" class="btn-square" title="Highlight Changes">
       <img src="icons/highlight.svg" alt="Highlight">
     </button>
-    <button id="settings-btn" class="btn-square" title="Show/Hide Sensitivity">
-      <img src="icons/settings.svg" alt="Settings">
+  </div>
+
+  <!-- POPUP for right-side date picker -->
+  <div id="date-popup"></div>
+
+  <!-- TOP-LEFT GROUP: Left-date calendar (shown only in compare mode)  -->
+  <div class="group-top-left" id="grp-top-left">
+    <button id="left-date-btn" type="button" class="btn-square" title="Choose left date">
+      <img src="icons/calendar.svg" alt="Left Date Selector">
     </button>
   </div>
-
-  <!-- Popups positioned by JS next to their respective buttons -->
-  <div id="date-popup"></div>
   <div id="left-date-popup"></div>
 
-  <!-- TOP LEFT -->
-  <div class="group-top-left" id="grp-top-left">
-    <div class="zoom-stack">
-      <button id="zoom-in-btn" class="btn-square" title="Zoom in">
-        <img src="icons/zoom_in.svg" alt="Zoom in">
-      </button>
-      <button id="zoom-out-btn" class="btn-square" title="Zoom out">
-        <img src="icons/zoom_out.svg" alt="Zoom out">
-      </button>
-    </div>
-  </div>
-
-  <!-- BOTTOM RIGHT -->
+  <!-- BOTTOM-RIGHT GROUP: Locate Me, Roads, Quick Switch -->
   <div class="group-bottom-right" id="grp-bottom-right">
     <button id="findme-btn" class="btn-square" title="Locate Me">
       <img src="icons/locateme.svg" alt="Locate Me">
@@ -181,9 +162,11 @@
   </div>
 
   <div id="findme-message"></div>
-  <div id="logo"><img src="logo.svg" alt="WDW Magic Explorer Logo"></div>
+  <!-- Removed: bottom-middle branding/logo -->
+  <!-- <div id="logo"><img src="logo.svg" alt="WDW Magic Explorer Logo"></div> -->
   <div id="current-date-display"></div>
 
+  <!-- === Compare UI Elements (swipe + handle + sensitivity) === -->
   <div id="swipe-thumb"></div>
   <div id="swipe-handle" title="Drag to compare"></div>
   <div id="sensitivity-row">
@@ -191,54 +174,45 @@
     <input type="range" id="sensitivity-slider" min="10" max="30" value="20">
   </div>
 
+  <!-- === NEW: Bottom-center Location Dock === -->
+  <div class="location-dock" id="location-dock" aria-label="Jump to location">
+    <button class="dock-btn" id="loc-mk" title="Magic Kingdom" aria-label="Magic Kingdom">
+      <img src="icons/locations/magic-kingdom.svg" alt="Magic Kingdom">
+    </button>
+    <button class="dock-btn" id="loc-epcot" title="Epcot" aria-label="Epcot">
+      <img src="icons/locations/epcot.svg" alt="Epcot">
+    </button>
+    <button class="dock-btn" id="loc-hs" title="Hollywood Studios" aria-label="Hollywood Studios">
+      <img src="icons/locations/hollywood-stuidos.svg" alt="Hollywood Studios">
+    </button>
+    <button class="dock-btn" id="loc-ak" title="Animal Kingdom" aria-label="Animal Kingdom">
+      <img src="icons/locations/animal-kingdom.svg" alt="Animal Kingdom">
+    </button>
+    <button class="dock-btn" id="loc-tl" title="Typhoon Lagoon" aria-label="Typhoon Lagoon">
+      <img src="icons/locations/typhoon-lagoon.svg" alt="Typhoon Lagoon">
+    </button>
+    <button class="dock-btn" id="loc-bb" title="Blizzard Beach" aria-label="Blizzard Beach">
+      <img src="icons/locations/blizzard-beach.svg" alt="Blizzard Beach">
+    </button>
+    <button class="dock-btn" id="loc-ds" title="Disney Springs" aria-label="Disney Springs">
+      <img src="icons/locations/disney-springs.svg" alt="Disney Springs">
+    </button>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
-
-<script>
-// Completely disable browser zoom everywhere (desktop + mobile)
-(function () {
-  // Prevent pinch zoom (desktop trackpads & mobile gestures)
-  document.addEventListener('wheel', (e) => {
-    if (e.ctrlKey || e.metaKey) e.preventDefault();
-  }, { passive: false, capture: true });
-
-  // Prevent pinch zoom on mobile Safari
-  ['gesturestart', 'gesturechange', 'gestureend'].forEach(type => {
-    window.addEventListener(type, (e) => e.preventDefault(), { passive: false, capture: true });
-  });
-
-  // Prevent Ctrl/Cmd + +/-/0 zoom shortcuts
-  document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && ['+', '=', '-', '0'].includes(e.key)) {
-      e.preventDefault();
-    }
-  }, { capture: true });
-
-  // Prevent double-click zoom (desktop browsers)
-  window.addEventListener('dblclick', (e) => {
-    e.preventDefault();
-  }, { passive: false, capture: true });
-
-  // Prevent iOS/macOS "smart zoom" (double-tap with trackpad/magic mouse)
-  document.addEventListener('touchstart', (e) => {
-    if (e.touches.length > 1) e.preventDefault();
-  }, { passive: false });
-})();
-</script>
-
-<script>
-(function() {
-  'use strict';
+  <script>
+    (function() {
+      'use strict';
 
       // ===== App State =====
       let serverOptions = [];
-      let currentCode = null;
-      let leftCode = null, rightCode = null;
+      let currentCode = null; // single-date mode
+      let leftCode = null, rightCode = null; // compare mode
       let lastTwoDates = [null, null];
-      let showingDisney = true; // false = Satellite (ESRI Wayback)
-      let compareMode = false;
-      let highlightMode = false; // Disney compare only
+      let showingDisney = true; // Disney vs Satellite toggle (satellite uses ESRI Wayback)
+      let compareMode = false; // when true, render swipe/highlight between leftCode & rightCode
+      let highlightMode = false; // when true (and compare), render Delta-E highlight tiles
       let roadsOn = false;
-      let showSensitivity = false;
 
       // Map & layers
       let map, disneyLayer, esriLayer, roadsLayer;
@@ -246,15 +220,7 @@
 
       // Compare UI state
       let swipeRatio = 0.5;
-
-      // Sensitivity (reversed slider mapping)
-      const sensitivitySlider = document.getElementById('sensitivity-slider');
-      let currentThreshold = sliderToThreshold(parseInt(sensitivitySlider.value, 10));
-      function sliderToThreshold(val) {
-        const min = parseInt(sensitivitySlider.min, 10);
-        const max = parseInt(sensitivitySlider.max, 10);
-        return (min + max) - val; // reverse: slider right = lower sensitivity
-      }
+      let currentThreshold = 20; // Delta-E threshold
 
       // Controls
       const dateBtn = document.getElementById('date-btn');
@@ -265,7 +231,6 @@
       const toggleIconImg = document.getElementById('toggle-icon-img');
       const compareBtn = document.getElementById('compare-btn');
       const highlightBtn = document.getElementById('highlight-btn');
-      const settingsBtn = document.getElementById('settings-btn');
       const quickSwitchBtn = document.getElementById('quick-switch-btn');
       const roadsBtn = document.getElementById('roads-btn');
       const roadsIconImg = document.getElementById('roads-icon-img');
@@ -274,14 +239,25 @@
       const swipeThumb = document.getElementById('swipe-thumb');
       const swipeHandle = document.getElementById('swipe-handle');
       const sensitivityRow = document.getElementById('sensitivity-row');
-      const zoomInBtn = document.getElementById('zoom-in-btn');
-      const zoomOutBtn = document.getElementById('zoom-out-btn');
+      const sensitivitySlider = document.getElementById('sensitivity-slider');
 
+      // ===== NEW: Location Dock buttons =====
+      const locButtons = {
+        mk: document.getElementById('loc-mk'),
+        epcot: document.getElementById('loc-epcot'),
+        hs: document.getElementById('loc-hs'),
+        ak: document.getElementById('loc-ak'),
+        tl: document.getElementById('loc-tl'),
+        bb: document.getElementById('loc-bb'),
+        ds: document.getElementById('loc-ds'),
+      };
+
+      // Extent bounds
       const disneyWorldExtent = ol.proj.transformExtent(
         [-81.9200, 28.1772, -81.2244, 28.6390], 'EPSG:4326', 'EPSG:3857'
       );
 
-      // Lookups
+      // Utility lookups
       function getLabelForCode(code) {
         const rec = serverOptions.find(o => o.code === code);
         return rec ? rec.label : '';
@@ -294,12 +270,8 @@
         const rec = serverOptions.find(o => o.code === code);
         return rec && rec.esri_label ? rec.esri_label : '';
       }
-      function getPreviousCode(code) {
-        const i = serverOptions.findIndex(o => o.code === code);
-        return i > 0 ? serverOptions[i - 1].code : serverOptions[0].code;
-      }
 
-      // Layers
+      // ===== Layers =====
       function makeDisneyLayer(code) {
         return new ol.layer.Tile({
           source: new ol.source.XYZ({
@@ -328,7 +300,7 @@
         });
       }
 
-      // Highlight (Disney only)
+      // ===== Compare rendering =====
       function makeHighlightLayer(baseCode, compareCode) {
         const baseUrlTpl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${baseCode}/{z}/{x}/{y}.jpg`;
         const compareUrlTpl = `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${compareCode}/{z}/{x}/{y}.jpg`;
@@ -383,6 +355,7 @@
           })
         });
       }
+
       function rgb2lab(r, g, b) {
         r /= 255; g /= 255; b /= 255;
         r = r > 0.04045 ? Math.pow((r + 0.055)/1.055, 2.4) : r/12.92;
@@ -399,7 +372,7 @@
       }
       function deltaE(a, b) { const dL=a[0]-b[0], da=a[1]-b[1], db=a[2]-b[2]; return Math.sqrt(dL*dL+da*da+db*db); }
 
-      // Map init
+      // ===== Base map init =====
       function initMap() {
         disneyLayer = makeDisneyLayer(currentCode);
         esriLayer = makeEsriLayer(getEsriIdForCode(currentCode));
@@ -411,23 +384,8 @@
         map = new ol.Map({
           target: 'map',
           layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
-          view: new ol.View({
-            center: ol.proj.fromLonLat([-81.5494, 28.3747]),
-            zoom: 16, minZoom: 0, maxZoom: 20, extent: disneyWorldExtent
-          }),
-          controls: ol.control.defaults.defaults({ zoom: false }),
-          interactions: ol.interaction.defaults.defaults({
-            altShiftDragRotate: false,
-            pinchRotate: false
-          })
+          view: new ol.View({ center: ol.proj.fromLonLat([-81.5494, 28.3747]), zoom: 16, minZoom: 0, maxZoom: 20, extent: disneyWorldExtent })
         });
-
-        // Keep handle/line synced when map renders or layout changes
-        map.on('rendercomplete', updateSwipeUI);
-        const ro = new ResizeObserver(updateSwipeUI);
-        ro.observe(document.getElementById('map'));
-        window.addEventListener('resize', updateSwipeUI);
-        window.addEventListener('scroll', updateSwipeUI, { passive: true });
       }
 
       function setRoadsLayerState() {
@@ -437,41 +395,28 @@
         if (layers.getArray()[layers.getLength()-1] !== roadsLayer) { map.removeLayer(roadsLayer); map.addLayer(roadsLayer); }
       }
 
-      // UI updates
+      // ===== UI updates =====
       function updateDateUI() {
         if (!compareMode) {
-          currentDateDisplay.textContent = showingDisney
-            ? getLabelForCode(currentCode)
-            : (getEsriLabelForCode(currentCode) || (getLabelForCode(currentCode) + ' (Satellite)'));
+          currentDateDisplay.textContent = showingDisney ? getLabelForCode(currentCode) : (getEsriLabelForCode(currentCode) || (getLabelForCode(currentCode) + ' (Satellite)'));
         } else {
-          const leftLabel  = showingDisney ? getLabelForCode(leftCode) : (getEsriLabelForCode(leftCode)  || getLabelForCode(leftCode));
-          const rightLabel = showingDisney ? getLabelForCode(rightCode): (getEsriLabelForCode(rightCode) || getLabelForCode(rightCode));
-          currentDateDisplay.textContent = `${leftLabel}  vs  ${rightLabel}`;
+          currentDateDisplay.textContent = `${getLabelForCode(leftCode)}  vs  ${getLabelForCode(rightCode)}`;
         }
         currentDateDisplay.style.display = 'block';
 
-        compareBtn.style.display = 'flex';
+        compareBtn.style.display = showingDisney ? 'flex' : 'none';
         highlightBtn.style.display = (showingDisney && compareMode) ? 'flex' : 'none';
-        settingsBtn.style.display = (compareMode && highlightMode) ? 'flex' : 'none';
-
         leftDateBtn.style.display = compareMode ? 'flex' : 'none';
         quickSwitchBtn.style.display = (lastTwoDates[1] && !compareMode) ? 'flex' : 'none';
 
+        toggleBtn.disabled = compareMode; // disable satellite toggle while comparing
         toggleIconImg.src = showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
         toggleIconImg.alt = showingDisney ? 'Satellite' : 'Disney Map';
 
+        // Compare UI widgets
         swipeThumb.style.display = (compareMode && !highlightMode) ? 'block' : 'none';
         swipeHandle.style.display = (compareMode && !highlightMode) ? 'block' : 'none';
-
-        sensitivityRow.style.display = (compareMode && highlightMode && showSensitivity) ? 'block' : 'none';
-
-        /* Active state toggles */
-        compareBtn.classList.toggle('active-btn', compareMode);
-        highlightBtn.classList.toggle('active-btn', compareMode && showingDisney && highlightMode);
-        settingsBtn.classList.toggle('active-btn', compareMode && highlightMode && showSensitivity);
-
-        // Keep the compare UI aligned if it becomes visible/hidden
-        updateSwipeUI();
+        sensitivityRow.style.display = (compareMode && highlightMode) ? 'block' : 'none';
       }
 
       function fillDatePopup(popupEl, selectedCode, onPick) {
@@ -485,63 +430,35 @@
           popupEl.appendChild(b);
         });
       }
-
-      // Anchor a popup next to a button (align popup's RIGHT edge to button's RIGHT edge)
-      function positionPopupForButton(popupEl, btnEl) {
-        const r = btnEl.getBoundingClientRect();
-        const gap = 8;
-
-        // Show invisibly to measure width
-        const prevDisplay = popupEl.style.display;
-        const prevVisibility = popupEl.style.visibility;
-        popupEl.style.display = 'block';
-        popupEl.style.visibility = 'hidden';
-        const width = popupEl.offsetWidth;
-        popupEl.style.display = prevDisplay;
-        popupEl.style.visibility = prevVisibility;
-
-        // Align right edges, clamp to viewport with 8px margin
-        const left = Math.max(8, Math.min(window.innerWidth - width - 8, r.right - width));
-        const top  = Math.max(8, r.bottom + gap);
-
-        popupEl.style.left = left + 'px';
-        popupEl.style.top  = top + 'px';
-      }
-
-      function showPopup(popupEl) { popupEl.style.display = 'block'; requestAnimationFrame(()=> popupEl.style.opacity = '1'); }
+      function showPopup(popupEl) { popupEl.style.display = 'block'; setTimeout(()=> popupEl.style.opacity = '1', 10); }
       function hidePopup(popupEl) { popupEl.style.opacity = '0'; setTimeout(()=> popupEl.style.display = 'none', 180); }
 
       function setSingleDate(newCode) {
         if (currentCode === newCode) return;
         if (lastTwoDates[0] !== newCode) lastTwoDates = [newCode, lastTwoDates[0]];
         currentCode = newCode;
-
-        const visD = disneyLayer.getVisible();
+        const vis = disneyLayer.getVisible();
         map.removeLayer(disneyLayer);
         disneyLayer = makeDisneyLayer(newCode);
-        disneyLayer.setVisible(visD);
+        disneyLayer.setVisible(vis);
         disneyLayer.getSource().set('extent', disneyWorldExtent);
         map.getLayers().setAt(0, disneyLayer);
 
-        const esri_id = getEsriIdForCode(newCode);
-        const visE = esriLayer && esriLayer.getVisible();
-        if (!esriLayer || esriLayer.get('esri_id') !== esri_id) {
-          if (esriLayer) map.removeLayer(esriLayer);
-          esriLayer = makeEsriLayer(esri_id);
-          if (esriLayer) { esriLayer.set('esri_id', esri_id); esriLayer.getSource().set('extent', disneyWorldExtent); map.getLayers().setAt(1, esriLayer); }
+        if (!showingDisney) {
+          const esri_id = getEsriIdForCode(newCode);
+          const visE = esriLayer && esriLayer.getVisible();
+          if (!esriLayer || esriLayer.get('esri_id') !== esri_id) {
+            if (esriLayer) map.removeLayer(esriLayer);
+            esriLayer = makeEsriLayer(esri_id);
+            if (esriLayer) { esriLayer.set('esri_id', esri_id); esriLayer.getSource().set('extent', disneyWorldExtent); map.getLayers().setAt(1, esriLayer); }
+          }
+          if (esriLayer) esriLayer.setVisible(visE);
         }
-        if (esriLayer) esriLayer.setVisible(visE);
-
         setRoadsLayerState();
-
-        if (compareMode) {
-          if (highlightMode) launchHighlightMode();
-          else launchSwipeMode();
-        }
         updateDateUI();
       }
 
-      // Compare housekeeping
+      // ===== Compare Mode Wiring =====
       function clearCompareLayers() {
         if (leftLayer) { map.removeLayer(leftLayer); leftLayer = null; }
         if (rightLayer) { map.removeLayer(rightLayer); rightLayer = null; }
@@ -549,28 +466,14 @@
       }
 
       function launchSwipeMode() {
+        highlightMode = false;
         clearCompareLayers();
-
-        if (showingDisney) {
-          leftLayer  = makeDisneyLayer(leftCode);
-          rightLayer = makeDisneyLayer(rightCode);
-        } else {
-          const leftEsri  = getEsriIdForCode(leftCode);
-          const rightEsri = getEsriIdForCode(rightCode);
-          leftLayer  = makeEsriLayer(leftEsri);
-          rightLayer = makeEsriLayer(rightEsri);
-          if (!leftLayer || !rightLayer) {
-            compareMode = false;
-            updateDateUI();
-            return;
-          }
-          leftLayer.setVisible(true);
-          rightLayer.setVisible(true);
-        }
-
+        leftLayer = makeDisneyLayer(leftCode);
+        rightLayer = makeDisneyLayer(rightCode);
         map.addLayer(leftLayer);
         map.addLayer(rightLayer);
 
+        // Clip right layer during render based on swipeRatio
         rightLayer.on('prerender', function(event) {
           const ctx = event.context;
           const w = ctx.canvas.width; const h = ctx.canvas.height;
@@ -579,12 +482,7 @@
         });
         rightLayer.on('postrender', function(event) { event.context.restore(); });
         map.render();
-
-        // Ensure UI aligns immediately after layers render
         updateSwipeUI();
-        requestAnimationFrame(updateSwipeUI);
-
-        updateDateUI();
       }
 
       function launchHighlightMode() {
@@ -594,74 +492,48 @@
         updateDateUI();
       }
 
-      // ========= FIXED: keep handle exactly centered on the line =========
+      // Swipe UI
       function updateSwipeUI() {
         if (!compareMode || highlightMode) return;
-
-        const mapEl = map.getTargetElement();
-        const mapRect = mapEl.getBoundingClientRect();
-        const w = mapRect.width;
-        const h = mapRect.height;
+        const mapDiv = map.getTargetElement();
+        const w = mapDiv.clientWidth; const h = mapDiv.clientHeight;
         const x = Math.round(w * swipeRatio);
-
-        // Vertical red line (use its actual width)
-        const lineHalf = (swipeThumb.offsetWidth || 5) / 2;
-        swipeThumb.style.left = (mapRect.left + x - lineHalf) + 'px';
-        swipeThumb.style.top = mapRect.top + 'px';
+        swipeThumb.style.left = (x - (swipeThumb.offsetWidth / 2)) + 'px';
+        swipeThumb.style.top = '0px';
         swipeThumb.style.height = h + 'px';
-
-        // Circle handle (use offset sizes so we always get real numbers)
-        const handleW = swipeHandle.offsetWidth || 34;
-        const handleH = swipeHandle.offsetHeight || 34;
-
-        let handlePos = 0.90;
-        if (window.innerWidth <= 600) handlePos = 0.75;
-
-        swipeHandle.style.left = (mapRect.left + x - (handleW / 2)) + 'px';
-        swipeHandle.style.top  = (mapRect.top + Math.round(h * handlePos) - (handleH / 2)) + 'px';
+        let handlePos = 0.90; if (window.innerWidth <= 600) handlePos = 0.75;
+        swipeHandle.style.left = (x - (swipeHandle.offsetWidth / 2) + (swipeThumb.offsetWidth / 2) - 2) + 'px';
+        swipeHandle.style.top = (Math.round(h * handlePos) - (swipeHandle.offsetHeight / 2)) + 'px';
+        map.render();
       }
-
-function startSwipeDrag(e) {
-  e.preventDefault();
-  document.body.style.userSelect = 'none';
-
-  const move = (ev) => {
-    const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-    const rect = map.getTargetElement().getBoundingClientRect();
-    swipeRatio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-
-    // keep the UI elements aligned
-    updateSwipeUI();
-
-    // *** force the map to re-render so the clip updates immediately ***
-    if (rightLayer) rightLayer.changed(); // mark layer dirty
-    map.render();                         // request a frame
-  };
-
-  const stop = () => {
-    document.removeEventListener('mousemove', move);
-    document.removeEventListener('mouseup', stop);
-    document.removeEventListener('touchmove', move);
-    document.removeEventListener('touchend', stop);
-    document.body.style.userSelect = '';
-
-    // final snap & one last render
-    updateSwipeUI();
-    if (rightLayer) rightLayer.changed();
-    map.render();
-  };
-
-  document.addEventListener('mousemove', move);
-  document.addEventListener('mouseup', stop);
-  document.addEventListener('touchmove', move, { passive: false });
-  document.addEventListener('touchend', stop);
-}
+      function startSwipeDrag(e) {
+        e.preventDefault(); document.body.style.userSelect = 'none';
+        function move(ev) {
+          const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+          const rect = map.getTargetElement().getBoundingClientRect();
+          swipeRatio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+          updateSwipeUI();
+        }
+        function stop() {
+          document.removeEventListener('mousemove', move);
+          document.removeEventListener('mouseup', stop);
+          document.removeEventListener('touchmove', move);
+          document.removeEventListener('touchend', stop);
+          document.body.style.userSelect = '';
+        }
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', stop);
+        document.addEventListener('touchmove', move);
+        document.addEventListener('touchend', stop);
+      }
       swipeThumb.addEventListener('mousedown', startSwipeDrag);
-      swipeThumb.addEventListener('touchstart', startSwipeDrag, { passive: false });
+      swipeThumb.addEventListener('touchstart', startSwipeDrag);
       swipeHandle.addEventListener('mousedown', startSwipeDrag);
-      swipeHandle.addEventListener('touchstart', startSwipeDrag, { passive: false });
+      swipeHandle.addEventListener('touchstart', startSwipeDrag);
+      window.addEventListener('resize', () => setTimeout(updateSwipeUI, 20));
+      window.addEventListener('load', () => setTimeout(updateSwipeUI, 30));
 
-      // Events: right date popup
+      // ===== Events (menus & toggles) =====
       dateBtn.addEventListener('click', () => {
         if (datePopup.style.display === 'block') { hidePopup(datePopup); return; }
         if (!compareMode) {
@@ -669,44 +541,35 @@ function startSwipeDrag(e) {
         } else {
           fillDatePopup(datePopup, rightCode, (code)=>{ rightCode = code; (highlightMode?launchHighlightMode:launchSwipeMode)(); updateDateUI(); });
         }
-        positionPopupForButton(datePopup, dateBtn);
         showPopup(datePopup);
-        const close = (e)=>{ if (!datePopup.contains(e.target) && e.target !== dateBtn && !dateBtn.contains(e.target)) { hidePopup(datePopup); document.removeEventListener('mousedown', close, true); document.removeEventListener('touchstart', close, true);} };
-        setTimeout(()=>{ document.addEventListener('mousedown', close, true); document.addEventListener('touchstart', close, true); }, 0);
+        const hide = (e)=>{ if (!datePopup.contains(e.target) && e.target !== dateBtn && !dateBtn.contains(e.target)) { hidePopup(datePopup); document.removeEventListener('mousedown', hide, true); document.removeEventListener('touchstart', hide, true);} };
+        setTimeout(()=>{ document.addEventListener('mousedown', hide, true); document.addEventListener('touchstart', hide, true); }, 0);
       });
 
-      // Events: left date popup
       leftDateBtn.addEventListener('click', () => {
         if (!compareMode) return;
         if (leftDatePopup.style.display === 'block') { hidePopup(leftDatePopup); return; }
         fillDatePopup(leftDatePopup, leftCode, (code)=>{ leftCode = code; (highlightMode?launchHighlightMode:launchSwipeMode)(); updateDateUI(); });
-        positionPopupForButton(leftDatePopup, leftDateBtn);
         showPopup(leftDatePopup);
-        const close = (e)=>{ if (!leftDatePopup.contains(e.target) && e.target !== leftDateBtn && !leftDateBtn.contains(e.target)) { hidePopup(leftDatePopup); document.removeEventListener('mousedown', close, true); document.removeEventListener('touchstart', close, true);} };
-        setTimeout(()=>{ document.addEventListener('mousedown', close, true); document.addEventListener('touchstart', close, true); }, 0);
+        const hide = (e)=>{ if (!leftDatePopup.contains(e.target) && e.target !== leftDateBtn && !leftDateBtn.contains(e.target)) { hidePopup(leftDatePopup); document.removeEventListener('mousedown', hide, true); document.removeEventListener('touchstart', hide, true);} };
+        setTimeout(()=>{ document.addEventListener('mousedown', hide, true); document.addEventListener('touchstart', hide, true); }, 0);
       });
 
       toggleBtn.addEventListener('click', () => {
+        if (compareMode) return; // disabled while comparing
         showingDisney = !showingDisney;
-
-        if (!compareMode) {
-          if (showingDisney) {
-            disneyLayer.setVisible(true); if (esriLayer) esriLayer.setVisible(false);
-          } else {
-            disneyLayer.setVisible(false);
-            const esriId = getEsriIdForCode(currentCode);
-            if (!esriLayer || esriLayer.get('esri_id') !== esriId) {
-              if (esriLayer) map.removeLayer(esriLayer);
-              esriLayer = makeEsriLayer(esriId);
-              if (esriLayer) { esriLayer.set('esri_id', esriId); esriLayer.getSource().set('extent', disneyWorldExtent); map.getLayers().setAt(1, esriLayer); }
-            }
-            if (esriLayer) esriLayer.setVisible(true);
-          }
+        if (showingDisney) {
+          disneyLayer.setVisible(true); if (esriLayer) esriLayer.setVisible(false);
         } else {
-          if (!showingDisney && highlightMode) { highlightMode = false; showSensitivity = false; }
-          (highlightMode ? launchHighlightMode : launchSwipeMode)();
+          disneyLayer.setVisible(false);
+          const esriId = getEsriIdForCode(currentCode);
+          if (!esriLayer || esriLayer.get('esri_id') !== esriId) {
+            if (esriLayer) map.removeLayer(esriLayer);
+            esriLayer = makeEsriLayer(esriId);
+            if (esriLayer) { esriLayer.set('esri_id', esriId); esriLayer.getSource().set('extent', disneyWorldExtent); map.getLayers().setAt(1, esriLayer); }
+          }
+          if (esriLayer) esriLayer.setVisible(true);
         }
-
         setRoadsLayerState();
         updateDateUI();
       });
@@ -714,31 +577,21 @@ function startSwipeDrag(e) {
       compareBtn.addEventListener('click', () => {
         compareMode = !compareMode;
         if (compareMode) {
+          // seed left/right: left = previous date if available, otherwise oldest; right = current
           rightCode = currentCode;
-          leftCode = getPreviousCode(currentCode);
-          highlightMode = false; // start in swipe
-          showSensitivity = false;
-          leftDateBtn.style.display = 'flex';
+          leftCode = lastTwoDates[1] || serverOptions[0].code;
           launchSwipeMode();
         } else {
-          highlightMode = false; showSensitivity = false; clearCompareLayers();
+          highlightMode = false; clearCompareLayers();
           swipeThumb.style.display = 'none'; swipeHandle.style.display = 'none'; sensitivityRow.style.display = 'none';
-          leftDateBtn.style.display = 'none';
         }
         updateDateUI();
       });
 
       highlightBtn.addEventListener('click', () => {
-        if (!compareMode || !showingDisney) return;
+        if (!compareMode) return;
         highlightMode = !highlightMode;
-        showSensitivity = false;
         if (highlightMode) launchHighlightMode(); else launchSwipeMode();
-        updateDateUI();
-      });
-
-      settingsBtn.addEventListener('click', () => {
-        if (!(compareMode && highlightMode)) return;
-        showSensitivity = !showSensitivity;
         updateDateUI();
       });
 
@@ -751,13 +604,9 @@ function startSwipeDrag(e) {
 
       quickSwitchBtn.addEventListener('click', () => { if (lastTwoDates[1]) setSingleDate(lastTwoDates[1]); });
 
-      // Find Me
+      // Find Me button
       const findmeMessage = document.getElementById('findme-message');
-      function showFindMeMessage(msg) {
-        findmeMessage.textContent = msg; findmeMessage.style.display = 'block';
-        setTimeout(()=> findmeMessage.style.opacity = '1', 10);
-        setTimeout(()=> { findmeMessage.style.opacity = '0'; setTimeout(()=> findmeMessage.style.display = 'none', 400); }, 2200);
-      }
+      function showFindMeMessage(msg) { findmeMessage.textContent = msg; findmeMessage.style.display = 'block'; setTimeout(()=> findmeMessage.style.opacity = '1', 10); setTimeout(()=> { findmeMessage.style.opacity = '0'; setTimeout(()=> findmeMessage.style.display = 'none', 400); }, 2200); }
       findmeBtn.addEventListener('click', () => {
         if (!navigator.geolocation) { showFindMeMessage('Geolocation not supported'); return; }
         navigator.geolocation.getCurrentPosition((pos)=>{
@@ -775,7 +624,31 @@ function startSwipeDrag(e) {
         }, ()=> showFindMeMessage('Unable to get location'), { enableHighAccuracy: true });
       });
 
-      // Touch zoom helper (your custom hold-to-zoom still works)
+      // ===== NEW: Location Dock handlers =====
+      const LOCS = {
+        // [lon, lat]
+        mk: [-81.5812, 28.4177],           // Magic Kingdom
+        epcot: [-81.5494, 28.3747],        // EPCOT (matches your default center)
+        hs: [-81.5580, 28.3575],           // Hollywood Studios
+        ak: [-81.5901, 28.3553],           // Animal Kingdom
+        tl: [-81.5230, 28.3680],           // Typhoon Lagoon
+        bb: [-81.5743, 28.3570],           // Blizzard Beach
+        ds: [-81.5187, 28.3700],           // Disney Springs
+      };
+      function flyToLonLat(lon, lat, zoom=17, duration=700) {
+        const view = map.getView();
+        const dest = ol.proj.fromLonLat([lon, lat]);
+        view.animate({ center: dest, zoom, duration, easing: ol.easing.inAndOut });
+      }
+      locButtons.mk.addEventListener('click', () => flyToLonLat(...LOCS.mk));
+      locButtons.epcot.addEventListener('click', () => flyToLonLat(...LOCS.epcot));
+      locButtons.hs.addEventListener('click', () => flyToLonLat(...LOCS.hs));
+      locButtons.ak.addEventListener('click', () => flyToLonLat(...LOCS.ak));
+      locButtons.tl.addEventListener('click', () => flyToLonLat(...LOCS.tl));
+      locButtons.bb.addEventListener('click', () => flyToLonLat(...LOCS.bb));
+      locButtons.ds.addEventListener('click', () => flyToLonLat(...LOCS.ds));
+
+      // Double-tap-and-hold zoom helper
       (function() {
         let lastTap = 0, isHoldZoom = false, startY = 0, startZoom = 0, holdTimeout = null;
         const mapDiv = document.getElementById('map');
@@ -791,56 +664,29 @@ function startSwipeDrag(e) {
           if (e.touches.length !== 1) return; const now = Date.now();
           if (now - lastTap < 350) { e.preventDefault(); startY = e.touches[0].clientY; startZoom = map.getView().getZoom(); isHoldZoom = true; holdTimeout = setTimeout(()=> mapDiv.addEventListener('touchmove', moveHandler, { passive: false }), 100); }
           else { lastTap = now; isHoldZoom = false; if (holdTimeout) clearTimeout(holdTimeout); }
-        }, { passive: false });
+        });
         mapDiv.addEventListener('touchend', function() { if (isHoldZoom) { isHoldZoom = false; mapDiv.removeEventListener('touchmove', moveHandler, { passive: false }); } if (holdTimeout) clearTimeout(holdTimeout); });
       })();
 
-      // Slider input (reversed mapping)
+      // Sensitivity Slider
       sensitivitySlider.addEventListener('input', () => {
-        currentThreshold = sliderToThreshold(parseInt(sensitivitySlider.value, 10));
+        currentThreshold = parseInt(sensitivitySlider.value, 10);
         if (compareMode && highlightMode) { launchHighlightMode(); }
       });
 
-      // Custom zoom buttons
-      zoomInBtn.addEventListener('click', () => {
-        const v = map.getView(); v.animate({ zoom: v.getZoom() + 1, duration: 160 });
-      });
-      zoomOutBtn.addEventListener('click', () => {
-        const v = map.getView(); v.animate({ zoom: v.getZoom() - 1, duration: 160 });
-      });
-
-      // Prevent iOS double‑tap smart zoom within UI chrome; prevent Safari gesture zoom globally
-      (function() {
-        const zones = ['#grp-top-right', '#grp-top-left', '#grp-bottom-right', '#sensitivity-row'];
-        zones.forEach(sel => {
-          const el = document.querySelector(sel);
-          if (!el) return;
-          el.addEventListener('dblclick', e => e.preventDefault());
-          let lastTouchEnd = 0;
-          el.addEventListener('touchend', e => {
-            const now = Date.now();
-            if (now - lastTouchEnd < 350) { e.preventDefault(); }
-            lastTouchEnd = now;
-          }, { passive: false });
-        });
-        ['gesturestart','gesturechange','gestureend'].forEach(type => {
-          window.addEventListener(type, e => e.preventDefault(), { passive: false });
-        });
-      })();
-
-      // Boot
+      // ===== Base Boot =====
       fetch('servers2.json')
         .then(r => r.json())
         .then(json => {
           serverOptions = json;
-          currentCode = serverOptions[serverOptions.length - 1].code; // newest default
+          currentCode = serverOptions[serverOptions.length - 1].code; // newest as default
           lastTwoDates = [currentCode, null];
           initMap();
           updateDateUI();
         })
         .catch(err => alert('Failed to load servers2.json: ' + err));
 
-      // Self-tests
+      // ===== Self-tests =====
       console.assert(document.getElementById('grp-top-right'), 'Top-right group should exist');
       console.assert(document.getElementById('grp-bottom-right'), 'Bottom-right group should exist');
       console.assert(document.getElementById('date-btn'), 'Date button should exist');
