@@ -46,7 +46,7 @@
     .group-top-right {
       position: absolute; top: 8px; right: 8px;
       display: flex; flex-direction: column; gap: 8px; z-index: 1100;
-      align-items: flex-end; /* keep everything anchored to the right edge */
+      align-items: flex-end;
     }
     .group-bottom-right { position: absolute; right: 8px; bottom: calc(18px + env(safe-area-inset-bottom, 0)); display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
     .group-top-left { position: absolute; top: 8px; left: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
@@ -54,11 +54,11 @@
     /* Row for the two date buttons at the top-right */
     .date-row {
       display: flex; flex-direction: row; gap: 8px;
-      justify-content: flex-end;   /* right-justify inside the row */
+      justify-content: flex-end;
       width: 100%;
     }
 
-    /* Popups: position will be set next to their buttons via JS */
+    /* Popups: positioned by JS; we right-align them to the buttons */
     #date-popup, #left-date-popup {
       display: none; opacity: 0; position: fixed; min-width: 180px; max-height: 70vh; overflow-y: auto;
       background: rgba(255,255,255,0.96); border: 1.5px solid #ccc; border-radius: 8px; box-shadow: 0 3px 15px #0002;
@@ -120,6 +120,50 @@
     #location-dock button { background: none; border: none; padding: 0; margin: 0; cursor: pointer; }
     #location-dock img { width: 36px; height: 36px; display: block; }
 
+    /* Info icon (bottom-left) */
+    #info-icon {
+      position: fixed;
+      left: 16px;
+      bottom: calc(16px + env(safe-area-inset-bottom, 0));
+      width: 32px;
+      height: 32px;
+      z-index: 1500;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    /* Info overlay */
+    #info-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      display: none;
+      z-index: 2000;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    #info-overlay .panel {
+      max-width: 720px;
+      margin: 40px auto;
+      background: #23287b;
+      padding: 18px 18px 12px;
+      border-radius: 12px;
+      box-shadow: 0 6px 24px #0009;
+    }
+    #info-overlay .panel header {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      margin-bottom: 8px;
+    }
+    #info-overlay h2 { margin: 0; font-size: 22px; }
+    #info-close {
+      appearance: none; border: none; background: #fff; color: #23287b; font-weight: 700; border-radius: 8px;
+      padding: 8px 12px; cursor: pointer;
+    }
+    #info-overlay .panel section { line-height: 1.45; }
+    #info-overlay .panel ul { margin: 8px 0 0 18px; }
+
     /* Zoom buttons stack (always visible, top-left) */
     .zoom-stack { display: flex; flex-direction: column; gap: 8px; }
 
@@ -132,6 +176,7 @@
       #current-date-display { font-size: 16px; padding: 0 10px; top: 10px; }
       #sensitivity-slider { width: 160px; }
       #location-dock img { width: 28px; height: 28px; }
+      #info-icon { width: 28px; height: 28px; }
     }
   </style>
 </head>
@@ -198,14 +243,55 @@
 
   <!-- Location Dock (bottom center) -->
   <div id="location-dock" aria-label="Quick location shortcuts">
-    <!-- Use the filenames exactly as you listed (typos included) -->
-    <button data-coords="-81.579,28.418" title="Magic Kingdom"><img src="icons/locations/magic-kingdom.svg" alt="Magic Kingdom"></button>
-    <button data-coords="-81.5494,28.3747" title="Epcot"><img src="icons/locations/epcot.svg" alt="Epcot"></button>
-    <button data-coords="-81.566,28.357" title="Hollywood Studios"><img src="icons/locations/hollywood-studios.svg" alt="Hollywood Studios"></button>
-    <button data-coords="-81.591,28.359" title="Animal Kingdom"><img src="icons/locations/animal-kingdom.svg" alt="Animal Kingdom"></button>
-    <button data-coords="-81.526,28.36" title="Typhoon Lagoon"><img src="icons/locations/typhoon-lagoon.svg" alt="Typhoon Lagoon"></button>
-    <button data-coords="-81.573,28.352" title="Blizzard Beach"><img src="icons/locations/blizzard-beach.svg" alt="Blizzard Beach"></button>
-    <button data-coords="-81.513,28.37" title="Disney Springs"><img src="icons/locations/disney-springs.svg" alt="Disney Springs"></button>
+    <!-- lon,lat and optional per-button zoom -->
+    <button data-coords="-81.579000,28.418000" data-zoom="17">
+      <img src="icons/locations/magic-kingdom.svg" alt="Magic Kingdom">
+    </button>
+    <button data-coords="-81.549400,28.374700" data-zoom="16">
+      <img src="icons/locations/epcot.svg" alt="Epcot">
+    </button>
+    <button data-coords="-81.566000,28.357000" data-zoom="17">
+      <img src="icons/locations/hollywood-studios.svg" alt="Hollywood Studios">
+    </button>
+    <button data-coords="-81.591000,28.359000" data-zoom="17">
+      <img src="icons/locations/animal-kingdom.svg" alt="Animal Kingdom">
+    </button>
+    <button data-coords="-81.526000,28.360000" data-zoom="16">
+      <img src="icons/locations/typhoon-lagoon.svg" alt="Typhoon Lagoon">
+    </button>
+    <button data-coords="-81.573000,28.352000" data-zoom="16">
+      <img src="icons/locations/blizzard-beach.svg" alt="Blizzard Beach">
+    </button>
+    <button data-coords="-81.513000,28.370000" data-zoom="16">
+      <img src="icons/locations/disney-springs.svg" alt="Disney Springs">
+    </button>
+  </div>
+
+  <!-- Info icon (bottom-left) -->
+  <img id="info-icon" src="icons/info.svg" alt="About & Disclaimers" title="About & Disclaimers">
+
+  <!-- Info overlay -->
+  <div id="info-overlay" role="dialog" aria-modal="true" aria-labelledby="info-title">
+    <div class="panel">
+      <header>
+        <h2 id="info-title">About WDW Magic Explorer</h2>
+        <button id="info-close" type="button" aria-label="Close">Close</button>
+      </header>
+      <section>
+        <p>
+          WDW Magic Explorer lets you browse historical Disney World resort maps and compare them over time.
+          Use the date selector to jump between years, the compare mode to swipe between two dates,
+          and the dock to quickly pan to popular locations.
+        </p>
+        <h3>Disclaimers</h3>
+        <ul>
+          <li>This is an unofficial fan project and is not affiliated with The Walt Disney Company.</li>
+          <li>All Disney map imagery © Disney. Used here for educational and historical exploration.</li>
+          <li>Satellite imagery via ESRI Wayback and partners; roads via Google tiles.</li>
+          <li>Positions are approximate and not suitable for navigation.</li>
+        </ul>
+      </section>
+    </div>
   </div>
 
   <div id="swipe-thumb"></div>
@@ -220,32 +306,15 @@
 <script>
 // Completely disable browser zoom everywhere (desktop + mobile)
 (function () {
-  // Prevent pinch zoom (desktop trackpads & mobile gestures)
-  document.addEventListener('wheel', (e) => {
-    if (e.ctrlKey || e.metaKey) e.preventDefault();
-  }, { passive: false, capture: true });
-
-  // Prevent pinch zoom on mobile Safari
+  document.addEventListener('wheel', (e) => { if (e.ctrlKey || e.metaKey) e.preventDefault(); }, { passive: false, capture: true });
   ['gesturestart', 'gesturechange', 'gestureend'].forEach(type => {
     window.addEventListener(type, (e) => e.preventDefault(), { passive: false, capture: true });
   });
-
-  // Prevent Ctrl/Cmd + +/-/0 zoom shortcuts
   document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && ['+', '=', '-', '0'].includes(e.key)) {
-      e.preventDefault();
-    }
+    if ((e.ctrlKey || e.metaKey) && ['+', '=', '-', '0'].includes(e.key)) { e.preventDefault(); }
   }, { capture: true });
-
-  // Prevent double-click zoom (desktop browsers)
-  window.addEventListener('dblclick', (e) => {
-    e.preventDefault();
-  }, { passive: false, capture: true });
-
-  // Prevent iOS/macOS "smart zoom" (double-tap with trackpad/magic mouse)
-  document.addEventListener('touchstart', (e) => {
-    if (e.touches.length > 1) e.preventDefault();
-  }, { passive: false });
+  window.addEventListener('dblclick', (e) => { e.preventDefault(); }, { passive: false, capture: true });
+  document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 })();
 </script>
 
@@ -300,6 +369,10 @@
       const sensitivityRow = document.getElementById('sensitivity-row');
       const zoomInBtn = document.getElementById('zoom-in-btn');
       const zoomOutBtn = document.getElementById('zoom-out-btn');
+
+      const infoIcon = document.getElementById('info-icon');
+      const infoOverlay = document.getElementById('info-overlay');
+      const infoClose = document.getElementById('info-close');
 
       const disneyWorldExtent = ol.proj.transformExtent(
         [-81.9200, 28.1772, -81.2244, 28.6390], 'EPSG:4326', 'EPSG:3857'
@@ -453,12 +526,22 @@
         window.addEventListener('resize', updateSwipeUI);
         window.addEventListener('scroll', updateSwipeUI, { passive: true });
 
-        // Hook up dock buttons
+        // Dock buttons: center + optional zoom
         const dock = document.getElementById('location-dock');
         dock.querySelectorAll('button').forEach(btn => {
           btn.addEventListener('click', () => {
-            const coords = btn.dataset.coords.split(',').map(Number);
-            map.getView().animate({ center: ol.proj.fromLonLat(coords), zoom: 16, duration: 600 });
+            const [lonStr, latStr] = (btn.dataset.coords || '').split(',');
+            const lon = parseFloat(lonStr);
+            const lat = parseFloat(latStr);
+            if (Number.isFinite(lon) && Number.isFinite(lat)) {
+              const target = ol.proj.fromLonLat([lon, lat]);
+              const targetZoom = Number.isFinite(parseFloat(btn.dataset.zoom))
+                ? parseFloat(btn.dataset.zoom)
+                : 16;
+              map.getView().animate({ center: target, zoom: targetZoom, duration: 600 });
+            } else {
+              console.warn('Invalid data-coords on dock button:', btn);
+            }
           });
         });
       }
@@ -519,12 +602,12 @@
         });
       }
 
-      // Anchor a popup next to a button (align popup's RIGHT edge to button's RIGHT edge)
+      // Anchor a popup next to a button (align popup RIGHT edge to button RIGHT edge)
       function positionPopupForButton(popupEl, btnEl) {
         const r = btnEl.getBoundingClientRect();
         const gap = 8;
 
-        // Show invisibly to measure width
+        // show invisibly to measure
         const prevDisplay = popupEl.style.display;
         const prevVisibility = popupEl.style.visibility;
         popupEl.style.display = 'block';
@@ -533,7 +616,7 @@
         popupEl.style.display = prevDisplay;
         popupEl.style.visibility = prevVisibility;
 
-        // Align right edges, clamp to viewport with 8px margin
+        // Align right edges, clamp to viewport
         const left = Math.max(8, Math.min(window.innerWidth - width - 8, r.right - width));
         const top  = Math.max(8, r.bottom + gap);
 
@@ -643,7 +726,7 @@
         swipeThumb.style.top = mapRect.top + 'px';
         swipeThumb.style.height = h + 'px';
 
-        // Circle handle (use offset sizes so we always get real numbers)
+        // Circle handle
         const handleW = swipeHandle.offsetWidth || 34;
         const handleH = swipeHandle.offsetHeight || 34;
 
@@ -663,12 +746,10 @@
           const rect = map.getTargetElement().getBoundingClientRect();
           swipeRatio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
 
-          // keep the UI elements aligned
           updateSwipeUI();
 
-          // force the map to re-render so the clip updates immediately
-          if (rightLayer) rightLayer.changed(); // mark layer dirty
-          map.render();                         // request a frame
+          if (rightLayer) rightLayer.changed();
+          map.render();
         };
 
         const stop = () => {
@@ -678,7 +759,6 @@
           document.removeEventListener('touchend', stop);
           document.body.style.userSelect = '';
 
-          // final snap & one last render
           updateSwipeUI();
           if (rightLayer) rightLayer.changed();
           map.render();
@@ -808,7 +888,7 @@
         }, ()=> showFindMeMessage('Unable to get location'), { enableHighAccuracy: true });
       });
 
-      // Touch zoom helper (your custom hold-to-zoom still works)
+      // Touch zoom helper (hold-to-zoom)
       (function() {
         let lastTap = 0, isHoldZoom = false, startY = 0, startZoom = 0, holdTimeout = null;
         const mapDiv = document.getElementById('map');
@@ -842,7 +922,7 @@
         const v = map.getView(); v.animate({ zoom: v.getZoom() - 1, duration: 160 });
       });
 
-      // Prevent iOS double-tap smart zoom within UI chrome; prevent Safari gesture zoom globally
+      // Prevent smart zoom within UI chrome; prevent Safari gesture zoom globally
       (function() {
         const zones = ['#grp-top-right', '#grp-top-left', '#grp-bottom-right', '#sensitivity-row', '#location-dock'];
         zones.forEach(sel => {
@@ -860,6 +940,18 @@
           window.addEventListener(type, e => e.preventDefault(), { passive: false });
         });
       })();
+
+      // Info overlay interactions
+      infoIcon.addEventListener('click', () => { infoOverlay.style.display = 'block'; });
+      infoClose.addEventListener('click', () => { infoOverlay.style.display = 'none'; });
+      infoOverlay.addEventListener('click', (e) => {
+        if (e.target === infoOverlay) infoOverlay.style.display = 'none';
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && infoOverlay.style.display === 'block') {
+          infoOverlay.style.display = 'none';
+        }
+      });
 
       // Boot
       fetch('servers2.json')
