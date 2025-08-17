@@ -75,9 +75,6 @@
       color: #fff; font-size: 22px; font-weight: bold; text-shadow: 0 3px 16px #222, 0 1px 0 #222; pointer-events: none; opacity: 0.97; padding: 0 22px;
     }
 
-    #logo { position: absolute; left: 16px; bottom: 16px; z-index: 1200; pointer-events: auto; opacity: 0.93; cursor: pointer;}
-    #logo img { display: block; width: 200px; height: 36px; max-width: 98vw;}
-
     #findme-message { display: none; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 2000;
       background: rgba(255,255,255,0.92); color: #d62525; font-size: 17px; font-weight: bold; text-align: center; opacity: 0;
       padding: 7px 20px; border-radius: 16px; box-shadow: 0 2px 8px #0001; transition: opacity 0.4s; pointer-events: none; }
@@ -106,6 +103,23 @@
     #sensitivity-row label { font-size: 13px; color: #555; display: block; margin-bottom: 6px; text-align: center; }
     #sensitivity-slider { width: 200px; }
 
+    /* Location Dock (bottom center) */
+    #location-dock {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(16px + env(safe-area-inset-bottom, 0));
+      display: flex; gap: 14px;
+      background: rgba(255,255,255,0.9);
+      padding: 8px 14px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px #0003;
+      z-index: 1200;
+      touch-action: manipulation;
+    }
+    #location-dock button { background: none; border: none; padding: 0; margin: 0; cursor: pointer; }
+    #location-dock img { width: 36px; height: 36px; display: block; }
+
     /* Zoom buttons stack (always visible, top-left) */
     .zoom-stack { display: flex; flex-direction: column; gap: 8px; }
 
@@ -115,10 +129,9 @@
       .group-top-left { left: 8px; top: 8px; gap: 6px; }
       .ol-control-inner, .btn-square { width: 32px; height: 32px; border-radius: 6px; font-size: 13px; }
       .ol-control-inner img, .btn-square img { width: 18px; height: 18px; }
-      #logo { left: 50%; transform: translateX(-50%); bottom: 8px;}
-      #logo img { width: 180px !important; height: 32px !important; }
       #current-date-display { font-size: 16px; padding: 0 10px; top: 10px; }
       #sensitivity-slider { width: 160px; }
+      #location-dock img { width: 28px; height: 28px; }
     }
   </style>
 </head>
@@ -181,8 +194,19 @@
   </div>
 
   <div id="findme-message"></div>
-  <div id="logo"><img src="logo.svg" alt="WDW Magic Explorer Logo"></div>
   <div id="current-date-display"></div>
+
+  <!-- Location Dock (bottom center) -->
+  <div id="location-dock" aria-label="Quick location shortcuts">
+    <!-- Use the filenames exactly as you listed (typos included) -->
+    <button data-coords="-81.579,28.418" title="Magic Kingdom"><img src="icons/locations/magic-kingdom.svg" alt="Magic Kingdom"></button>
+    <button data-coords="-81.5494,28.3747" title="Epcot"><img src="icons/locations/epcot.svg" alt="Epcot"></button>
+    <button data-coords="-81.566,28.357" title="Hollywood Studios"><img src="icons/locations/hollywood-studios.svg" alt="Hollywood Studios"></button>
+    <button data-coords="-81.591,28.359" title="Animal Kingdom"><img src="icons/locations/animal-kingdom.svg" alt="Animal Kingdom"></button>
+    <button data-coords="-81.526,28.36" title="Typhoon Lagoon"><img src="icons/locations/typhoon-lagoon.svg" alt="Typhoon Lagoon"></button>
+    <button data-coords="-81.573,28.352" title="Blizzard Beach"><img src="icons/locations/blizzard-beach.svg" alt="Blizzard Beach"></button>
+    <button data-coords="-81.513,28.37" title="Disney Springs"><img src="icons/locations/disney-springs.svg" alt="Disney Springs"></button>
+  </div>
 
   <div id="swipe-thumb"></div>
   <div id="swipe-handle" title="Drag to compare"></div>
@@ -428,6 +452,15 @@
         ro.observe(document.getElementById('map'));
         window.addEventListener('resize', updateSwipeUI);
         window.addEventListener('scroll', updateSwipeUI, { passive: true });
+
+        // Hook up dock buttons
+        const dock = document.getElementById('location-dock');
+        dock.querySelectorAll('button').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const coords = btn.dataset.coords.split(',').map(Number);
+            map.getView().animate({ center: ol.proj.fromLonLat(coords), zoom: 16, duration: 600 });
+          });
+        });
       }
 
       function setRoadsLayerState() {
@@ -594,7 +627,7 @@
         updateDateUI();
       }
 
-      // ========= FIXED: keep handle exactly centered on the line =========
+      // ========= keep handle exactly centered on the line =========
       function updateSwipeUI() {
         if (!compareMode || highlightMode) return;
 
@@ -621,41 +654,41 @@
         swipeHandle.style.top  = (mapRect.top + Math.round(h * handlePos) - (handleH / 2)) + 'px';
       }
 
-function startSwipeDrag(e) {
-  e.preventDefault();
-  document.body.style.userSelect = 'none';
+      function startSwipeDrag(e) {
+        e.preventDefault();
+        document.body.style.userSelect = 'none';
 
-  const move = (ev) => {
-    const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-    const rect = map.getTargetElement().getBoundingClientRect();
-    swipeRatio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        const move = (ev) => {
+          const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+          const rect = map.getTargetElement().getBoundingClientRect();
+          swipeRatio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
 
-    // keep the UI elements aligned
-    updateSwipeUI();
+          // keep the UI elements aligned
+          updateSwipeUI();
 
-    // *** force the map to re-render so the clip updates immediately ***
-    if (rightLayer) rightLayer.changed(); // mark layer dirty
-    map.render();                         // request a frame
-  };
+          // force the map to re-render so the clip updates immediately
+          if (rightLayer) rightLayer.changed(); // mark layer dirty
+          map.render();                         // request a frame
+        };
 
-  const stop = () => {
-    document.removeEventListener('mousemove', move);
-    document.removeEventListener('mouseup', stop);
-    document.removeEventListener('touchmove', move);
-    document.removeEventListener('touchend', stop);
-    document.body.style.userSelect = '';
+        const stop = () => {
+          document.removeEventListener('mousemove', move);
+          document.removeEventListener('mouseup', stop);
+          document.removeEventListener('touchmove', move);
+          document.removeEventListener('touchend', stop);
+          document.body.style.userSelect = '';
 
-    // final snap & one last render
-    updateSwipeUI();
-    if (rightLayer) rightLayer.changed();
-    map.render();
-  };
+          // final snap & one last render
+          updateSwipeUI();
+          if (rightLayer) rightLayer.changed();
+          map.render();
+        };
 
-  document.addEventListener('mousemove', move);
-  document.addEventListener('mouseup', stop);
-  document.addEventListener('touchmove', move, { passive: false });
-  document.addEventListener('touchend', stop);
-}
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', stop);
+        document.addEventListener('touchmove', move, { passive: false });
+        document.addEventListener('touchend', stop);
+      }
       swipeThumb.addEventListener('mousedown', startSwipeDrag);
       swipeThumb.addEventListener('touchstart', startSwipeDrag, { passive: false });
       swipeHandle.addEventListener('mousedown', startSwipeDrag);
@@ -809,9 +842,9 @@ function startSwipeDrag(e) {
         const v = map.getView(); v.animate({ zoom: v.getZoom() - 1, duration: 160 });
       });
 
-      // Prevent iOS double‑tap smart zoom within UI chrome; prevent Safari gesture zoom globally
+      // Prevent iOS double-tap smart zoom within UI chrome; prevent Safari gesture zoom globally
       (function() {
-        const zones = ['#grp-top-right', '#grp-top-left', '#grp-bottom-right', '#sensitivity-row'];
+        const zones = ['#grp-top-right', '#grp-top-left', '#grp-bottom-right', '#sensitivity-row', '#location-dock'];
         zones.forEach(sel => {
           const el = document.querySelector(sel);
           if (!el) return;
