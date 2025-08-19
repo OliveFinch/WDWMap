@@ -511,22 +511,22 @@
         if (esriLayer) esriLayer.getSource().set('extent', disneyWorldExtent);
         roadsLayer.getSource().set('extent', disneyWorldExtent);
 
-        map = new ol.Map({
-          target: 'map',
-          layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
-        view: new ol.View({
-  center: ol.proj.fromLonLat([-81.58, 28.37]), // midpoint of resort
-  zoom: 13,                                   // more zoomed out
-  minZoom: 0,
-  maxZoom: 20,
-  extent: disneyWorldExtent
-})
-          controls: ol.control.defaults.defaults({ zoom: false }),
-          interactions: ol.interaction.defaults.defaults({
-            altShiftDragRotate: false,
-            pinchRotate: false
-          })
-        });
+map = new ol.Map({
+  target: 'map',
+  layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
+  view: new ol.View({
+    center: ol.proj.fromLonLat([-81.5494, 28.3747]),  // <- initial center (Epcot)
+    zoom: 16,                                        // <- initial zoom
+    minZoom: 0,
+    maxZoom: 20,
+    extent: disneyWorldExtent
+  }),
+  controls: ol.control.defaults.defaults({ zoom: false }),
+  interactions: ol.interaction.defaults.defaults({
+    altShiftDragRotate: false,
+    pinchRotate: false
+  })
+});
 
         // Keep handle/line synced when map renders or layout changes
         map.on('rendercomplete', updateSwipeUI);
