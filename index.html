@@ -515,8 +515,8 @@ map = new ol.Map({
   target: 'map',
   layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
   view: new ol.View({
-    center: ol.proj.fromLonLat([-81.5494, 28.3747]),  // <- initial center (Epcot)
-    zoom: 16,                                        // <- initial zoom
+    center: ol.proj.fromLonLat([-81.58, 28.37]),
+    zoom: 13,
     minZoom: 0,
     maxZoom: 20,
     extent: disneyWorldExtent
