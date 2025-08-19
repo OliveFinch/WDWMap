@@ -514,10 +514,13 @@
         map = new ol.Map({
           target: 'map',
           layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
-          view: new ol.View({
-            center: ol.proj.fromLonLat([-81.5494, 28.3747]),
-            zoom: 16, minZoom: 0, maxZoom: 20, extent: disneyWorldExtent
-          }),
+        view: new ol.View({
+  center: ol.proj.fromLonLat([-81.58, 28.37]), // midpoint of resort
+  zoom: 13,                                   // more zoomed out
+  minZoom: 0,
+  maxZoom: 20,
+  extent: disneyWorldExtent
+})
           controls: ol.control.defaults.defaults({ zoom: false }),
           interactions: ol.interaction.defaults.defaults({
             altShiftDragRotate: false,
