@@ -1,9 +1,7 @@
-/* ======================================================
-   BASE LAYOUT (required for OpenLayers to render)
-   ====================================================== */
-
-html,
-body {
+/* =========================================================
+   Base layout
+   ========================================================= */
+html, body {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -18,27 +16,373 @@ body {
   touch-action: none;
   -webkit-user-select: none;
   user-select: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
 }
 
-/* ======================================================
-   DIM OVERLAYS
-   ====================================================== */
+/* =========================================================
+   Buttons / controls
+   ========================================================= */
+.ol-control-inner, .btn-square {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255,255,255,0.85);
+  border: 1.5px solid #ccc;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #222;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s;
+  user-select: none;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
 
-#changes-overlay,
-#report-overlay {
-  display: none; /* toggled by JS */
+.ol-control-inner img, .btn-square img {
+  width: 24px;
+  height: 24px;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+.ol-control-inner:active, .ol-control-inner:focus, .ol-control-inner:hover,
+.btn-square:active, .btn-square:focus, .btn-square:hover {
+  background: #f8f8f8;
+  border-color: #999;
+}
+
+.btn-square[disabled] {
+  opacity: .45;
+  cursor: default;
+}
+
+/* Active-state styling for toggle buttons (compare / highlight / settings) */
+.btn-square.active-btn {
+  background: rgba(55, 97, 196, 0.15);
+  border-color: #3761c4;
+}
+.btn-square.active-btn img {
+  filter: brightness(0) saturate(100%) invert(27%) sepia(72%) saturate(3440%)
+          hue-rotate(210deg) brightness(92%) contrast(91%);
+}
+
+/* =========================================================
+   Control groups positioning
+   ========================================================= */
+.group-top-right {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1100;
+  align-items: flex-end;
+}
+
+.group-top-left {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1100;
+}
+
+.group-bottom-right {
+  position: absolute;
+  right: 8px;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1100;
+}
+
+.zoom-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Row for the two date buttons at the top-right */
+.date-row {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+/* =========================================================
+   Date popups
+   ========================================================= */
+#date-popup, #left-date-popup {
+  display: none;
+  opacity: 0;
+  position: fixed;
+  min-width: 180px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: rgba(255,255,255,0.96);
+  border: 1.5px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 3px 15px #0002;
+  z-index: 1400;
+  font-family: Arial, Helvetica, sans-serif;
+  transition: opacity .18s ease;
+}
+
+.date-popup-item {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  font-size: 15px;
+  text-align: left;
+  padding: 9px 16px;
+  cursor: pointer;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.date-popup-item.selected {
+  background: #f2f5fa;
+  color: #3761c4;
+  font-weight: bold;
+}
+
+.date-popup-item:active, .date-popup-item:hover {
+  background: #f8f8f8;
+}
+
+/* =========================================================
+   Date display + messages
+   ========================================================= */
+#current-date-display {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1500;
+  background: none;
+  color: #fff;
+  font-size: 22px;
+  font-weight: bold;
+  text-shadow: 0 3px 16px #222, 0 1px 0 #222;
+  pointer-events: none;
+  opacity: 0.97;
+  padding: 0 22px;
+}
+
+#findme-message {
+  display: none;
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  background: rgba(255,255,255,0.92);
+  color: #d62525;
+  font-size: 17px;
+  font-weight: bold;
+  text-align: center;
+  opacity: 0;
+  padding: 7px 20px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px #0001;
+  transition: opacity 0.4s;
+  pointer-events: none;
+}
+
+/* These start hidden; core.js will show when applicable */
+#compare-btn, #highlight-btn, #settings-btn {
+  display: none;
+}
+
+/* =========================================================
+   Swipe compare UI
+   ========================================================= */
+#swipe-thumb {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: #e24141cc;
+  z-index: 1300;
+  cursor: ew-resize;
+  border-radius: 3px;
+  box-shadow: 0 2px 12px #3336;
+  pointer-events: auto;
+  display: none;
+}
+
+#swipe-handle {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  background: #fff;
+  border: 4px solid #e24141cc;
+  border-radius: 50%;
+  box-shadow: 0 2px 12px #2225;
+  z-index: 1400;
+  cursor: grab;
+  touch-action: none;
+  display: none;
+  transition: background 0.1s, border 0.1s;
+}
+
+#swipe-handle:active {
+  background: #ffeaea;
+  border-color: #e24141;
+}
+
+/* =========================================================
+   Sensitivity panel
+   ========================================================= */
+#sensitivity-row {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(18px + env(safe-area-inset-bottom, 0));
+  display: none;
+  background: rgba(255,255,255,0.96);
+  padding: 10px 14px;
+  border: 1.5px solid #ccc;
+  border-radius: 10px;
+  z-index: 1600;
+  box-shadow: 0 4px 16px #0002;
+  touch-action: manipulation;
+}
+
+#sensitivity-row label {
+  font-size: 13px;
+  color: #555;
+  display: block;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+#sensitivity-slider {
+  width: 200px;
+}
+
+/* =========================================================
+   Location Dock
+   ========================================================= */
+#location-dock {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(16px + env(safe-area-inset-bottom, 0));
+  display: flex;
+  gap: 14px;
+  background: rgba(255,255,255,0.9);
+  padding: 8px 14px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #0003;
+  z-index: 1200;
+  touch-action: manipulation;
+}
+
+#location-dock button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+#location-dock img {
+  width: 36px;
+  height: 36px;
+  display: block;
+}
+
+/* =========================================================
+   Info icon + overlay
+   ========================================================= */
+#info-icon {
+  position: fixed;
+  left: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0));
+  width: 32px;
+  height: 32px;
+  z-index: 1500;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+#info-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  display: none;
+  z-index: 2000;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+#info-overlay .panel {
+  max-width: 720px;
+  margin: 40px auto;
+  background: #23287b;
+  padding: 18px 18px 12px;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px #0009;
+}
+
+#info-overlay .panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+#info-overlay h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+#info-close {
+  appearance: none;
+  border: none;
+  background: #fff;
+  color: #23287b;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+#info-overlay .panel section { line-height: 1.45; }
+#info-overlay .panel ul { margin: 8px 0 0 18px; }
+#info-overlay a { color: #fff; text-decoration: underline; }
+#info-overlay a:hover { color: #ffd700; }
+
+/* =========================================================
+   Recent changes + Report a change (board + modal)
+   Hidden by default (CRITICAL)
+   ========================================================= */
+#changes-overlay, #report-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.55);
+  display: none; /* IMPORTANT */
   z-index: 2200;
 }
 
-/* ======================================================
-   RECENT CHANGES BOARD (right side panel)
-   ====================================================== */
-
 #changes-board {
-  display: none; /* toggled by JS */
   position: fixed;
   top: 0;
   right: 0;
@@ -46,77 +390,81 @@ body {
   width: min(420px, 92vw);
   background: rgba(255,255,255,0.98);
   border-left: 1.5px solid #ccc;
-  box-shadow: -6px 0 24px rgba(0,0,0,0.18);
+  box-shadow: -6px 0 24px #0002;
   z-index: 2300;
+  display: none; /* IMPORTANT */
   overflow: hidden;
-  color: #222;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 #changes-board header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px;
+  gap: 10px;
+  padding: 12px 12px;
   border-bottom: 1px solid #e5e5e5;
+  background: #fff;
 }
 
 #changes-board header h3 {
   margin: 0;
   font-size: 16px;
+  color: #222;
 }
 
 #changes-close {
   appearance: none;
   border: 1px solid #ccc;
   background: #fff;
+  color: #222;
   border-radius: 8px;
-  padding: 6px 10px;
+  padding: 8px 10px;
   cursor: pointer;
+}
+
+#changes-board .meta {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #555;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
 }
 
 #changes-list {
-  padding: 10px;
+  height: calc(100vh - 112px);
   overflow-y: auto;
-  height: calc(100vh - 56px);
+  padding: 8px 8px 12px;
 }
 
-.changes-item {
+.change-item {
+  width: 100%;
+  text-align: left;
   border: 1px solid #e6e6e6;
   background: #fff;
   border-radius: 10px;
-  padding: 10px;
-  margin-bottom: 10px;
+  padding: 10px 10px;
   cursor: pointer;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  margin: 8px 0;
+  box-shadow: 0 1px 8px #0001;
 }
 
-.changes-item:hover {
-  background: #fafafa;
-}
+.change-item:hover { background: #fafafa; }
 
-.changes-item-title {
-  font-weight: 700;
-  margin-bottom: 4px;
+.change-title {
   font-size: 14px;
+  color: #111;
+  margin: 0 0 4px 0;
 }
 
-.changes-item-meta {
+.change-sub {
   font-size: 12px;
   color: #666;
+  margin: 0;
+  line-height: 1.35;
 }
-
-.changes-empty {
-  font-size: 13px;
-  color: #666;
-  padding: 12px;
-}
-
-/* ======================================================
-   REPORT CHANGE MODAL (centered)
-   ====================================================== */
 
 #report-modal {
-  display: none; /* toggled by JS */
   position: fixed;
   left: 50%;
   top: 50%;
@@ -127,78 +475,66 @@ body {
   background: #fff;
   border: 1.5px solid #ccc;
   border-radius: 12px;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 28px #0003;
   z-index: 2301;
-  color: #222;
+  display: none; /* IMPORTANT */
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 #report-modal header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px;
+  gap: 10px;
+  padding: 12px 12px;
   border-bottom: 1px solid #eee;
 }
 
 #report-modal header h3 {
   margin: 0;
   font-size: 16px;
+  color: #222;
 }
 
 #report-close {
   appearance: none;
   border: 1px solid #ccc;
   background: #fff;
+  color: #222;
   border-radius: 8px;
-  padding: 6px 10px;
+  padding: 8px 10px;
   cursor: pointer;
 }
 
-/* ======================================================
-   REPORT FORM
-   ====================================================== */
+#report-modal .body { padding: 12px; }
 
-#report-modal .body {
-  padding: 12px;
-}
-
-.report-label {
+.form-row { margin-bottom: 10px; }
+.form-row label {
   display: block;
   font-size: 13px;
-  margin: 12px 0 6px;
+  color: #444;
+  margin-bottom: 6px;
 }
 
-.report-input,
-.report-textarea {
+.form-row input, .form-row select, .form-row textarea {
   width: 100%;
   box-sizing: border-box;
-  border-radius: 10px;
   border: 1px solid #ccc;
-  padding: 10px;
+  border-radius: 10px;
+  padding: 10px 10px;
   font-size: 14px;
   font-family: Arial, Helvetica, sans-serif;
-}
-
-.report-textarea {
-  min-height: 110px;
-  resize: vertical;
-}
-
-.report-input:focus,
-.report-textarea:focus {
   outline: none;
-  border-color: #3761c4;
 }
 
-.report-status {
-  font-size: 13px;
-  margin-top: 8px;
-  min-height: 18px;
-}
+.form-row textarea { min-height: 110px; resize: vertical; }
 
-/* ======================================================
-   REPORT ACTION BUTTONS
-   ====================================================== */
+.hint {
+  font-size: 12px;
+  color: #666;
+  margin-top: 6px;
+  line-height: 1.35;
+}
 
 #report-actions {
   display: flex;
@@ -206,6 +542,7 @@ body {
   justify-content: flex-end;
   padding: 12px;
   border-top: 1px solid #eee;
+  background: #fff;
 }
 
 .btn-primary {
@@ -214,45 +551,56 @@ body {
   background: #3761c4;
   color: #fff;
   border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 14px;
+  padding: 10px 12px;
   cursor: pointer;
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: default;
+  font-size: 14px;
 }
 
 .btn-secondary {
   appearance: none;
   border: 1px solid #ccc;
   background: #fff;
+  color: #222;
   border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 14px;
+  padding: 10px 12px;
   cursor: pointer;
+  font-size: 14px;
 }
 
-/* ======================================================
-   MOBILE TWEAKS
-   ====================================================== */
+#report-status {
+  padding: 0 12px 12px;
+  font-size: 13px;
+  color: #444;
+  display: none;
+}
 
+/* =========================================================
+   Mobile tweaks
+   ========================================================= */
 @media (max-width: 600px) {
-  #changes-board {
-    width: 100vw;
+  .group-top-right { right: 8px; top: 8px; gap: 6px; }
+  .group-bottom-right { right: 8px; bottom: calc(8px + env(safe-area-inset-bottom, 0)); gap: 6px; }
+  .group-top-left { left: 8px; top: 8px; gap: 6px; }
+
+  .ol-control-inner, .btn-square {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    font-size: 13px;
   }
 
-  #report-modal {
-    width: 94vw;
+  .ol-control-inner img, .btn-square img {
+    width: 18px;
+    height: 18px;
   }
 
-  #report-actions {
-    flex-direction: column-reverse;
+  #current-date-display {
+    font-size: 16px;
+    padding: 0 10px;
+    top: 10px;
   }
 
-  .btn-primary,
-  .btn-secondary {
-    width: 100%;
-  }
+  #sensitivity-slider { width: 160px; }
+  #location-dock img { width: 28px; height: 28px; }
+  #info-icon { width: 28px; height: 28px; }
 }
