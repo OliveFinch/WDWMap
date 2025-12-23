@@ -141,7 +141,9 @@
   }
 
   function normalizeItems(data) {
+    // Worker returns: { results: [...] }
     if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.results)) return data.results;
     if (data && Array.isArray(data.items)) return data.items;
     return [];
   }
@@ -163,9 +165,18 @@
   // API: Changes
   // =========================
   async function loadChanges() {
-    // If your Worker’s changes endpoint is global, keep it simple.
-    // If it supports filtering by mapVersion/serverId, we can add that later.
-    const url = `${API_BASE}/api/changes?limit=50`;
+    const code = getActiveMapCode();
+    if (!code) throw new Error('No active map code available.');
+
+    // Your Worker REQUIRES these params:
+    // /api/changes?serverId=...&mapVersion=...&limit=...
+    const params = new URLSearchParams({
+      serverId: code,
+      mapVersion: code,
+      limit: '50'
+    });
+
+    const url = `${API_BASE}/api/changes?${params.toString()}`;
     const res = await fetch(url, { method: 'GET' });
 
     if (!res.ok) {
@@ -179,7 +190,6 @@
     if (changesList) changesList.innerHTML = '';
 
     if (changesMeta) {
-      const code = getActiveMapCode() || '';
       const label = (WDWMX.getLabelForCode && WDWMX.getLabelForCode(code)) || code;
       changesMeta.textContent = label ? `Map: ${label}` : 'Recent changes';
     }
@@ -202,16 +212,18 @@
 
       const title = document.createElement('p');
       title.className = 'change-title';
-      title.textContent = safeText(it.title || it.summary || it.type || 'Change');
+
+      // With your current DB schema, the best “title” is category + optional display_name
+      const cat = safeText(it.category || 'Change');
+      const disp = safeText(it.display_name || '');
+      title.textContent = disp ? `${cat} — ${disp}` : cat;
 
       const sub = document.createElement('p');
       sub.className = 'change-sub';
 
-      const who = it.reporter_name ? `by ${it.reporter_name}` : 'by anonymous';
-      const when = formatWhen(it.created_at || it.approved_at || it.submitted_at);
-      const desc = safeText(it.description || it.details || '', '');
-
-      sub.textContent = `${who}${when ? ' · ' + when : ''}${desc ? ' · ' + desc : ''}`;
+      const when = formatWhen(it.created_at || it.approved_at);
+      const desc = safeText(it.description || '', '');
+      sub.textContent = `${when ? when : ''}${desc ? (when ? ' · ' : '') + desc : ''}`;
 
       btn.appendChild(title);
       btn.appendChild(sub);
@@ -221,9 +233,9 @@
         const map = WDWMX.getMap && WDWMX.getMap();
         if (!ol || !map) return;
 
-        const lng = Number(it.center_lng ?? it.lng ?? it.lon);
-        const lat = Number(it.center_lat ?? it.lat);
-        const z = Number(it.zoom ?? it.view_zoom);
+        const lng = Number(it.lng);
+        const lat = Number(it.lat);
+        const z = Number(it.zoom);
 
         if (Number.isFinite(lng) && Number.isFinite(lat)) {
           const target = ol.proj.fromLonLat([lng, lat]);
@@ -238,90 +250,85 @@
   }
 
   // =========================
-  // API: Report (FIXED FIELD NAMES)
+  // API: Report
   // =========================
-
-
   async function submitReport() {
-  const desc = safeText(reportDesc && reportDesc.value).trim();
-  if (!desc) {
-    setStatus('Please describe what changed.', '#b00020');
-    return;
-  }
-
-  const code = getActiveMapCode();
-  if (!code) {
-    setStatus('Could not determine current map version.', '#b00020');
-    return;
-  }
-
-  const state = getMapState();
-  if (!state) {
-    setStatus('Map not ready yet.', '#b00020');
-    return;
-  }
-
-  // IMPORTANT: Worker expects top-level lat/lng/zoom as numbers
-  const lat = Number(state.center_lat);
-  const lng = Number(state.center_lng);
-  const zoom = Number(state.zoom);
-
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !Number.isFinite(zoom)) {
-    setStatus('Could not read map centre/zoom. Try moving the map a little and retry.', '#b00020');
-    return;
-  }
-
-  // Worker required fields (from your previous errors)
-  const payload = {
-    serverId: code,
-    mapVersion: code,
-    description: desc,
-
-    // now included exactly as the Worker wants
-    lat,
-    lng,
-    zoom,
-
-    // optional extras (only if your Worker tolerates them)
-    reporterName: safeText(reportName && reportName.value).trim() || null,
-    changeType: safeText(reportType && reportType.value).trim() || 'other'
-  };
-
-  if (reportSubmit) reportSubmit.disabled = true;
-  setStatus('Sending…', '#444');
-
-  try {
-    const res = await fetch(`${API_BASE}/api/reports`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      if (reportSubmit) reportSubmit.disabled = false;
-      setStatus(`Failed to submit: HTTP ${res.status}${txt ? ' — ' + txt : ''}`, '#b00020');
+    const desc = safeText(reportDesc && reportDesc.value).trim();
+    if (!desc) {
+      setStatus('Please describe what changed.', '#b00020');
       return;
     }
 
-    setStatus('Report sent. Thanks. It will appear once approved.', '#1b5e20');
+    const code = getActiveMapCode();
+    if (!code) {
+      setStatus('Could not determine current map version.', '#b00020');
+      return;
+    }
 
-    if (reportDesc) reportDesc.value = '';
-    if (reportType) reportType.value = 'new';
+    const state = getMapState();
+    if (!state) {
+      setStatus('Map not ready yet.', '#b00020');
+      return;
+    }
 
-    setTimeout(() => {
-      closeReportModal();
+    const lat = Number(state.center_lat);
+    const lng = Number(state.center_lng);
+    const zoom = Number(state.zoom);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !Number.isFinite(zoom)) {
+      setStatus('Could not read map centre/zoom. Try moving the map a little and retry.', '#b00020');
+      return;
+    }
+
+    // Worker required fields
+    const payload = {
+      serverId: code,
+      mapVersion: code,
+      description: desc,
+      lat,
+      lng,
+      zoom,
+
+      // These are currently ignored by your Worker (safe to include)
+      reporterName: safeText(reportName && reportName.value).trim() || null,
+      changeType: safeText(reportType && reportType.value).trim() || 'other'
+    };
+
+    if (reportSubmit) reportSubmit.disabled = true;
+    setStatus('Sending…', '#444');
+
+    try {
+      const res = await fetch(`${API_BASE}/api/reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        if (reportSubmit) reportSubmit.disabled = false;
+        setStatus(`Failed to submit: HTTP ${res.status}${txt ? ' — ' + txt : ''}`, '#b00020');
+        return;
+      }
+
+      setStatus('Report sent. Thanks. It will appear once approved.', '#1b5e20');
+
+      if (reportDesc) reportDesc.value = '';
+      if (reportType) reportType.value = 'new';
+
+      // Slightly longer so it doesn’t feel “instant”
+      setTimeout(() => {
+        closeReportModal();
+        if (reportSubmit) reportSubmit.disabled = false;
+        clearStatus();
+      }, 1800);
+
+    } catch (err) {
+      console.error(err);
       if (reportSubmit) reportSubmit.disabled = false;
-      clearStatus();
-    }, 2550);
-
-  } catch (err) {
-    console.error(err);
-    if (reportSubmit) reportSubmit.disabled = false;
-    setStatus('Failed to submit. Check your Worker and CORS settings.', '#b00020');
+      setStatus('Failed to submit. Check your Worker and CORS settings.', '#b00020');
+    }
   }
-}
-  
 
   // =========================
   // Wiring
