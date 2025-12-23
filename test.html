@@ -48,7 +48,15 @@
       display: flex; flex-direction: column; gap: 8px; z-index: 1100;
       align-items: flex-end;
     }
-    .group-bottom-right { position: absolute; right: 8px; bottom: calc(18px + env(safe-area-inset-bottom, 0)); display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
+    .group-bottom-right {
+      position: absolute;
+      right: 8px;
+      bottom: calc(18px + env(safe-area-inset-bottom, 0));
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 1100;
+    }
     .group-top-left { position: absolute; top: 8px; left: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 1100; }
 
     /* Row for the two date buttons at the top-right */
@@ -164,8 +172,177 @@
     #info-overlay .panel section { line-height: 1.45; }
     #info-overlay .panel ul { margin: 8px 0 0 18px; }
 
+    #info-overlay a { color: #fff; text-decoration: underline; }
+    #info-overlay a:hover { color: #ffd700; }
+
     /* Zoom buttons stack (always visible, top-left) */
     .zoom-stack { display: flex; flex-direction: column; gap: 8px; }
+
+    /* =========================
+       Changes UI (panel + modal)
+       ========================= */
+    #changes-overlay, #report-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: none;
+      z-index: 2200;
+    }
+
+    /* Right-side board */
+    #changes-board {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: min(420px, 92vw);
+      background: rgba(255,255,255,0.98);
+      border-left: 1.5px solid #ccc;
+      box-shadow: -6px 0 24px #0002;
+      z-index: 2300;
+      display: none;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    #changes-board header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 12px;
+      border-bottom: 1px solid #e5e5e5;
+      background: #fff;
+    }
+    #changes-board header h3 {
+      margin: 0;
+      font-size: 16px;
+      color: #222;
+    }
+    #changes-close {
+      appearance: none;
+      border: 1px solid #ccc;
+      background: #fff;
+      color: #222;
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    #changes-board .meta {
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #555;
+      border-bottom: 1px solid #f0f0f0;
+      background: #fff;
+    }
+    #changes-list {
+      height: calc(100vh - 112px);
+      overflow-y: auto;
+      padding: 8px 8px 12px;
+    }
+    .change-item {
+      width: 100%;
+      text-align: left;
+      border: 1px solid #e6e6e6;
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px 10px;
+      cursor: pointer;
+      margin: 8px 0;
+      box-shadow: 0 1px 8px #0001;
+    }
+    .change-item:hover { background: #fafafa; }
+    .change-title { font-size: 14px; color: #111; margin: 0 0 4px 0; }
+    .change-sub { font-size: 12px; color: #666; margin: 0; line-height: 1.35; }
+
+    /* Modal */
+    #report-modal {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: min(520px, 92vw);
+      max-height: 86vh;
+      overflow: auto;
+      background: #fff;
+      border: 1.5px solid #ccc;
+      border-radius: 12px;
+      box-shadow: 0 8px 28px #0003;
+      z-index: 2301;
+      display: none;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    #report-modal header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 12px;
+      border-bottom: 1px solid #eee;
+    }
+    #report-modal header h3 { margin: 0; font-size: 16px; color: #222; }
+    #report-close {
+      appearance: none;
+      border: 1px solid #ccc;
+      background: #fff;
+      color: #222;
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    #report-modal .body { padding: 12px; }
+    .form-row { margin-bottom: 10px; }
+    .form-row label { display: block; font-size: 13px; color: #444; margin-bottom: 6px; }
+    .form-row input, .form-row select, .form-row textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 10px 10px;
+      font-size: 14px;
+      font-family: Arial, Helvetica, sans-serif;
+      outline: none;
+    }
+    .form-row textarea { min-height: 110px; resize: vertical; }
+    .hint {
+      font-size: 12px;
+      color: #666;
+      margin-top: 6px;
+      line-height: 1.35;
+    }
+    #report-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      padding: 12px;
+      border-top: 1px solid #eee;
+      background: #fff;
+    }
+    .btn-primary {
+      appearance: none;
+      border: 1px solid #3761c4;
+      background: #3761c4;
+      color: #fff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn-secondary {
+      appearance: none;
+      border: 1px solid #ccc;
+      background: #fff;
+      color: #222;
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    #report-status {
+      padding: 0 12px 12px;
+      font-size: 13px;
+      color: #444;
+      display: none;
+    }
 
     @media (max-width: 600px) {
       .group-top-right { right: 8px; top: 8px; gap: 6px; }
@@ -227,6 +404,16 @@
 
   <!-- BOTTOM RIGHT -->
   <div class="group-bottom-right" id="grp-bottom-right">
+    <!-- NEW: Changes board + Report -->
+    <button id="changes-btn" class="btn-square" title="Recent changes">
+      <!-- Placeholder icon: reuse highlight.svg for now -->
+      <img src="icons/highlight.svg" alt="Changes">
+    </button>
+    <button id="report-btn" class="btn-square" title="Report a change">
+      <!-- Placeholder icon: reuse compare.svg for now -->
+      <img src="icons/compare.svg" alt="Report">
+    </button>
+
     <button id="findme-btn" class="btn-square" title="Locate Me">
       <img src="icons/locateme.svg" alt="Locate Me">
     </button>
@@ -268,7 +455,7 @@
       <img src="icons/locations/blizzard-beach.svg" alt="Blizzard Beach">
     </button>
 
-    <button data-coords="-81.518325,28.370757" data-zoom="17.3">
+    <button data-coords="-81.518325,28.370757" data-zoom="17.5">
       <img src="icons/locations/disney-springs.svg" alt="Disney Springs">
     </button>
   </div>
@@ -285,16 +472,21 @@
       </header>
       <section>
         <p>
-          WDW Magic Explorer lets you browse historical Disney World resort maps and compare them over time.
+          WDW Magic Explorer is a fan made app by Ashley Burton that lets you browse historical
+          Disney World resort maps and compare them over time.
           Use the date selector to jump between years, the compare mode to swipe between two dates,
           and the dock to quickly pan to popular locations.
         </p>
+
+        <p>
+          Connect with me on <a href="https://www.linkedin.com/in/ashleyjburton/">LinkedIn</a>.
+        </p>
+
         <h3>Disclaimers</h3>
         <ul>
           <li>This is an unofficial fan project and is not affiliated with The Walt Disney Company.</li>
           <li>All Disney map imagery © Disney. Used here for educational and historical exploration.</li>
           <li>Satellite imagery via ESRI Wayback and partners; roads via Google tiles.</li>
-          <li>Created by Ashley Burton.</li>
         </ul>
       </section>
     </div>
@@ -305,6 +497,58 @@
   <div id="sensitivity-row">
     <label for="sensitivity-slider">Highlight Sensitivity</label>
     <input type="range" id="sensitivity-slider" min="10" max="30" value="20">
+  </div>
+
+  <!-- =========================
+       Changes board + Report modal
+       ========================= -->
+  <div id="changes-overlay" aria-hidden="true"></div>
+  <aside id="changes-board" aria-label="Recent changes" role="dialog" aria-modal="true">
+    <header>
+      <h3>Recent changes</h3>
+      <button id="changes-close" type="button">Close</button>
+    </header>
+    <div class="meta" id="changes-meta">Loading…</div>
+    <div id="changes-list"></div>
+  </aside>
+
+  <div id="report-overlay" aria-hidden="true"></div>
+  <div id="report-modal" role="dialog" aria-modal="true" aria-label="Report a change">
+    <header>
+      <h3>Report a change</h3>
+      <button id="report-close" type="button">Close</button>
+    </header>
+    <div class="body">
+      <div class="form-row">
+        <label for="report-name">Your name</label>
+        <input id="report-name" type="text" maxlength="60" placeholder="Optional">
+      </div>
+
+      <div class="form-row">
+        <label for="report-type">Type</label>
+        <select id="report-type">
+          <option value="new">New (ride, road, building)</option>
+          <option value="changed">Changed (layout, entrance, path)</option>
+          <option value="removed">Removed (closed, demolished)</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="report-desc">What changed?</label>
+        <textarea id="report-desc" maxlength="800" placeholder="Describe what you see, as clearly as you can."></textarea>
+        <div class="hint" id="report-hint">
+          This report will include the map version you’re viewing, plus the current centre point and zoom level so an admin can review it.
+        </div>
+      </div>
+    </div>
+
+    <div id="report-actions">
+      <button id="report-cancel" class="btn-secondary" type="button">Cancel</button>
+      <button id="report-submit" class="btn-primary" type="button">Send report</button>
+    </div>
+
+    <div id="report-status"></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
@@ -327,6 +571,14 @@
 <script>
 (function() {
   'use strict';
+
+      // =====================
+      // API config (Cloudflare)
+      // =====================
+      // If you bind your Worker Routes so it lives on the same domain, keep this as ''.
+      // If you instead deploy a separate Worker domain (e.g. https://wdw-api.yourdomain.workers.dev),
+      // set API_BASE to that full origin.
+      const API_BASE = '';
 
       // ===== App State =====
       let serverOptions = [];
@@ -379,6 +631,27 @@
       const infoIcon = document.getElementById('info-icon');
       const infoOverlay = document.getElementById('info-overlay');
       const infoClose = document.getElementById('info-close');
+
+      // NEW: Changes UI controls
+      const changesBtn = document.getElementById('changes-btn');
+      const reportBtn  = document.getElementById('report-btn');
+
+      const changesOverlay = document.getElementById('changes-overlay');
+      const changesBoard   = document.getElementById('changes-board');
+      const changesClose   = document.getElementById('changes-close');
+      const changesMeta    = document.getElementById('changes-meta');
+      const changesList    = document.getElementById('changes-list');
+
+      const reportOverlay  = document.getElementById('report-overlay');
+      const reportModal    = document.getElementById('report-modal');
+      const reportClose    = document.getElementById('report-close');
+      const reportCancel   = document.getElementById('report-cancel');
+      const reportSubmit   = document.getElementById('report-submit');
+      const reportStatus   = document.getElementById('report-status');
+
+      const reportName     = document.getElementById('report-name');
+      const reportType     = document.getElementById('report-type');
+      const reportDesc     = document.getElementById('report-desc');
 
       const disneyWorldExtent = ol.proj.transformExtent(
         [-81.9200, 28.1772, -81.2244, 28.6390], 'EPSG:4326', 'EPSG:3857'
@@ -515,8 +788,11 @@
           target: 'map',
           layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
           view: new ol.View({
-            center: ol.proj.fromLonLat([-81.5494, 28.3747]),
-            zoom: 16, minZoom: 0, maxZoom: 20, extent: disneyWorldExtent
+            center: ol.proj.fromLonLat([-81.566575, 28.386606]),
+            zoom: 13,
+            minZoom: 0,
+            maxZoom: 20,
+            extent: disneyWorldExtent
           }),
           controls: ol.control.defaults.defaults({ zoom: false }),
           interactions: ol.interaction.defaults.defaults({
@@ -549,6 +825,14 @@
               console.warn('Invalid data-coords on dock button:', btn);
             }
           });
+        });
+
+        // Close panels on Escape
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            if (changesBoard.style.display === 'block') closeChangesBoard();
+            if (reportModal.style.display === 'block') closeReportModal();
+          }
         });
       }
 
@@ -594,6 +878,12 @@
 
         // Keep the compare UI aligned if it becomes visible/hidden
         updateSwipeUI();
+
+        // If changes board is open, refresh its context label
+        if (changesBoard.style.display === 'block') {
+          setChangesMeta('Loading…');
+          loadChangesList().catch(()=>{});
+        }
       }
 
       function fillDatePopup(popupEl, selectedCode, onPick) {
@@ -959,7 +1249,232 @@
         }
       });
 
+      // =========================
+      // Changes + Report functions
+      // =========================
+      function setChangesMeta(text) {
+        changesMeta.textContent = text;
+      }
+
+      function openChangesBoard() {
+        changesOverlay.style.display = 'block';
+        changesBoard.style.display = 'block';
+        changesOverlay.setAttribute('aria-hidden', 'false');
+        setChangesMeta('Loading…');
+        changesList.innerHTML = '';
+        loadChangesList().catch((err) => {
+          console.warn(err);
+          setChangesMeta('Could not load changes (check API_BASE and Worker routes).');
+        });
+      }
+
+      function closeChangesBoard() {
+        changesOverlay.style.display = 'none';
+        changesBoard.style.display = 'none';
+        changesOverlay.setAttribute('aria-hidden', 'true');
+      }
+
+      function openReportModal() {
+        reportOverlay.style.display = 'block';
+        reportModal.style.display = 'block';
+        reportOverlay.setAttribute('aria-hidden', 'false');
+        reportStatus.style.display = 'none';
+        reportStatus.textContent = '';
+        reportSubmit.disabled = false;
+
+        // Prefill helpful placeholder context in the hint
+        const s = getCurrentMapState();
+        const label = getLabelForCode(currentCode) || currentCode || '';
+        const modeText = showingDisney ? 'Disney map' : 'Satellite';
+        const zoom = (s && typeof s.zoom === 'number') ? s.zoom.toFixed(2) : '';
+        document.getElementById('report-hint').textContent =
+          `Submitting for ${label} (${modeText}). Centre and zoom will be captured (zoom ${zoom}).`;
+      }
+
+      function closeReportModal() {
+        reportOverlay.style.display = 'none';
+        reportModal.style.display = 'none';
+        reportOverlay.setAttribute('aria-hidden', 'true');
+      }
+
+      function getCurrentMapState() {
+        if (!map) return null;
+        const view = map.getView();
+        const center3857 = view.getCenter();
+        const zoom = view.getZoom();
+
+        const extent3857 = view.calculateExtent(map.getSize());
+        const extent4326 = ol.proj.transformExtent(extent3857, 'EPSG:3857', 'EPSG:4326');
+
+        const center4326 = ol.proj.toLonLat(center3857);
+
+        return {
+          zoom: zoom,
+          center_lng: center4326[0],
+          center_lat: center4326[1],
+          bbox_w: extent4326[0],
+          bbox_s: extent4326[1],
+          bbox_e: extent4326[2],
+          bbox_n: extent4326[3]
+        };
+      }
+
+      function safeText(v, fallback='') {
+        if (v === null || v === undefined) return fallback;
+        return String(v);
+      }
+
+      function formatWhen(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return safeText(iso);
+        return d.toLocaleString(undefined, { year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+      }
+
+      async function loadChangesList() {
+        // This assumes your Worker returns "approved" items for the current map version.
+        // Endpoint expectation (you can adjust in the Worker): GET /api/changes?map_code=...&limit=50
+        const label = getLabelForCode(currentCode) || currentCode || '';
+        setChangesMeta(`Map: ${label}`);
+
+        const url = `${API_BASE}/api/changes?map_code=${encodeURIComponent(currentCode || '')}&limit=50`;
+        const res = await fetch(url, { method: 'GET' });
+        if (!res.ok) throw new Error(`Changes API failed: ${res.status}`);
+        const data = await res.json();
+
+        // Support a couple of possible shapes:
+        // - { items: [...] }
+        // - [...] directly
+        const items = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []);
+        if (!items.length) {
+          changesList.innerHTML = '';
+          const empty = document.createElement('div');
+          empty.style.padding = '12px';
+          empty.style.color = '#666';
+          empty.style.fontSize = '13px';
+          empty.textContent = 'No approved changes yet for this map version.';
+          changesList.appendChild(empty);
+          return;
+        }
+
+        changesList.innerHTML = '';
+        items.forEach((it) => {
+          const btn = document.createElement('button');
+          btn.className = 'change-item';
+
+          const title = document.createElement('p');
+          title.className = 'change-title';
+          title.textContent = safeText(it.title || it.summary || it.type || 'Change');
+
+          const sub = document.createElement('p');
+          sub.className = 'change-sub';
+          const who = it.reporter_name ? `by ${it.reporter_name}` : 'by anonymous';
+          const when = formatWhen(it.created_at || it.approved_at || it.submitted_at);
+          const desc = safeText(it.description || it.details || '', '');
+          sub.textContent = `${who}${when ? ' · ' + when : ''}${desc ? ' · ' + desc : ''}`;
+
+          btn.appendChild(title);
+          btn.appendChild(sub);
+
+          btn.addEventListener('click', () => {
+            const lng = Number(it.center_lng ?? it.lng ?? it.lon);
+            const lat = Number(it.center_lat ?? it.lat);
+            const z   = Number(it.zoom ?? it.view_zoom);
+            if (Number.isFinite(lng) && Number.isFinite(lat)) {
+              const target = ol.proj.fromLonLat([lng, lat]);
+              const targetZoom = Number.isFinite(z) ? z : map.getView().getZoom();
+              closeChangesBoard();
+              map.getView().animate({ center: target, zoom: targetZoom, duration: 650 });
+            }
+          });
+
+          changesList.appendChild(btn);
+        });
+      }
+
+      async function submitReport() {
+        const desc = safeText(reportDesc.value).trim();
+        if (!desc) {
+          reportStatus.style.display = 'block';
+          reportStatus.style.color = '#b00020';
+          reportStatus.textContent = 'Please describe what changed.';
+          return;
+        }
+
+        const state = getCurrentMapState();
+        if (!state) {
+          reportStatus.style.display = 'block';
+          reportStatus.style.color = '#b00020';
+          reportStatus.textContent = 'Map not ready yet.';
+          return;
+        }
+
+        reportSubmit.disabled = true;
+        reportStatus.style.display = 'block';
+        reportStatus.style.color = '#444';
+        reportStatus.textContent = 'Sending…';
+
+        const payload = {
+          map_code: currentCode,
+          map_label: getLabelForCode(currentCode),
+          map_mode: showingDisney ? 'disney' : 'satellite',
+          reporter_name: safeText(reportName.value).trim() || null,
+          change_type: safeText(reportType.value).trim(),
+          description: desc,
+          view: state
+        };
+
+        const url = `${API_BASE}/api/reports`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const txt = await res.text().catch(()=> '');
+          reportSubmit.disabled = false;
+          reportStatus.style.color = '#b00020';
+          reportStatus.textContent = `Failed to send (${res.status}). ${txt ? txt : 'Check Worker logs.'}`;
+          return;
+        }
+
+        reportStatus.style.color = '#1b5e20';
+        reportStatus.textContent = 'Report sent. Thanks. It will appear in the list once approved.';
+
+        // Light reset
+        reportDesc.value = '';
+        reportType.value = 'new';
+
+        // Close after a moment
+        setTimeout(() => {
+          closeReportModal();
+          reportSubmit.disabled = false;
+          reportStatus.style.display = 'none';
+          reportStatus.textContent = '';
+        }, 850);
+      }
+
+      // Wire buttons
+      changesBtn.addEventListener('click', () => {
+        if (changesBoard.style.display === 'block') closeChangesBoard();
+        else openChangesBoard();
+      });
+      changesClose.addEventListener('click', closeChangesBoard);
+      changesOverlay.addEventListener('click', closeChangesBoard);
+
+      reportBtn.addEventListener('click', () => {
+        if (reportModal.style.display === 'block') closeReportModal();
+        else openReportModal();
+      });
+      reportClose.addEventListener('click', closeReportModal);
+      reportCancel.addEventListener('click', closeReportModal);
+      reportOverlay.addEventListener('click', closeReportModal);
+      reportSubmit.addEventListener('click', submitReport);
+
+      // =========================
       // Boot
+      // =========================
       fetch('servers2.json')
         .then(r => r.json())
         .then(json => {
