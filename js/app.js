@@ -5,13 +5,8 @@
   // =========================
   // Config
   // =========================
-  // Use your Worker origin (no trailing slash). If you bind the Worker on the same domain,
-  // set this to "" instead.
   const API_BASE = 'https://wdw-magic-explorer-api.gullet-erase2v.workers.dev';
 
-  // =========================
-  // Guard: core.js bridge
-  // =========================
   if (!window.WDWMX) {
     console.error('WDWMX bridge not found. Ensure core.js loads before app.js and sets window.WDWMX.');
     return;
@@ -39,42 +34,34 @@
   const changesMeta = document.getElementById('changes-meta');
   const changesList = document.getElementById('changes-list');
 
-  if (!reportBtn || !changesBtn) {
-    console.warn('Report/Changes buttons not found in DOM.');
-  }
-
   // =========================
-  // Small helpers
+  // Helpers
   // =========================
   function safeText(v, fallback = '') {
     if (v === null || v === undefined) return fallback;
     return String(v);
   }
 
-  function setStatus(el, text, color) {
-    if (!el) return;
-    el.style.display = 'block';
-    el.style.color = color || '#444';
-    el.textContent = text || '';
+  function setStatus(text, color) {
+    if (!reportStatus) return;
+    reportStatus.style.display = 'block';
+    reportStatus.style.color = color || '#444';
+    reportStatus.textContent = text || '';
   }
 
-  function clearStatus(el) {
-    if (!el) return;
-    el.textContent = '';
-    el.style.display = 'none';
+  function clearStatus() {
+    if (!reportStatus) return;
+    reportStatus.textContent = '';
+    reportStatus.style.display = 'none';
   }
 
   function openReportModal() {
     if (!reportOverlay || !reportModal) return;
-
     reportOverlay.style.display = 'block';
     reportModal.style.display = 'block';
     reportOverlay.setAttribute('aria-hidden', 'false');
-    clearStatus(reportStatus);
+    clearStatus();
     if (reportSubmit) reportSubmit.disabled = false;
-
-    // Optional: update hint text if you keep a hint element in markup
-    // (Your HTML uses an inline <p class="hint"> already, so nothing to update here.)
   }
 
   function closeReportModal() {
@@ -116,8 +103,8 @@
     changesOverlay.setAttribute('aria-hidden', 'true');
   }
 
+  // Prefer right code in compare mode, else current
   function getActiveMapCode() {
-    // Prefer "right" date if you are in compare mode, otherwise current
     try {
       if (WDWMX.getCompareMode && WDWMX.getCompareMode()) {
         const r = WDWMX.getRightCode && WDWMX.getRightCode();
@@ -176,14 +163,9 @@
   // API: Changes
   // =========================
   async function loadChanges() {
-    const code = getActiveMapCode() || '';
-    const label = (WDWMX.getLabelForCode && WDWMX.getLabelForCode(code)) || code;
-
-    if (changesMeta) changesMeta.textContent = `Map: ${label || '(unknown)'}`;
-
-    // Your earlier inline implementation used:
-    //   GET /api/changes?map_code=...&limit=50
-    const url = `${API_BASE}/api/changes?map_code=${encodeURIComponent(code)}&limit=50`;
+    // If your Worker’s changes endpoint is global, keep it simple.
+    // If it supports filtering by mapVersion/serverId, we can add that later.
+    const url = `${API_BASE}/api/changes?limit=50`;
     const res = await fetch(url, { method: 'GET' });
 
     if (!res.ok) {
@@ -194,20 +176,26 @@
     const data = await res.json();
     const items = normalizeItems(data);
 
+    if (changesList) changesList.innerHTML = '';
+
+    if (changesMeta) {
+      const code = getActiveMapCode() || '';
+      const label = (WDWMX.getLabelForCode && WDWMX.getLabelForCode(code)) || code;
+      changesMeta.textContent = label ? `Map: ${label}` : 'Recent changes';
+    }
+
     if (!changesList) return;
 
     if (!items.length) {
-      changesList.innerHTML = '';
       const empty = document.createElement('div');
       empty.style.padding = '12px';
       empty.style.color = '#666';
       empty.style.fontSize = '13px';
-      empty.textContent = 'No approved changes yet for this map version.';
+      empty.textContent = 'No approved changes yet.';
       changesList.appendChild(empty);
       return;
     }
 
-    changesList.innerHTML = '';
     items.forEach((it) => {
       const btn = document.createElement('button');
       btn.className = 'change-item';
@@ -250,47 +238,46 @@
   }
 
   // =========================
-  // API: Report
+  // API: Report (FIXED FIELD NAMES)
   // =========================
   async function submitReport() {
-    if (!reportDesc || !reportStatus || !reportSubmit) return;
-
-    const desc = safeText(reportDesc.value).trim();
+    const desc = safeText(reportDesc && reportDesc.value).trim();
     if (!desc) {
-      setStatus(reportStatus, 'Please describe what changed.', '#b00020');
+      setStatus('Please describe what changed.', '#b00020');
       return;
     }
 
     const code = getActiveMapCode();
     if (!code) {
-      setStatus(reportStatus, 'Could not determine current map version.', '#b00020');
+      setStatus('Could not determine current map version.', '#b00020');
       return;
     }
 
     const state = getMapState();
     if (!state) {
-      setStatus(reportStatus, 'Map not ready yet.', '#b00020');
+      setStatus('Map not ready yet.', '#b00020');
       return;
     }
 
-    reportSubmit.disabled = true;
-    setStatus(reportStatus, 'Sending…', '#444');
-
+    // Worker wants: serverId, mapVersion, description
+    // We map your "code" into both serverId + mapVersion for now.
+    // If you later confirm serverId should be a different value, change it here.
     const payload = {
-      map_code: code,
-      map_label: (WDWMX.getLabelForCode && WDWMX.getLabelForCode(code)) || code,
-      // If core exposes mode: keep this optional
-      map_mode: (WDWMX.getShowingDisney && WDWMX.getShowingDisney()) ? 'disney' : 'satellite',
-      reporter_name: safeText(reportName && reportName.value).trim() || null,
-      change_type: safeText(reportType && reportType.value).trim() || 'other',
+      serverId: code,
+      mapVersion: code,
       description: desc,
+
+      // Extra fields (harmless if your Worker ignores unknown keys)
+      reporterName: safeText(reportName && reportName.value).trim() || null,
+      changeType: safeText(reportType && reportType.value).trim() || 'other',
       view: state
     };
 
-    const url = `${API_BASE}/api/reports`;
+    if (reportSubmit) reportSubmit.disabled = true;
+    setStatus('Sending…', '#444');
 
     try {
-      const res = await fetch(url, {
+      const res = await fetch(`${API_BASE}/api/reports`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -298,31 +285,26 @@
 
       if (!res.ok) {
         const txt = await res.text().catch(() => '');
-        reportSubmit.disabled = false;
-        setStatus(
-          reportStatus,
-          `Failed to submit: HTTP ${res.status}${txt ? ' — ' + txt : ''}`,
-          '#b00020'
-        );
+        if (reportSubmit) reportSubmit.disabled = false;
+        setStatus(`Failed to submit: HTTP ${res.status}${txt ? ' — ' + txt : ''}`, '#b00020');
         return;
       }
 
-      setStatus(reportStatus, 'Report sent. Thanks. It will appear once approved.', '#1b5e20');
+      setStatus('Report sent. Thanks. It will appear once approved.', '#1b5e20');
 
-      // Light reset
-      reportDesc.value = '';
+      if (reportDesc) reportDesc.value = '';
       if (reportType) reportType.value = 'new';
 
       setTimeout(() => {
         closeReportModal();
-        reportSubmit.disabled = false;
-        clearStatus(reportStatus);
+        if (reportSubmit) reportSubmit.disabled = false;
+        clearStatus();
       }, 850);
 
     } catch (err) {
       console.error(err);
-      reportSubmit.disabled = false;
-      setStatus(reportStatus, 'Failed to submit. Check your Worker and CORS settings.', '#b00020');
+      if (reportSubmit) reportSubmit.disabled = false;
+      setStatus('Failed to submit. Check your Worker and CORS settings.', '#b00020');
     }
   }
 
@@ -336,10 +318,7 @@
 
   reportClose && reportClose.addEventListener('click', closeReportModal);
   reportCancel && reportCancel.addEventListener('click', closeReportModal);
-
-  // Clicking the dim backdrop should close
   reportOverlay && reportOverlay.addEventListener('click', closeReportModal);
-
   reportSubmit && reportSubmit.addEventListener('click', submitReport);
 
   changesBtn && changesBtn.addEventListener('click', () => {
@@ -356,10 +335,4 @@
       closeChangesBoard();
     }
   });
-
-  // =========================
-  // Sanity logs (optional)
-  // =========================
-  // Uncomment if you want a quick check that you’re hitting the right origin.
-  // console.log('app.js loaded. API_BASE =', API_BASE);
 })();
