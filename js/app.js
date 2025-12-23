@@ -240,73 +240,88 @@
   // =========================
   // API: Report (FIXED FIELD NAMES)
   // =========================
+
+
   async function submitReport() {
-    const desc = safeText(reportDesc && reportDesc.value).trim();
-    if (!desc) {
-      setStatus('Please describe what changed.', '#b00020');
-      return;
-    }
-
-    const code = getActiveMapCode();
-    if (!code) {
-      setStatus('Could not determine current map version.', '#b00020');
-      return;
-    }
-
-    const state = getMapState();
-    if (!state) {
-      setStatus('Map not ready yet.', '#b00020');
-      return;
-    }
-
-    // Worker wants: serverId, mapVersion, description
-    // We map your "code" into both serverId + mapVersion for now.
-    // If you later confirm serverId should be a different value, change it here.
-    const payload = {
-      serverId: code,
-      mapVersion: code,
-      description: desc,
-
-      // Extra fields (harmless if your Worker ignores unknown keys)
-      reporterName: safeText(reportName && reportName.value).trim() || null,
-      changeType: safeText(reportType && reportType.value).trim() || 'other',
-      view: state
-    };
-
-    if (reportSubmit) reportSubmit.disabled = true;
-    setStatus('Sending…', '#444');
-
-    try {
-      const res = await fetch(`${API_BASE}/api/reports`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '');
-        if (reportSubmit) reportSubmit.disabled = false;
-        setStatus(`Failed to submit: HTTP ${res.status}${txt ? ' — ' + txt : ''}`, '#b00020');
-        return;
-      }
-
-      setStatus('Report sent. Thanks. It will appear once approved.', '#1b5e20');
-
-      if (reportDesc) reportDesc.value = '';
-      if (reportType) reportType.value = 'new';
-
-      setTimeout(() => {
-        closeReportModal();
-        if (reportSubmit) reportSubmit.disabled = false;
-        clearStatus();
-      }, 850);
-
-    } catch (err) {
-      console.error(err);
-      if (reportSubmit) reportSubmit.disabled = false;
-      setStatus('Failed to submit. Check your Worker and CORS settings.', '#b00020');
-    }
+  const desc = safeText(reportDesc && reportDesc.value).trim();
+  if (!desc) {
+    setStatus('Please describe what changed.', '#b00020');
+    return;
   }
+
+  const code = getActiveMapCode();
+  if (!code) {
+    setStatus('Could not determine current map version.', '#b00020');
+    return;
+  }
+
+  const state = getMapState();
+  if (!state) {
+    setStatus('Map not ready yet.', '#b00020');
+    return;
+  }
+
+  // IMPORTANT: Worker expects top-level lat/lng/zoom as numbers
+  const lat = Number(state.center_lat);
+  const lng = Number(state.center_lng);
+  const zoom = Number(state.zoom);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !Number.isFinite(zoom)) {
+    setStatus('Could not read map centre/zoom. Try moving the map a little and retry.', '#b00020');
+    return;
+  }
+
+  // Worker required fields (from your previous errors)
+  const payload = {
+    serverId: code,
+    mapVersion: code,
+    description: desc,
+
+    // now included exactly as the Worker wants
+    lat,
+    lng,
+    zoom,
+
+    // optional extras (only if your Worker tolerates them)
+    reporterName: safeText(reportName && reportName.value).trim() || null,
+    changeType: safeText(reportType && reportType.value).trim() || 'other'
+  };
+
+  if (reportSubmit) reportSubmit.disabled = true;
+  setStatus('Sending…', '#444');
+
+  try {
+    const res = await fetch(`${API_BASE}/api/reports`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      if (reportSubmit) reportSubmit.disabled = false;
+      setStatus(`Failed to submit: HTTP ${res.status}${txt ? ' — ' + txt : ''}`, '#b00020');
+      return;
+    }
+
+    setStatus('Report sent. Thanks. It will appear once approved.', '#1b5e20');
+
+    if (reportDesc) reportDesc.value = '';
+    if (reportType) reportType.value = 'new';
+
+    setTimeout(() => {
+      closeReportModal();
+      if (reportSubmit) reportSubmit.disabled = false;
+      clearStatus();
+    }, 850);
+
+  } catch (err) {
+    console.error(err);
+    if (reportSubmit) reportSubmit.disabled = false;
+    setStatus('Failed to submit. Check your Worker and CORS settings.', '#b00020');
+  }
+}
+  
 
   // =========================
   // Wiring
