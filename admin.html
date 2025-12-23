@@ -163,7 +163,10 @@
             headers: getHeaders()
           });
 
-          const items = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []);
+
+          const items = Array.isArray(data)
+  ? data
+  : (Array.isArray(data.results) ? data.results : []);
           els.count.textContent = items.length ? (items.length + ' item(s)') : 'No items';
           setMsg('', '');
 
