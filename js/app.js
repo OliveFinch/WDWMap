@@ -152,47 +152,79 @@
     reportStatus.textContent = '';
   }
 
-  async function submitReport() {
-    const desc = reportDesc.value.trim();
+async function submitReport() {
+  // Always show something immediately so it never feels like "nothing happened"
+  reportStatus.style.display = 'block';
+  reportStatus.style.color = '#444';
+  reportStatus.textContent = 'Checking…';
 
-    if (!desc) {
-      reportStatus.textContent = 'Please describe what changed.';
-      return;
-    }
-
-    reportSubmit.disabled = true;
-    reportStatus.textContent = 'Submitting…';
-
-    const state = getMapViewState();
-    const code  = getActiveMapCode();
-
-    try {
-      const res = await fetch(`${API_BASE}/api/reports`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          map_code: code,
-          map_label: WDWMX.getLabelForCode(code),
-          description: desc,
-          reporter_name: reportName.value.trim() || null,
-          lon: state.lon,
-          lat: state.lat,
-          zoom: state.zoom
-        })
-      });
-
-      if (!res.ok) throw new Error(res.status);
-
-      reportStatus.textContent = 'Thanks — your report has been sent.';
-
-      setTimeout(closeReport, 900);
-
-    } catch (err) {
-      console.error(err);
-      reportStatus.textContent = 'Failed to submit. Please try again.';
-      reportSubmit.disabled = false;
-    }
+  const desc = (reportDesc.value || '').trim();
+  if (!desc) {
+    reportStatus.style.color = '#b00020';
+    reportStatus.textContent = 'Please describe what changed.';
+    return;
   }
+
+  // If your core exposes the map + ol
+  const map = WDWMX.getMap?.();
+  const ol = WDWMX.ol;
+
+  if (!map || !ol) {
+    reportStatus.style.color = '#b00020';
+    reportStatus.textContent = 'Map bridge not ready (WDWMX).';
+    return;
+  }
+
+  const center = ol.proj.toLonLat(map.getView().getCenter());
+  const zoom = map.getView().getZoom();
+  const code = getActiveMapCode();
+
+  reportSubmit.disabled = true;
+  reportStatus.style.color = '#444';
+  reportStatus.textContent = 'Sending…';
+
+  const payload = {
+    map_code: code,
+    map_label: WDWMX.getLabelForCode?.(code) || code,
+    lon: center[0],
+    lat: center[1],
+    zoom,
+    description: desc,
+    reporter_name: (reportName.value || '').trim() || null
+  };
+
+  try {
+    const res = await fetch(API_BASE + '/api/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status}${txt ? ` – ${txt}` : ''}`);
+    }
+
+    reportStatus.style.color = '#1b5e20';
+    reportStatus.textContent = 'Thanks — your report has been sent for review.';
+    reportDesc.value = '';
+
+    setTimeout(() => {
+      closeOverlay(reportOverlay);
+      reportSubmit.disabled = false;
+      reportStatus.textContent = '';
+      reportStatus.style.display = 'none';
+    }, 900);
+
+  } catch (err) {
+    console.error('Report submit failed:', err);
+    reportStatus.style.color = '#b00020';
+    reportStatus.textContent = `Failed to submit: ${err.message || err}`;
+    reportSubmit.disabled = false;
+  }
+}
+
+  
 
   /* =========================
      Wiring
