@@ -11,7 +11,7 @@
   <!-- OpenLayers CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
 
-  <!-- App CSS (use ./ to avoid GH Pages path surprises) -->
+  <!-- Your app CSS -->
   <link rel="stylesheet" href="./css/app.css">
 
   <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -57,7 +57,7 @@
     </button>
   </div>
 
-  <!-- Popups positioned by JS next to their respective buttons -->
+  <!-- Popups -->
   <div id="date-popup"></div>
   <div id="left-date-popup"></div>
 
@@ -75,6 +75,7 @@
 
   <!-- BOTTOM RIGHT -->
   <div class="group-bottom-right" id="grp-bottom-right">
+    <!-- Changes / Report -->
     <button id="changes-btn" class="btn-square" title="Recent changes">
       <img src="icons/highlight.svg" alt="Changes">
     </button>
@@ -99,7 +100,7 @@
   <div id="findme-message"></div>
   <div id="current-date-display"></div>
 
-  <!-- Location Dock (bottom center) -->
+  <!-- Location Dock -->
   <div id="location-dock" aria-label="Quick location shortcuts">
     <button data-coords="-81.581203,28.418714" data-zoom="17.5">
       <img src="icons/locations/magic-kingdom.svg" alt="Magic Kingdom">
@@ -130,7 +131,7 @@
     </button>
   </div>
 
-  <!-- Info icon (bottom-left) -->
+  <!-- Info icon -->
   <img id="info-icon" src="icons/info.svg" alt="About & Disclaimers" title="About & Disclaimers">
 
   <!-- Info overlay -->
@@ -170,7 +171,7 @@
     <input type="range" id="sensitivity-slider" min="10" max="30" value="20">
   </div>
 
-  <!-- Changes board + Report modal -->
+  <!-- Changes board + Report modal (your existing markup) -->
   <div id="changes-overlay" aria-hidden="true"></div>
   <aside id="changes-board" aria-label="Recent changes" role="dialog" aria-modal="true">
     <header>
@@ -189,6 +190,11 @@
     </header>
 
     <div class="body">
+      <!-- Instruction you asked for -->
+      <p class="hint" style="margin-top:0;">
+        Before submitting, pan/zoom the map so the change is centred on screen. Your report will capture the current map, centre point and zoom level.
+      </p>
+
       <div class="form-row">
         <label for="report-name">Your name</label>
         <input id="report-name" type="text" maxlength="60" placeholder="Optional">
@@ -207,7 +213,6 @@
       <div class="form-row">
         <label for="report-desc">What changed?</label>
         <textarea id="report-desc" maxlength="800" placeholder="Describe what you see, as clearly as you can."></textarea>
-        <div class="hint" id="report-hint"></div>
       </div>
     </div>
 
@@ -219,10 +224,26 @@
     <div id="report-status"></div>
   </div>
 
-  <!-- OpenLayers -->
+  <!-- OpenLayers JS -->
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
 
-  <!-- App JS (defer so DOM is ready; OpenLayers is loaded above) -->
+  <!-- Disable browser zoom (keep as-is, inline is fine) -->
+  <script>
+    (function () {
+      document.addEventListener('wheel', (e) => { if (e.ctrlKey || e.metaKey) e.preventDefault(); }, { passive: false, capture: true });
+      ['gesturestart', 'gesturechange', 'gestureend'].forEach(type => {
+        window.addEventListener(type, (e) => e.preventDefault(), { passive: false, capture: true });
+      });
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && ['+', '=', '-', '0'].includes(e.key)) { e.preventDefault(); }
+      }, { capture: true });
+      window.addEventListener('dblclick', (e) => { e.preventDefault(); }, { passive: false, capture: true });
+      document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+    })();
+  </script>
+
+  <!-- Your JS: core first, then app -->
+  <script src="./js/core.js" defer></script>
   <script src="./js/app.js" defer></script>
 </body>
 </html>
