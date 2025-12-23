@@ -9,7 +9,7 @@
     header { position:sticky; top:0; background:#fff; border-bottom:1px solid #e5e7ef; padding:12px 16px; z-index:10; }
     header h1 { margin:0; font-size:16px; }
     .wrap { max-width: 1100px; margin: 0 auto; padding: 14px 16px 40px; }
-    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
     label { font-size:12px; color:#444; display:block; margin-bottom:6px; }
     input, select, textarea { font: inherit; padding:10px; border:1px solid #cfd5e2; border-radius:10px; background:#fff; }
     input[type="password"], input[type="text"] { min-width: 320px; }
@@ -18,7 +18,7 @@
     button.primary { background:#3761c4; color:#fff; border-color:#3761c4; }
     button.danger { background:#b00020; color:#fff; border-color:#b00020; }
     button:disabled { opacity:.6; cursor:default; }
-    .card { background:#fff; border:1px solid #e5e7ef; border-radius:14px; box-shadow:_confirm: 0 1px 10px rgba(0,0,0,0.04); padding:12px; margin-top:12px; }
+    .card { background:#fff; border:1px solid #e5e7ef; border-radius:14px; box-shadow: 0 1px 10px rgba(0,0,0,0.04); padding:12px; margin-top:12px; }
     .meta { font-size:12px; color:#555; }
     .grid { display:grid; grid-template-columns: 1fr; gap: 12px; margin-top: 14px; }
     .item { background:#fff; border:1px solid #e5e7ef; border-radius:14px; padding:12px; }
@@ -31,11 +31,18 @@
     .error { color:#b00020; white-space:pre-wrap; }
     .ok { color:#1b5e20; white-space:pre-wrap; }
     textarea { width: 100%; min-height: 90px; }
-    .two { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    .two { display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:10px; }
+    .inline { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .field { display:flex; flex-direction:column; min-width: 220px; }
+    .muted { opacity: .8; }
+    .editbox { margin-top:10px; padding-top:10px; border-top:1px dashed #e5e7ef; }
+    .editbox summary { cursor:pointer; font-weight:700; }
+    .hint { font-size:12px; color:#666; line-height:1.35; margin-top:6px; }
     @media (max-width: 800px) {
       .two { grid-template-columns: 1fr; }
       input[type="password"], input[type="text"] { min-width: 240px; width: 100%; }
       select { width: 100%; }
+      .field { min-width: 0; width: 100%; }
     }
   </style>
 </head>
@@ -49,18 +56,18 @@
   <div class="wrap">
     <div class="card">
       <div class="row">
-        <div>
+        <div class="field">
           <label for="workerOrigin">Worker origin</label>
           <input id="workerOrigin" type="text" value="https://wdw-magic-explorer-api.gullet-erase2v.workers.dev" />
         </div>
 
-        <div>
+        <div class="field">
           <label for="adminToken">Admin token (Bearer)</label>
           <input id="adminToken" type="password" placeholder="Paste your ADMIN_TOKEN" />
-          <div class="small">Stored locally in your browser when you click Save.</div>
+          <div class="small muted">Stored locally in your browser when you click Save.</div>
         </div>
 
-        <div>
+        <div class="field">
           <label for="status">Status</label>
           <select id="status">
             <option value="pending" selected>pending</option>
@@ -69,7 +76,7 @@
           </select>
         </div>
 
-        <div style="display:flex; gap:10px; align-items:flex-end;">
+        <div class="inline">
           <button id="saveBtn">Save</button>
           <button id="refreshBtn" class="primary">Refresh</button>
         </div>
@@ -129,6 +136,12 @@
         return String(v);
       }
 
+      function numOrEmpty(v) {
+        if (v === null || v === undefined || v === '') return '';
+        const n = Number(v);
+        return Number.isFinite(n) ? String(n) : '';
+      }
+
       function fmtWhen(iso) {
         if (!iso) return '';
         const d = new Date(iso);
@@ -150,6 +163,39 @@
         return json ?? text;
       }
 
+      function normalizeList(data) {
+        if (Array.isArray(data)) return data;
+        if (data && Array.isArray(data.results)) return data.results;
+        if (data && Array.isArray(data.items)) return data.items;
+        return [];
+      }
+
+      async function saveEdits(id, fields) {
+        // Only send fields that have a value (or are intentionally set)
+        const body = {};
+        for (const [k, v] of Object.entries(fields)) {
+          if (v === undefined) continue;
+          if (v === null) body[k] = null;
+          else if (typeof v === 'string') {
+            const t = v.trim();
+            if (t !== '') body[k] = t;
+          } else {
+            body[k] = v;
+          }
+        }
+
+        if (!Object.keys(body).length) {
+          setMsg('Nothing to save (no edits entered).', 'error');
+          return;
+        }
+
+        await api('/api/admin/reports/' + encodeURIComponent(id) + '/update', {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify(body)
+        });
+      }
+
       async function load() {
         els.refreshBtn.disabled = true;
         els.list.innerHTML = '';
@@ -163,8 +209,7 @@
             headers: getHeaders()
           });
 
-
-          const items = Array.isArray(data?.items) ? data.items : [];
+          const items = normalizeList(data);
           els.count.textContent = items.length ? (items.length + ' item(s)') : 'No items';
           setMsg('', '');
 
@@ -178,16 +223,16 @@
             div.className = 'item';
 
             const title = document.createElement('h3');
-            title.textContent = (safe(it.map_label) || safe(it.map_version) || safe(it.server_id) || 'Report') + ' — ' + safe(it.id);
+            title.textContent = (safe(it.map_version) || safe(it.server_id) || 'Report') + ' — ' + safe(it.id);
             div.appendChild(title);
 
             const meta = document.createElement('div');
             meta.className = 'meta';
             meta.textContent =
               'Status: ' + safe(it.status) +
-              ' | When: ' + (fmtWhen(it.created_at) || '') +
-              ' | Reporter: ' + (safe(it.reporter_name) || 'anonymous') +
-              ' | Type: ' + (safe(it.change_type) || '');
+              ' | Created: ' + (fmtWhen(it.created_at) || '') +
+              (it.approved_at ? (' | Approved: ' + fmtWhen(it.approved_at)) : '') +
+              (it.updated_at ? (' | Updated: ' + fmtWhen(it.updated_at)) : '');
             div.appendChild(meta);
 
             const coords = document.createElement('div');
@@ -195,13 +240,175 @@
             coords.textContent =
               'lat=' + safe(it.lat) + ', lng=' + safe(it.lng) + ', zoom=' + safe(it.zoom) +
               (it.map_version ? ' | map_version=' + safe(it.map_version) : '') +
-              (it.server_id ? ' | server_id=' + safe(it.server_id) : '');
+              (it.server_id ? ' | server_id=' + safe(it.server_id) : '') +
+              (it.category ? ' | category=' + safe(it.category) : '');
             div.appendChild(coords);
 
             const desc = document.createElement('p');
             desc.textContent = safe(it.description);
             div.appendChild(desc);
 
+            // ------- Edit box (before approving/rejecting) -------
+            const details = document.createElement('details');
+            details.className = 'editbox';
+
+            const sum = document.createElement('summary');
+            sum.textContent = 'Edit report before approving';
+            details.appendChild(sum);
+
+            const hint = document.createElement('div');
+            hint.className = 'hint';
+            hint.textContent = 'Edits are saved back to the database via /api/admin/reports/:id/update. You can change description/category/display name, coords/zoom, and map_version/server_id if needed.';
+            details.appendChild(hint);
+
+            const two = document.createElement('div');
+            two.className = 'two';
+
+            // Left column fields
+            const colA = document.createElement('div');
+
+            const fDescLabel = document.createElement('label');
+            fDescLabel.textContent = 'Description';
+            const fDesc = document.createElement('textarea');
+            fDesc.value = safe(it.description);
+            colA.appendChild(fDescLabel);
+            colA.appendChild(fDesc);
+
+            const fCategoryLabel = document.createElement('label');
+            fCategoryLabel.style.marginTop = '10px';
+            fCategoryLabel.textContent = 'Category';
+            const fCategory = document.createElement('input');
+            fCategory.type = 'text';
+            fCategory.value = safe(it.category);
+            colA.appendChild(fCategoryLabel);
+            colA.appendChild(fCategory);
+
+            const fDisplayLabel = document.createElement('label');
+            fDisplayLabel.style.marginTop = '10px';
+            fDisplayLabel.textContent = 'Display name (optional)';
+            const fDisplay = document.createElement('input');
+            fDisplay.type = 'text';
+            fDisplay.value = safe(it.display_name);
+            colA.appendChild(fDisplayLabel);
+            colA.appendChild(fDisplay);
+
+            // Right column fields
+            const colB = document.createElement('div');
+
+            const fLatLabel = document.createElement('label');
+            fLatLabel.textContent = 'Lat';
+            const fLat = document.createElement('input');
+            fLat.type = 'text';
+            fLat.inputMode = 'decimal';
+            fLat.value = numOrEmpty(it.lat);
+            colB.appendChild(fLatLabel);
+            colB.appendChild(fLat);
+
+            const fLngLabel = document.createElement('label');
+            fLngLabel.style.marginTop = '10px';
+            fLngLabel.textContent = 'Lng';
+            const fLng = document.createElement('input');
+            fLng.type = 'text';
+            fLng.inputMode = 'decimal';
+            fLng.value = numOrEmpty(it.lng);
+            colB.appendChild(fLngLabel);
+            colB.appendChild(fLng);
+
+            const fZoomLabel = document.createElement('label');
+            fZoomLabel.style.marginTop = '10px';
+            fZoomLabel.textContent = 'Zoom';
+            const fZoom = document.createElement('input');
+            fZoom.type = 'text';
+            fZoom.inputMode = 'decimal';
+            fZoom.value = numOrEmpty(it.zoom);
+            colB.appendChild(fZoomLabel);
+            colB.appendChild(fZoom);
+
+            const fMapVerLabel = document.createElement('label');
+            fMapVerLabel.style.marginTop = '10px';
+            fMapVerLabel.textContent = 'map_version';
+            const fMapVer = document.createElement('input');
+            fMapVer.type = 'text';
+            fMapVer.value = safe(it.map_version);
+            colB.appendChild(fMapVerLabel);
+            colB.appendChild(fMapVer);
+
+            const fServerIdLabel = document.createElement('label');
+            fServerIdLabel.style.marginTop = '10px';
+            fServerIdLabel.textContent = 'server_id';
+            const fServerId = document.createElement('input');
+            fServerId.type = 'text';
+            fServerId.value = safe(it.server_id);
+            colB.appendChild(fServerIdLabel);
+            colB.appendChild(fServerId);
+
+            two.appendChild(colA);
+            two.appendChild(colB);
+            details.appendChild(two);
+
+            const editActions = document.createElement('div');
+            editActions.className = 'actions';
+
+            const saveEditsBtn = document.createElement('button');
+            saveEditsBtn.textContent = 'Save edits';
+            saveEditsBtn.className = 'primary';
+
+            const resetBtn = document.createElement('button');
+            resetBtn.textContent = 'Reset fields';
+            resetBtn.className = '';
+
+            saveEditsBtn.addEventListener('click', async () => {
+              saveEditsBtn.disabled = true;
+              setMsg('Saving edits for ' + it.id + '…');
+
+              try {
+                const lat = fLat.value.trim() === '' ? undefined : Number(fLat.value);
+                const lng = fLng.value.trim() === '' ? undefined : Number(fLng.value);
+                const zoom = fZoom.value.trim() === '' ? undefined : Number(fZoom.value);
+
+                if (lat !== undefined && !Number.isFinite(lat)) throw new Error('Lat must be a number');
+                if (lng !== undefined && !Number.isFinite(lng)) throw new Error('Lng must be a number');
+                if (zoom !== undefined && !Number.isFinite(zoom)) throw new Error('Zoom must be a number');
+
+                await saveEdits(it.id, {
+                  description: fDesc.value,
+                  category: fCategory.value,
+                  display_name: fDisplay.value,
+                  lat: lat,
+                  lng: lng,
+                  zoom: zoom,
+                  map_version: fMapVer.value,
+                  server_id: fServerId.value
+                });
+
+                setMsg('Saved edits for ' + it.id, 'ok');
+                await load(); // refresh list to show edits + updated_at
+              } catch (e) {
+                setMsg('Save edits failed: ' + e.message, 'error');
+              } finally {
+                saveEditsBtn.disabled = false;
+              }
+            });
+
+            resetBtn.addEventListener('click', () => {
+              fDesc.value = safe(it.description);
+              fCategory.value = safe(it.category);
+              fDisplay.value = safe(it.display_name);
+              fLat.value = numOrEmpty(it.lat);
+              fLng.value = numOrEmpty(it.lng);
+              fZoom.value = numOrEmpty(it.zoom);
+              fMapVer.value = safe(it.map_version);
+              fServerId.value = safe(it.server_id);
+              setMsg('Reset fields for ' + it.id, 'ok');
+            });
+
+            editActions.appendChild(saveEditsBtn);
+            editActions.appendChild(resetBtn);
+            details.appendChild(editActions);
+
+            div.appendChild(details);
+
+            // ------- Approve/Reject actions -------
             const actions = document.createElement('div');
             actions.className = 'actions';
 
