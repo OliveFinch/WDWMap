@@ -3,36 +3,42 @@
   'use strict';
 
   if (!window.WDWMX) {
-    console.error('WDWMX bridge not found. Ensure window.WDWMX is set in index.html.');
+    console.error('WDWMX not found. core.js must load first.');
     return;
   }
 
-  const API_BASE = ""; // same domain
+  const API_BASE = '';
 
-  // Buttons
-  const reportBtn = document.getElementById('report-btn');
-  const changesBtn = document.getElementById('changes-btn');
+  /* =========================
+     Element references
+     ========================= */
 
-  // Report overlay
-  const reportOverlay = document.getElementById('report-overlay');
-  const reportClose = document.getElementById('report-close');
-  const reportCancel = document.getElementById('report-cancel');
-  const reportSubmit = document.getElementById('report-submit');
-  const reportDesc = document.getElementById('report-desc');
-  const reportName = document.getElementById('report-name');
-  const reportStatus = document.getElementById('report-status');
-
-  // Changes overlay
+  const changesBtn     = document.getElementById('changes-btn');
   const changesOverlay = document.getElementById('changes-overlay');
-  const changesClose = document.getElementById('changes-close');
-  const changesList = document.getElementById('changes-list');
+  const changesBoard   = document.getElementById('changes-board');
+  const changesClose   = document.getElementById('changes-close');
+  const changesList    = document.getElementById('changes-list');
 
-  function openOverlay(el) {
-    el.style.display = 'block';
+  const reportBtn      = document.getElementById('report-btn');
+  const reportOverlay  = document.getElementById('report-overlay');
+  const reportModal    = document.getElementById('report-modal');
+  const reportClose    = document.getElementById('report-close');
+  const reportCancel   = document.getElementById('report-cancel');
+  const reportSubmit   = document.getElementById('report-submit');
+  const reportDesc     = document.getElementById('report-desc');
+  const reportName     = document.getElementById('report-name');
+  const reportStatus   = document.getElementById('report-status');
+
+  /* =========================
+     Helpers
+     ========================= */
+
+  function show(el) {
+    if (el) el.style.display = 'block';
   }
 
-  function closeOverlay(el) {
-    el.style.display = 'none';
+  function hide(el) {
+    if (el) el.style.display = 'none';
   }
 
   function getActiveMapCode() {
@@ -41,64 +47,44 @@
       : WDWMX.getCurrentCode();
   }
 
-  async function submitReport() {
-    const desc = reportDesc.value.trim();
-    const name = reportName.value.trim();
-
-    if (!desc) {
-      reportStatus.textContent = 'Please describe what changed.';
-      return;
-    }
-
+  function getMapViewState() {
     const map = WDWMX.getMap();
-    const ol = WDWMX.ol;
+    const ol  = WDWMX.ol;
 
-    const center = ol.proj.toLonLat(map.getView().getCenter());
-    const zoom = map.getView().getZoom();
-    const code = getActiveMapCode();
+    const view = map.getView();
+    const center = ol.proj.toLonLat(view.getCenter());
 
-    reportSubmit.disabled = true;
-    reportStatus.textContent = 'Submitting…';
+    return {
+      lon: center[0],
+      lat: center[1],
+      zoom: view.getZoom()
+    };
+  }
 
-    try {
-      const res = await fetch(API_BASE + '/api/reports', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          map_code: code,
-          map_label: WDWMX.getLabelForCode(code),
-          lon: center[0],
-          lat: center[1],
-          zoom,
-          description: desc,
-          reporter_name: name || null
-        })
-      });
+  /* =========================
+     Changes board
+     ========================= */
 
-      if (!res.ok) throw new Error(res.status);
+  function openChanges() {
+    show(changesOverlay);
+    show(changesBoard);
+    loadChanges();
+  }
 
-      reportStatus.textContent = 'Thanks — your report has been sent for review.';
-      reportDesc.value = '';
-
-      setTimeout(() => {
-        closeOverlay(reportOverlay);
-        reportSubmit.disabled = false;
-        reportStatus.textContent = '';
-      }, 900);
-
-    } catch (err) {
-      console.error(err);
-      reportStatus.textContent = 'Failed to submit. Please try again.';
-      reportSubmit.disabled = false;
-    }
+  function closeChanges() {
+    hide(changesOverlay);
+    hide(changesBoard);
   }
 
   async function loadChanges() {
     changesList.innerHTML = '<div class="changes-empty">Loading…</div>';
 
     try {
-      const res = await fetch(API_BASE + '/api/changes?status=approved&limit=50');
+      const code = getActiveMapCode();
+      const res = await fetch(`${API_BASE}/api/changes?status=approved&map_code=${encodeURIComponent(code)}`);
+
       if (!res.ok) throw new Error(res.status);
+
       const items = await res.json();
 
       if (!items.length) {
@@ -113,25 +99,29 @@
         div.className = 'changes-item';
 
         div.innerHTML = `
-          <div class="changes-item-title">Reported change</div>
+          <div class="changes-item-title">${item.title || 'Reported change'}</div>
           <div class="changes-item-meta">
             ${item.map_label || item.map_code}
           </div>
         `;
 
         div.addEventListener('click', () => {
-          if (!WDWMX.getCompareMode() && item.map_code !== WDWMX.getCurrentCode()) {
+          const map = WDWMX.getMap();
+          const ol  = WDWMX.ol;
+
+          if (item.map_code && item.map_code !== WDWMX.getCurrentCode()) {
             WDWMX.setSingleDate(item.map_code);
           }
 
-          const target = WDWMX.ol.proj.fromLonLat([item.lon, item.lat]);
-          WDWMX.getMap().getView().animate({
+          const target = ol.proj.fromLonLat([item.lon, item.lat]);
+
+          map.getView().animate({
             center: target,
             zoom: item.zoom || 16,
             duration: 650
           });
 
-          closeOverlay(changesOverlay);
+          closeChanges();
         });
 
         changesList.appendChild(div);
@@ -139,27 +129,90 @@
 
     } catch (err) {
       console.error(err);
-      changesList.innerHTML = '<div class="changes-empty">Failed to load changes.</div>';
+      changesList.innerHTML =
+        '<div class="changes-empty">Failed to load changes.</div>';
     }
   }
 
-  // Wiring
-  reportBtn?.addEventListener('click', () => openOverlay(reportOverlay));
-  reportClose.addEventListener('click', () => closeOverlay(reportOverlay));
-  reportCancel.addEventListener('click', () => closeOverlay(reportOverlay));
-  reportSubmit.addEventListener('click', submitReport);
+  /* =========================
+     Report modal
+     ========================= */
 
-  changesBtn?.addEventListener('click', () => {
-    openOverlay(changesOverlay);
-    loadChanges();
-  });
+  function openReport() {
+    show(reportOverlay);
+    show(reportModal);
+    reportStatus.textContent = '';
+    reportDesc.value = '';
+  }
 
-  changesClose.addEventListener('click', () => closeOverlay(changesOverlay));
+  function closeReport() {
+    hide(reportOverlay);
+    hide(reportModal);
+    reportSubmit.disabled = false;
+    reportStatus.textContent = '';
+  }
+
+  async function submitReport() {
+    const desc = reportDesc.value.trim();
+
+    if (!desc) {
+      reportStatus.textContent = 'Please describe what changed.';
+      return;
+    }
+
+    reportSubmit.disabled = true;
+    reportStatus.textContent = 'Submitting…';
+
+    const state = getMapViewState();
+    const code  = getActiveMapCode();
+
+    try {
+      const res = await fetch(`${API_BASE}/api/reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          map_code: code,
+          map_label: WDWMX.getLabelForCode(code),
+          description: desc,
+          reporter_name: reportName.value.trim() || null,
+          lon: state.lon,
+          lat: state.lat,
+          zoom: state.zoom
+        })
+      });
+
+      if (!res.ok) throw new Error(res.status);
+
+      reportStatus.textContent = 'Thanks — your report has been sent.';
+
+      setTimeout(closeReport, 900);
+
+    } catch (err) {
+      console.error(err);
+      reportStatus.textContent = 'Failed to submit. Please try again.';
+      reportSubmit.disabled = false;
+    }
+  }
+
+  /* =========================
+     Wiring
+     ========================= */
+
+  changesBtn?.addEventListener('click', openChanges);
+  changesClose?.addEventListener('click', closeChanges);
+  changesOverlay?.addEventListener('click', closeChanges);
+
+  reportBtn?.addEventListener('click', openReport);
+  reportClose?.addEventListener('click', closeReport);
+  reportCancel?.addEventListener('click', closeReport);
+  reportOverlay?.addEventListener('click', closeReport);
+  reportSubmit?.addEventListener('click', submitReport);
 
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      closeOverlay(reportOverlay);
-      closeOverlay(changesOverlay);
+      closeChanges();
+      closeReport();
     }
   });
+
 })();
