@@ -117,20 +117,45 @@
   }
 
   // We only show Recent Changes while in Disney map view.
-  // If core.js exposes a flag, use it. If not, we’ll default to “unknown = allow”.
+  // Also: if user is currently in satellite, we should not show (per your requirement).
   function isDisneyView() {
     try {
       if (typeof WDWMX.getShowingDisney === 'function') return !!WDWMX.getShowingDisney();
       if (typeof WDWMX.isShowingDisney === 'function') return !!WDWMX.isShowingDisney();
       if (typeof WDWMX.getMapMode === 'function') return (WDWMX.getMapMode() === 'disney');
     } catch {}
+    // If core.js doesn't expose a way to detect, default to "true" so it doesn't break.
     return true;
+  }
+
+  // If core.js exposes a way to force Disney view, use it.
+  function ensureDisneyView() {
+    try {
+      if (typeof WDWMX.setMapMode === 'function') {
+        WDWMX.setMapMode('disney');
+        return true;
+      }
+      if (typeof WDWMX.setShowingDisney === 'function') {
+        WDWMX.setShowingDisney(true);
+        return true;
+      }
+      if (typeof WDWMX.showDisney === 'function') {
+        WDWMX.showDisney();
+        return true;
+      }
+      if (typeof WDWMX.setSatellite === 'function') {
+        // Common pattern: setSatellite(true/false)
+        WDWMX.setSatellite(false);
+        return true;
+      }
+    } catch {}
+    return false;
   }
 
   function normalizeItems(data) {
     if (Array.isArray(data)) return data;
     if (data && Array.isArray(data.items)) return data.items;
-    if (data && Array.isArray(data.results)) return data.results; // your Worker returns {results:[...]}
+    if (data && Array.isArray(data.results)) return data.results; // Worker returns {results:[...]}
     return [];
   }
 
@@ -155,8 +180,17 @@
     return code;
   }
 
+  function sleep(ms) {
+    return new Promise((r) => setTimeout(r, ms));
+  }
+
   // =========================
-  // API: Recent changes (ALL approved)
+  // API: Recent changes (ALL approved, across all maps)
+  // Requirements:
+  // - Only accessible in Disney view (not satellite)
+  // - List shows ALL approved changes (irrespective of currently selected date)
+  // - Highlight entries matching currently selected map/date
+  // - Clicking an entry switches to that map/date (Disney) and zooms to the change
   // =========================
   async function loadChangesAllApproved() {
     // 1) Enforce Disney-only
@@ -183,9 +217,9 @@
         : 'Recent changes';
     }
 
-    // 2) Load ALL approved changes, not filtered by selected map/date.
-    // Adjust query params if you’ve implemented different Worker behaviour.
-    const url = `${API_BASE}/api/changes?status=approved&limit=200`;
+    // 2) Load ALL approved changes, irrespective of currently selected map/date.
+    // Use the Worker global feed endpoint (returns approved changes across all maps).
+    const url = `${API_BASE}/api/changes-feed?limit=200`;
     const res = await fetch(url, { method: 'GET' });
 
     if (!res.ok) {
@@ -209,7 +243,7 @@
       return;
     }
 
-    // Optional: sort newest first if not already
+    // Sort newest first (approved_at preferred)
     items.sort((a, b) => {
       const da = new Date(a.approved_at || a.created_at || 0).getTime();
       const db = new Date(b.approved_at || b.created_at || 0).getTime();
@@ -217,13 +251,14 @@
     });
 
     items.forEach((it) => {
-      const mapVersion = safeText(it.map_version || it.mapVersion || it.server_id || it.serverId || '');
+      // Worker schema: map_version + server_id (strings)
+      const mapVersion = safeText(it.map_version || it.mapVersion || '');
       const mapLabel = labelForMapVersion(mapVersion);
 
       const btn = document.createElement('button');
       btn.className = 'change-item';
 
-      // highlight items that match currently selected map
+      // Highlight items that match currently selected map/date
       if (activeCode && mapVersion && String(mapVersion) === String(activeCode)) {
         btn.classList.add('change-item-active');
       }
@@ -239,9 +274,7 @@
       const when = formatWhen(it.approved_at || it.created_at);
       const desc = safeText(it.description || '', '');
 
-      // include map label so user understands it may jump dates
       const mapTag = mapLabel ? `${mapLabel}` : (mapVersion ? `Map: ${mapVersion}` : '');
-
       sub.textContent = `${mapTag}${when ? ' · ' + when : ''}${desc ? ' · ' + desc : ''}${who ? ' · ' + who : ''}`;
 
       btn.appendChild(title);
@@ -252,12 +285,17 @@
         const map = WDWMX.getMap && WDWMX.getMap();
         if (!ol || !map) return;
 
-        // switch date/version first (irrespective of what user is currently viewing)
+        // Always ensure Disney view (because jumping dates is Disney-specific)
+        ensureDisneyView();
+
+        // Switch map/date/version first
         if (mapVersion && WDWMX.setSingleDate) {
           try { WDWMX.setSingleDate(mapVersion); } catch {}
         }
 
-        // lat/lng/zoom fields from your Worker schema
+        // Give the map a beat to swap layers before animating (avoids "jump to wrong place" feel)
+        await sleep(60);
+
         const lng = Number(it.lng);
         const lat = Number(it.lat);
         const z = Number(it.zoom);
@@ -268,7 +306,6 @@
           closeChangesBoard();
           map.getView().animate({ center: target, zoom: targetZoom, duration: 650 });
         } else {
-          // If coords missing, still close and leave user on the map version
           closeChangesBoard();
         }
       });
