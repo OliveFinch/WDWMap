@@ -313,7 +313,7 @@
       closeReportModal();
       if (reportSubmit) reportSubmit.disabled = false;
       clearStatus();
-    }, 850);
+    }, 2550);
 
   } catch (err) {
     console.error(err);
