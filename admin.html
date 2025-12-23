@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WDW Magic Explorer – Admin</title>
+  <style>
+    html, body { margin:0; padding:0; font-family: Arial, Helvetica, sans-serif; background:#f6f7fb; color:#111; }
+    header { position:sticky; top:0; background:#fff; border-bottom:1px solid #e5e7ef; padding:12px 16px; z-index:10; }
+    header h1 { margin:0; font-size:16px; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 14px 16px 40px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    label { font-size:12px; color:#444; display:block; margin-bottom:6px; }
+    input, select, textarea { font: inherit; padding:10px; border:1px solid #cfd5e2; border-radius:10px; background:#fff; }
+    input[type="password"], input[type="text"] { min-width: 320px; }
+    select { min-width: 220px; }
+    button { font: inherit; padding:10px 12px; border-radius:10px; border:1px solid #cfd5e2; background:#fff; cursor:pointer; }
+    button.primary { background:#3761c4; color:#fff; border-color:#3761c4; }
+    button.danger { background:#b00020; color:#fff; border-color:#b00020; }
+    button:disabled { opacity:.6; cursor:default; }
+    .card { background:#fff; border:1px solid #e5e7ef; border-radius:14px; box-shadow:_confirm: 0 1px 10px rgba(0,0,0,0.04); padding:12px; margin-top:12px; }
+    .meta { font-size:12px; color:#555; }
+    .grid { display:grid; grid-template-columns: 1fr; gap: 12px; margin-top: 14px; }
+    .item { background:#fff; border:1px solid #e5e7ef; border-radius:14px; padding:12px; }
+    .item h3 { margin:0 0 6px 0; font-size:14px; }
+    .item p { margin:8px 0 0 0; line-height:1.35; }
+    .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .small { font-size:12px; color:#666; }
+    .pill { display:inline-block; padding:3px 8px; border-radius:999px; font-size:12px; background:#eef2ff; color:#2b46a4; border:1px solid #d9e1ff; }
+    .status { margin-left:8px; }
+    .error { color:#b00020; white-space:pre-wrap; }
+    .ok { color:#1b5e20; white-space:pre-wrap; }
+    textarea { width: 100%; min-height: 90px; }
+    .two { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    @media (max-width: 800px) {
+      .two { grid-template-columns: 1fr; }
+      input[type="password"], input[type="text"] { min-width: 240px; width: 100%; }
+      select { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>WDW Magic Explorer – Admin Console</h1>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="row">
+        <div>
+          <label for="workerOrigin">Worker origin</label>
+          <input id="workerOrigin" type="text" value="https://wdw-magic-explorer-api.gullet-erase2v.workers.dev" />
+        </div>
+
+        <div>
+          <label for="adminToken">Admin token (Bearer)</label>
+          <input id="adminToken" type="password" placeholder="Paste your ADMIN_TOKEN" />
+          <div class="small">Stored locally in your browser when you click Save.</div>
+        </div>
+
+        <div>
+          <label for="status">Status</label>
+          <select id="status">
+            <option value="pending" selected>pending</option>
+            <option value="approved">approved</option>
+            <option value="rejected">rejected</option>
+          </select>
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:flex-end;">
+          <button id="saveBtn">Save</button>
+          <button id="refreshBtn" class="primary">Refresh</button>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;">
+        <div id="msg" class="small"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between;">
+        <div>
+          <span class="pill">Reports</span>
+          <span id="count" class="meta status"></span>
+        </div>
+        <div class="small">Tip: open DevTools → Network to see the admin API calls.</div>
+      </div>
+
+      <div id="list" class="grid"></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const els = {
+        workerOrigin: document.getElementById('workerOrigin'),
+        adminToken: document.getElementById('adminToken'),
+        status: document.getElementById('status'),
+        saveBtn: document.getElementById('saveBtn'),
+        refreshBtn: document.getElementById('refreshBtn'),
+        list: document.getElementById('list'),
+        msg: document.getElementById('msg'),
+        count: document.getElementById('count'),
+      };
+
+      const LS_ORIGIN = 'wdwmx_admin_origin';
+      const LS_TOKEN  = 'wdwmx_admin_token';
+
+      function setMsg(text, kind) {
+        els.msg.className = kind === 'error' ? 'error' : (kind === 'ok' ? 'ok' : 'small');
+        els.msg.textContent = text || '';
+      }
+
+      function getHeaders() {
+        const token = (els.adminToken.value || '').trim();
+        return {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        };
+      }
+
+      function safe(v, fallback='') {
+        if (v === null || v === undefined) return fallback;
+        return String(v);
+      }
+
+      function fmtWhen(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return safe(iso);
+        return d.toLocaleString(undefined, { year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+      }
+
+      async function api(path, opts) {
+        const origin = (els.workerOrigin.value || '').replace(/\/$/, '');
+        const url = origin + path;
+        const res = await fetch(url, opts);
+        const text = await res.text();
+        let json = null;
+        try { json = JSON.parse(text); } catch {}
+        if (!res.ok) {
+          const detail = json ? JSON.stringify(json) : text;
+          throw new Error(res.status + ' ' + res.statusText + (detail ? ' — ' + detail : ''));
+        }
+        return json ?? text;
+      }
+
+      async function load() {
+        els.refreshBtn.disabled = true;
+        els.list.innerHTML = '';
+        els.count.textContent = '';
+        setMsg('Loading…');
+
+        try {
+          const status = els.status.value;
+          const data = await api('/api/admin/reports?status=' + encodeURIComponent(status), {
+            method: 'GET',
+            headers: getHeaders()
+          });
+
+          const items = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []);
+          els.count.textContent = items.length ? (items.length + ' item(s)') : 'No items';
+          setMsg('', '');
+
+          if (!items.length) {
+            els.list.innerHTML = '<div class="small">Nothing to show.</div>';
+            return;
+          }
+
+          for (const it of items) {
+            const div = document.createElement('div');
+            div.className = 'item';
+
+            const title = document.createElement('h3');
+            title.textContent = (safe(it.map_label) || safe(it.map_version) || safe(it.server_id) || 'Report') + ' — ' + safe(it.id);
+            div.appendChild(title);
+
+            const meta = document.createElement('div');
+            meta.className = 'meta';
+            meta.textContent =
+              'Status: ' + safe(it.status) +
+              ' | When: ' + (fmtWhen(it.created_at) || '') +
+              ' | Reporter: ' + (safe(it.reporter_name) || 'anonymous') +
+              ' | Type: ' + (safe(it.change_type) || '');
+            div.appendChild(meta);
+
+            const coords = document.createElement('div');
+            coords.className = 'small';
+            coords.textContent =
+              'lat=' + safe(it.lat) + ', lng=' + safe(it.lng) + ', zoom=' + safe(it.zoom) +
+              (it.map_version ? ' | map_version=' + safe(it.map_version) : '') +
+              (it.server_id ? ' | server_id=' + safe(it.server_id) : '');
+            div.appendChild(coords);
+
+            const desc = document.createElement('p');
+            desc.textContent = safe(it.description);
+            div.appendChild(desc);
+
+            const actions = document.createElement('div');
+            actions.className = 'actions';
+
+            const approveBtn = document.createElement('button');
+            approveBtn.className = 'primary';
+            approveBtn.textContent = 'Approve';
+            approveBtn.disabled = (els.status.value === 'approved');
+
+            const rejectBtn = document.createElement('button');
+            rejectBtn.className = 'danger';
+            rejectBtn.textContent = 'Reject';
+            rejectBtn.disabled = (els.status.value === 'rejected');
+
+            const reason = document.createElement('textarea');
+            reason.placeholder = 'Rejection reason (optional, saved to admin_notes)';
+            reason.style.display = 'none';
+
+            const toggleReason = document.createElement('button');
+            toggleReason.textContent = 'Add rejection note';
+            toggleReason.disabled = (els.status.value === 'rejected');
+            toggleReason.addEventListener('click', () => {
+              reason.style.display = (reason.style.display === 'none') ? 'block' : 'none';
+            });
+
+            approveBtn.addEventListener('click', async () => {
+              approveBtn.disabled = true;
+              rejectBtn.disabled = true;
+              setMsg('Approving ' + it.id + '…');
+              try {
+                await api('/api/admin/reports/' + encodeURIComponent(it.id) + '/approve', {
+                  method: 'POST',
+                  headers: getHeaders()
+                });
+                setMsg('Approved ' + it.id, 'ok');
+                await load();
+              } catch (e) {
+                setMsg('Approve failed: ' + e.message, 'error');
+                approveBtn.disabled = false;
+                rejectBtn.disabled = false;
+              }
+            });
+
+            rejectBtn.addEventListener('click', async () => {
+              rejectBtn.disabled = true;
+              approveBtn.disabled = true;
+              setMsg('Rejecting ' + it.id + '…');
+              try {
+                await api('/api/admin/reports/' + encodeURIComponent(it.id) + '/reject', {
+                  method: 'POST',
+                  headers: getHeaders(),
+                  body: JSON.stringify({ reason: reason.value || '' })
+                });
+                setMsg('Rejected ' + it.id, 'ok');
+                await load();
+              } catch (e) {
+                setMsg('Reject failed: ' + e.message, 'error');
+                rejectBtn.disabled = false;
+                approveBtn.disabled = false;
+              }
+            });
+
+            actions.appendChild(approveBtn);
+            actions.appendChild(rejectBtn);
+            actions.appendChild(toggleReason);
+            div.appendChild(actions);
+            div.appendChild(reason);
+
+            els.list.appendChild(div);
+          }
+        } catch (e) {
+          setMsg('Load failed: ' + e.message, 'error');
+        } finally {
+          els.refreshBtn.disabled = false;
+        }
+      }
+
+      // Restore saved settings
+      const savedOrigin = localStorage.getItem(LS_ORIGIN);
+      const savedToken  = localStorage.getItem(LS_TOKEN);
+      if (savedOrigin) els.workerOrigin.value = savedOrigin;
+      if (savedToken) els.adminToken.value = savedToken;
+
+      els.saveBtn.addEventListener('click', () => {
+        localStorage.setItem(LS_ORIGIN, (els.workerOrigin.value || '').trim());
+        localStorage.setItem(LS_TOKEN, (els.adminToken.value || '').trim());
+        setMsg('Saved.', 'ok');
+      });
+
+      els.refreshBtn.addEventListener('click', load);
+      els.status.addEventListener('change', load);
+
+      // Initial load
+      load();
+    })();
+  </script>
+</body>
+</html>
