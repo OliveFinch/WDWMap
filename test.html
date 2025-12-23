@@ -4,93 +4,133 @@
   <meta charset="UTF-8">
   <title>WDW Magic Explorer</title>
 
-  <meta id="viewport-meta" name="viewport"
+  <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 
+  <!-- OpenLayers -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
+
+  <!-- App CSS -->
   <link rel="stylesheet" href="css/app.css">
 
+  <!-- Icons / PWA -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
-
   <meta name="theme-color" content="#23287b">
+
+  <!-- Open Graph -->
   <meta property="og:title" content="WDW Magic Explorer">
   <meta property="og:description" content="Explore historical Disney World maps with custom overlays.">
   <meta property="og:image" content="icon-512.png">
   <meta property="og:type" content="website">
-
-  <!-- YOUR EXISTING CORE STYLES (UNCHANGED) -->
-  <style>
-    html, body { margin: 0; padding: 0; height: 100%; overscroll-behavior: none; overflow: hidden; font-family: Arial, Helvetica, sans-serif;}
-    #map { width: 100vw; height: 100vh; touch-action: none; -webkit-user-select: none; user-select: none; }
-
-    /* … everything else exactly as before … */
-
-    /* NOTE:
-       The “Changes UI (panel + modal)” CSS block
-       has been removed from here.
-       It now lives in css/app.css.
-    */
-  </style>
 </head>
 
 <body>
+
+  <!-- Map -->
   <div id="map"></div>
 
-  <!-- ALL YOUR UI MARKUP REMAINS EXACTLY AS YOU POSTED -->
-  <!-- (buttons, overlays, dock, info panel, report modal, etc.) -->
+  <!-- TOP RIGHT -->
+  <div class="group-top-right" id="grp-top-right">
+    <div class="date-row">
+      <button id="left-date-btn" class="btn-square" style="display:none">
+        <img src="icons/date_left.svg" alt="">
+      </button>
+      <button id="date-btn" class="btn-square">
+        <img src="icons/date_right.svg" alt="">
+      </button>
+    </div>
 
-  <!-- OpenLayers -->
+    <button id="toggle-btn" class="btn-square">
+      <img id="toggle-icon-img" src="icons/satellite.svg" alt="">
+    </button>
+
+    <button id="compare-btn" class="btn-square">
+      <img src="icons/compare.svg" alt="">
+    </button>
+
+    <button id="highlight-btn" class="btn-square">
+      <img src="icons/highlight.svg" alt="">
+    </button>
+
+    <button id="settings-btn" class="btn-square">
+      <img src="icons/settings.svg" alt="">
+    </button>
+  </div>
+
+  <!-- Popups -->
+  <div id="date-popup"></div>
+  <div id="left-date-popup"></div>
+
+  <!-- TOP LEFT -->
+  <div class="group-top-left">
+    <div class="zoom-stack">
+      <button id="zoom-in-btn" class="btn-square">
+        <img src="icons/zoom_in.svg" alt="">
+      </button>
+      <button id="zoom-out-btn" class="btn-square">
+        <img src="icons/zoom_out.svg" alt="">
+      </button>
+    </div>
+  </div>
+
+  <!-- BOTTOM RIGHT -->
+  <div class="group-bottom-right">
+    <button id="changes-btn" class="btn-square">
+      <img src="icons/highlight.svg" alt="">
+    </button>
+
+    <button id="report-btn" class="btn-square">
+      <img src="icons/compare.svg" alt="">
+    </button>
+
+    <button id="findme-btn" class="btn-square">
+      <img src="icons/locateme.svg" alt="">
+    </button>
+
+    <button id="roads-btn" class="btn-square">
+      <img id="roads-icon-img" src="icons/roads.svg" alt="">
+    </button>
+
+    <button id="quick-switch-btn" class="btn-square" style="display:none">
+      <img src="icons/switch.svg" alt="">
+    </button>
+  </div>
+
+  <!-- Misc UI -->
+  <div id="findme-message"></div>
+  <div id="current-date-display"></div>
+
+  <!-- Location dock -->
+  <div id="location-dock"></div>
+
+  <!-- Info -->
+  <img id="info-icon" src="icons/info.svg" alt="">
+  <div id="info-overlay"></div>
+
+  <!-- Compare UI -->
+  <div id="swipe-thumb"></div>
+  <div id="swipe-handle"></div>
+
+  <div id="sensitivity-row">
+    <label for="sensitivity-slider">Highlight Sensitivity</label>
+    <input id="sensitivity-slider" type="range" min="10" max="30" value="20">
+  </div>
+
+  <!-- Changes + Report -->
+  <div id="changes-overlay"></div>
+  <aside id="changes-board"></aside>
+
+  <div id="report-overlay"></div>
+  <div id="report-modal"></div>
+
+  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
 
-  <!-- Disable browser zoom -->
-  <script>
-    (function () {
-      document.addEventListener('wheel', (e) => { if (e.ctrlKey || e.metaKey) e.preventDefault(); }, { passive: false, capture: true });
-      ['gesturestart','gesturechange','gestureend'].forEach(t =>
-        window.addEventListener(t, e => e.preventDefault(), { passive: false, capture: true })
-      );
-      document.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && ['+','=','-','0'].includes(e.key)) e.preventDefault();
-      }, { capture: true });
-    })();
-  </script>
-
-  <!-- MAIN MAP APPLICATION (UNCHANGED) -->
-  <script>
-    (function () {
-      'use strict';
-
-      /* your entire existing map code stays here
-         unchanged, including initMap(), updateDateUI(), etc.
-      */
-
-      fetch('servers2.json')
-        .then(r => r.json())
-        .then(json => {
-          serverOptions = json;
-          currentCode = serverOptions[serverOptions.length - 1].code;
-          lastTwoDates = [currentCode, null];
-          initMap();
-          updateDateUI();
-
-          // 🔑 Bridge for app.js
-          window.WDWMX = {
-            map,
-            ol,
-            getCurrentCode: () => currentCode,
-            getLabelForCode,
-            isCompareMode: () => compareMode,
-            isDisneyMode: () => showingDisney
-          };
-        })
-        .catch(err => alert('Failed to load servers2.json: ' + err));
-    })();
-  </script>
-
-  <!-- NEW FEATURE MODULE -->
+  <!-- App JS -->
   <script src="js/app.js"></script>
+
 </body>
 </html>
