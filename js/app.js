@@ -81,7 +81,7 @@
     if (changesMeta) changesMeta.textContent = 'Loading…';
     if (changesList) changesList.innerHTML = '';
 
-    loadChanges().catch((err) => {
+    loadChangesAllApproved().catch((err) => {
       console.warn(err);
       if (changesMeta) changesMeta.textContent = 'Could not load changes. Check API_BASE and Worker routes.';
       if (changesList) {
@@ -116,6 +116,170 @@
     }
   }
 
+  // We only show Recent Changes while in Disney map view.
+  // If core.js exposes a flag, use it. If not, we’ll default to “unknown = allow”.
+  function isDisneyView() {
+    try {
+      if (typeof WDWMX.getShowingDisney === 'function') return !!WDWMX.getShowingDisney();
+      if (typeof WDWMX.isShowingDisney === 'function') return !!WDWMX.isShowingDisney();
+      if (typeof WDWMX.getMapMode === 'function') return (WDWMX.getMapMode() === 'disney');
+    } catch {}
+    return true;
+  }
+
+  function normalizeItems(data) {
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.items)) return data.items;
+    if (data && Array.isArray(data.results)) return data.results; // your Worker returns {results:[...]}
+    return [];
+  }
+
+  function formatWhen(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return safeText(iso);
+    return d.toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  function labelForMapVersion(code) {
+    if (!code) return '';
+    try {
+      if (WDWMX.getLabelForCode) return WDWMX.getLabelForCode(code) || code;
+    } catch {}
+    return code;
+  }
+
+  // =========================
+  // API: Recent changes (ALL approved)
+  // =========================
+  async function loadChangesAllApproved() {
+    // 1) Enforce Disney-only
+    if (!isDisneyView()) {
+      if (changesMeta) changesMeta.textContent = 'Recent changes are available in Disney map view only.';
+      if (changesList) {
+        changesList.innerHTML = '';
+        const d = document.createElement('div');
+        d.style.padding = '12px';
+        d.style.color = '#666';
+        d.style.fontSize = '13px';
+        d.textContent = 'Switch back to Disney map view (mouse icon) to view and jump to recent changes.';
+        changesList.appendChild(d);
+      }
+      return;
+    }
+
+    const activeCode = getActiveMapCode();
+    const activeLabel = labelForMapVersion(activeCode);
+
+    if (changesMeta) {
+      changesMeta.textContent = activeLabel
+        ? `Recent changes (highlighted: ${activeLabel})`
+        : 'Recent changes';
+    }
+
+    // 2) Load ALL approved changes, not filtered by selected map/date.
+    // Adjust query params if you’ve implemented different Worker behaviour.
+    const url = `${API_BASE}/api/changes?status=approved&limit=200`;
+    const res = await fetch(url, { method: 'GET' });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      throw new Error(`Changes API failed: ${res.status} ${txt}`);
+    }
+
+    const data = await res.json();
+    const items = normalizeItems(data);
+
+    if (!changesList) return;
+    changesList.innerHTML = '';
+
+    if (!items.length) {
+      const empty = document.createElement('div');
+      empty.style.padding = '12px';
+      empty.style.color = '#666';
+      empty.style.fontSize = '13px';
+      empty.textContent = 'No approved changes yet.';
+      changesList.appendChild(empty);
+      return;
+    }
+
+    // Optional: sort newest first if not already
+    items.sort((a, b) => {
+      const da = new Date(a.approved_at || a.created_at || 0).getTime();
+      const db = new Date(b.approved_at || b.created_at || 0).getTime();
+      return db - da;
+    });
+
+    items.forEach((it) => {
+      const mapVersion = safeText(it.map_version || it.mapVersion || it.server_id || it.serverId || '');
+      const mapLabel = labelForMapVersion(mapVersion);
+
+      const btn = document.createElement('button');
+      btn.className = 'change-item';
+
+      // highlight items that match currently selected map
+      if (activeCode && mapVersion && String(mapVersion) === String(activeCode)) {
+        btn.classList.add('change-item-active');
+      }
+
+      const title = document.createElement('p');
+      title.className = 'change-title';
+      title.textContent = mapLabel || mapVersion || 'Change';
+
+      const sub = document.createElement('p');
+      sub.className = 'change-sub';
+
+      const who = it.display_name ? `by ${it.display_name}` : 'by anonymous';
+      const when = formatWhen(it.approved_at || it.created_at);
+      const desc = safeText(it.description || '', '');
+
+      // include map label so user understands it may jump dates
+      const mapTag = mapLabel ? `${mapLabel}` : (mapVersion ? `Map: ${mapVersion}` : '');
+
+      sub.textContent = `${mapTag}${when ? ' · ' + when : ''}${desc ? ' · ' + desc : ''}${who ? ' · ' + who : ''}`;
+
+      btn.appendChild(title);
+      btn.appendChild(sub);
+
+      btn.addEventListener('click', async () => {
+        const ol = WDWMX.ol;
+        const map = WDWMX.getMap && WDWMX.getMap();
+        if (!ol || !map) return;
+
+        // switch date/version first (irrespective of what user is currently viewing)
+        if (mapVersion && WDWMX.setSingleDate) {
+          try { WDWMX.setSingleDate(mapVersion); } catch {}
+        }
+
+        // lat/lng/zoom fields from your Worker schema
+        const lng = Number(it.lng);
+        const lat = Number(it.lat);
+        const z = Number(it.zoom);
+
+        if (Number.isFinite(lng) && Number.isFinite(lat)) {
+          const target = ol.proj.fromLonLat([lng, lat]);
+          const targetZoom = Number.isFinite(z) ? z : map.getView().getZoom();
+          closeChangesBoard();
+          map.getView().animate({ center: target, zoom: targetZoom, duration: 650 });
+        } else {
+          // If coords missing, still close and leave user on the map version
+          closeChangesBoard();
+        }
+      });
+
+      changesList.appendChild(btn);
+    });
+  }
+
+  // =========================
+  // API: Report
+  // =========================
   function getMapState() {
     const map = WDWMX.getMap && WDWMX.getMap();
     const ol = WDWMX.ol;
@@ -140,118 +304,6 @@
     };
   }
 
-  function normalizeItems(data) {
-    // Worker returns: { results: [...] }
-    if (Array.isArray(data)) return data;
-    if (data && Array.isArray(data.results)) return data.results;
-    if (data && Array.isArray(data.items)) return data.items;
-    return [];
-  }
-
-  function formatWhen(iso) {
-    if (!iso) return '';
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return safeText(iso);
-    return d.toLocaleString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
-
-  // =========================
-  // API: Changes
-  // =========================
-  async function loadChanges() {
-    const code = getActiveMapCode();
-    if (!code) throw new Error('No active map code available.');
-
-    // Your Worker REQUIRES these params:
-    // /api/changes?serverId=...&mapVersion=...&limit=...
-    const params = new URLSearchParams({
-      serverId: code,
-      mapVersion: code,
-      limit: '50'
-    });
-
-    const url = `${API_BASE}/api/changes?${params.toString()}`;
-    const res = await fetch(url, { method: 'GET' });
-
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      throw new Error(`Changes API failed: ${res.status} ${txt}`);
-    }
-
-    const data = await res.json();
-    const items = normalizeItems(data);
-
-    if (changesList) changesList.innerHTML = '';
-
-    if (changesMeta) {
-      const label = (WDWMX.getLabelForCode && WDWMX.getLabelForCode(code)) || code;
-      changesMeta.textContent = label ? `Map: ${label}` : 'Recent changes';
-    }
-
-    if (!changesList) return;
-
-    if (!items.length) {
-      const empty = document.createElement('div');
-      empty.style.padding = '12px';
-      empty.style.color = '#666';
-      empty.style.fontSize = '13px';
-      empty.textContent = 'No approved changes yet.';
-      changesList.appendChild(empty);
-      return;
-    }
-
-    items.forEach((it) => {
-      const btn = document.createElement('button');
-      btn.className = 'change-item';
-
-      const title = document.createElement('p');
-      title.className = 'change-title';
-
-      // With your current DB schema, the best “title” is category + optional display_name
-      const cat = safeText(it.category || 'Change');
-      const disp = safeText(it.display_name || '');
-      title.textContent = disp ? `${cat} — ${disp}` : cat;
-
-      const sub = document.createElement('p');
-      sub.className = 'change-sub';
-
-      const when = formatWhen(it.created_at || it.approved_at);
-      const desc = safeText(it.description || '', '');
-      sub.textContent = `${when ? when : ''}${desc ? (when ? ' · ' : '') + desc : ''}`;
-
-      btn.appendChild(title);
-      btn.appendChild(sub);
-
-      btn.addEventListener('click', () => {
-        const ol = WDWMX.ol;
-        const map = WDWMX.getMap && WDWMX.getMap();
-        if (!ol || !map) return;
-
-        const lng = Number(it.lng);
-        const lat = Number(it.lat);
-        const z = Number(it.zoom);
-
-        if (Number.isFinite(lng) && Number.isFinite(lat)) {
-          const target = ol.proj.fromLonLat([lng, lat]);
-          const targetZoom = Number.isFinite(z) ? z : map.getView().getZoom();
-          closeChangesBoard();
-          map.getView().animate({ center: target, zoom: targetZoom, duration: 650 });
-        }
-      });
-
-      changesList.appendChild(btn);
-    });
-  }
-
-  // =========================
-  // API: Report
-  // =========================
   async function submitReport() {
     const desc = safeText(reportDesc && reportDesc.value).trim();
     if (!desc) {
@@ -280,7 +332,6 @@
       return;
     }
 
-    // Worker required fields
     const payload = {
       serverId: code,
       mapVersion: code,
@@ -288,10 +339,12 @@
       lat,
       lng,
       zoom,
-
-      // These are currently ignored by your Worker (safe to include)
-      reporterName: safeText(reportName && reportName.value).trim() || null,
-      changeType: safeText(reportType && reportType.value).trim() || 'other'
+      bboxWest: Number.isFinite(Number(state.bbox_w)) ? Number(state.bbox_w) : null,
+      bboxSouth: Number.isFinite(Number(state.bbox_s)) ? Number(state.bbox_s) : null,
+      bboxEast: Number.isFinite(Number(state.bbox_e)) ? Number(state.bbox_e) : null,
+      bboxNorth: Number.isFinite(Number(state.bbox_n)) ? Number(state.bbox_n) : null,
+      category: 'general',
+      displayName: safeText(reportName && reportName.value).trim() || null
     };
 
     if (reportSubmit) reportSubmit.disabled = true;
@@ -316,12 +369,11 @@
       if (reportDesc) reportDesc.value = '';
       if (reportType) reportType.value = 'new';
 
-      // Slightly longer so it doesn’t feel “instant”
       setTimeout(() => {
         closeReportModal();
         if (reportSubmit) reportSubmit.disabled = false;
         clearStatus();
-      }, 1800);
+      }, 2550);
 
     } catch (err) {
       console.error(err);
