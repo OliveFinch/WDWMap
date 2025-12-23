@@ -1,9 +1,32 @@
 /* =========================
+   Base layout (REQUIRED)
+   ========================= */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overscroll-behavior: none;
+  overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+#map {
+  width: 100vw;
+  height: 100vh;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* =========================
    Change reporting & changes board
    ========================= */
 
 #report-overlay,
 #changes-overlay {
+  display: none; /* IMPORTANT: hidden until opened */
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.7);
@@ -50,7 +73,10 @@
   cursor: pointer;
 }
 
-/* Instruction note */
+/* =========================
+   Instruction note
+   ========================= */
+
 .report-note {
   background: rgba(255,255,255,0.14);
   border: 1px solid rgba(255,255,255,0.25);
@@ -68,7 +94,10 @@
   line-height: 1.35;
 }
 
-/* Form */
+/* =========================
+   Form elements
+   ========================= */
+
 .report-label {
   display: block;
   margin: 12px 0 6px;
@@ -92,11 +121,20 @@
   font-size: 14px;
 }
 
+.report-textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
 .report-textarea:focus,
 .report-input:focus {
   border-color: #ffd700;
   outline: none;
 }
+
+/* =========================
+   Actions / buttons
+   ========================= */
 
 .report-actions {
   display: flex;
@@ -132,13 +170,20 @@
   border: 1px solid rgba(255,255,255,0.25);
 }
 
+/* =========================
+   Status text
+   ========================= */
+
 .report-status {
   margin-top: 10px;
   font-size: 14px;
   min-height: 18px;
 }
 
-/* Changes list */
+/* =========================
+   Changes list
+   ========================= */
+
 .changes-list {
   display: flex;
   flex-direction: column;
@@ -171,6 +216,10 @@
   font-size: 14px;
   opacity: 0.9;
 }
+
+/* =========================
+   Mobile tweaks
+   ========================= */
 
 @media (max-width: 600px) {
   #report-overlay .panel,
