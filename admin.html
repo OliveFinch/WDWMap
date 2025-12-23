@@ -164,9 +164,7 @@
           });
 
 
-          const items = Array.isArray(data)
-  ? data
-  : (Array.isArray(data.results) ? data.results : []);
+          const items = Array.isArray(data?.items) ? data.items : [];
           els.count.textContent = items.length ? (items.length + ' item(s)') : 'No items';
           setMsg('', '');
 
