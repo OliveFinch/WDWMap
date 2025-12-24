@@ -250,68 +250,81 @@
       return db - da;
     });
 
-    items.forEach((it) => {
-      // Worker schema: map_version + server_id (strings)
-      const mapVersion = safeText(it.map_version || it.mapVersion || '');
-      const mapLabel = labelForMapVersion(mapVersion);
+items.forEach((it) => {
+  const mapVersion = safeText(it.map_version || it.mapVersion || '');
+  const mapLabel = labelForMapVersion(mapVersion);
 
-      const btn = document.createElement('button');
-      btn.className = 'change-item';
+  const btn = document.createElement('button');
+  btn.className = 'change-item';
 
-      // Highlight items that match currently selected map/date
-      if (activeCode && mapVersion && String(mapVersion) === String(activeCode)) {
-        btn.classList.add('change-item-active');
-      }
+  // Highlight items that match currently selected map/date
+  if (activeCode && mapVersion && String(mapVersion) === String(activeCode)) {
+    btn.classList.add('change-item-active');
+  }
 
-      const title = document.createElement('p');
-      title.className = 'change-title';
-      title.textContent = mapLabel || mapVersion || 'Change';
+  // BIG line = description
+  const title = document.createElement('p');
+  title.className = 'change-title';
+  title.textContent = safeText(it.description || 'Change');
 
-      const sub = document.createElement('p');
-      sub.className = 'change-sub';
+  // Small line = map label + date (no time) + by X
+  const sub = document.createElement('p');
+  sub.className = 'change-sub';
 
-      const who = it.display_name ? `by ${it.display_name}` : 'by anonymous';
-      const when = formatWhen(it.approved_at || it.created_at);
-      const desc = safeText(it.description || '', '');
+  const who = it.display_name ? `by ${it.display_name}` : 'by anonymous';
 
-      const mapTag = mapLabel ? `${mapLabel}` : (mapVersion ? `Map: ${mapVersion}` : '');
-      sub.textContent = `${mapTag}${when ? ' · ' + when : ''}${desc ? ' · ' + desc : ''}${who ? ' · ' + who : ''}`;
-
-      btn.appendChild(title);
-      btn.appendChild(sub);
-
-      btn.addEventListener('click', async () => {
-        const ol = WDWMX.ol;
-        const map = WDWMX.getMap && WDWMX.getMap();
-        if (!ol || !map) return;
-
-        // Always ensure Disney view (because jumping dates is Disney-specific)
-        ensureDisneyView();
-
-        // Switch map/date/version first
-        if (mapVersion && WDWMX.setSingleDate) {
-          try { WDWMX.setSingleDate(mapVersion); } catch {}
-        }
-
-        // Give the map a beat to swap layers before animating (avoids "jump to wrong place" feel)
-        await sleep(60);
-
-        const lng = Number(it.lng);
-        const lat = Number(it.lat);
-        const z = Number(it.zoom);
-
-        if (Number.isFinite(lng) && Number.isFinite(lat)) {
-          const target = ol.proj.fromLonLat([lng, lat]);
-          const targetZoom = Number.isFinite(z) ? z : map.getView().getZoom();
-          closeChangesBoard();
-          map.getView().animate({ center: target, zoom: targetZoom, duration: 650 });
-        } else {
-          closeChangesBoard();
-        }
+  // Date only (no time)
+  const iso = it.approved_at || it.created_at;
+  let whenDate = '';
+  if (iso) {
+    const d = new Date(iso);
+    if (!Number.isNaN(d.getTime())) {
+      whenDate = d.toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit'
       });
+    } else {
+      whenDate = safeText(iso);
+    }
+  }
 
-      changesList.appendChild(btn);
-    });
+  const mapTag = mapLabel || (mapVersion ? `Map: ${mapVersion}` : '');
+  sub.textContent = `${mapTag}${whenDate ? ' · ' + whenDate : ''}${who ? ' · ' + who : ''}`;
+
+  btn.appendChild(title);
+  btn.appendChild(sub);
+
+  btn.addEventListener('click', async () => {
+    const ol = WDWMX.ol;
+    const map = WDWMX.getMap && WDWMX.getMap();
+    if (!ol || !map) return;
+
+    ensureDisneyView();
+
+    if (mapVersion && WDWMX.setSingleDate) {
+      try { WDWMX.setSingleDate(mapVersion); } catch {}
+    }
+
+    await sleep(60);
+
+    const lng = Number(it.lng);
+    const lat = Number(it.lat);
+    const z = Number(it.zoom);
+
+    if (Number.isFinite(lng) && Number.isFinite(lat)) {
+      const target = ol.proj.fromLonLat([lng, lat]);
+      const targetZoom = Number.isFinite(z) ? z : map.getView().getZoom();
+      closeChangesBoard();
+      map.getView().animate({ center: target, zoom: targetZoom, duration: 650 });
+    } else {
+      closeChangesBoard();
+    }
+  });
+
+  changesList.appendChild(btn);
+});
+
   }
 
   // =========================
