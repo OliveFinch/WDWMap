@@ -34,12 +34,6 @@
   const changesMeta = document.getElementById('changes-meta');
   const changesList = document.getElementById('changes-list');
 
-  // Try to find a visible title element for the changes pane
-  const changesTitleEl =
-    document.getElementById('changes-title') ||
-    document.getElementById('recent-changes-title') ||
-    (changesBoard ? changesBoard.querySelector('[data-changes-title], h1, h2, h3') : null);
-
   // =========================
   // Helpers
   // =========================
@@ -79,9 +73,6 @@
 
   function openChangesBoard() {
     if (!changesOverlay || !changesBoard) return;
-
-    // Rename the panel title
-    if (changesTitleEl) changesTitleEl.textContent = 'Map changes';
 
     changesOverlay.style.display = 'block';
     changesBoard.style.display = 'block';
@@ -125,16 +116,17 @@
     }
   }
 
-  // Disney map view only (not satellite)
+  // We only show Map changes while in Disney map view (not satellite).
   function isDisneyView() {
     try {
       if (typeof WDWMX.getShowingDisney === 'function') return !!WDWMX.getShowingDisney();
       if (typeof WDWMX.isShowingDisney === 'function') return !!WDWMX.isShowingDisney();
       if (typeof WDWMX.getMapMode === 'function') return (WDWMX.getMapMode() === 'disney');
     } catch {}
-    return true;
+    return true; // fail-open to avoid breaking UI if core.js doesn't expose this
   }
 
+  // If core.js exposes a way to force Disney view, use it.
   function ensureDisneyView() {
     try {
       if (typeof WDWMX.setMapMode === 'function') {
@@ -160,8 +152,15 @@
   function normalizeItems(data) {
     if (Array.isArray(data)) return data;
     if (data && Array.isArray(data.items)) return data.items;
-    if (data && Array.isArray(data.results)) return data.results;
+    if (data && Array.isArray(data.results)) return data.results; // Worker returns {results:[...]}
     return [];
+  }
+
+  function formatDateOnly(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return safeText(iso);
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
   }
 
   function labelForMapVersion(code) {
@@ -172,38 +171,66 @@
     return code;
   }
 
-  function formatDateOnly(iso) {
-    if (!iso) return '';
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return safeText(iso);
-    return d.toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit'
-    });
-  }
-
   function sleep(ms) {
     return new Promise((r) => setTimeout(r, ms));
   }
 
-  // Optional: if core.js can give us a sortable key per map code, use it.
-  // Expected: WDWMX.getSortKeyForCode(code) -> number (e.g., yyyymmdd or timestamp)
-  function getMapSortKey(code) {
-    if (!code) return null;
+  // =========================
+  // servers2.json ordering (same as date picker)
+  // =========================
+  let __serversIndexPromise = null;
+
+  function tryGetServersFromWDWMX() {
     try {
-      if (typeof WDWMX.getSortKeyForCode === 'function') {
-        const k = WDWMX.getSortKeyForCode(code);
-        return Number.isFinite(Number(k)) ? Number(k) : null;
-      }
+      if (typeof WDWMX.getServers === 'function') return WDWMX.getServers();
+      if (Array.isArray(WDWMX.servers)) return WDWMX.servers;
+      if (Array.isArray(WDWMX.SERVERS)) return WDWMX.SERVERS;
     } catch {}
     return null;
   }
 
+  async function loadServersIndex() {
+    if (__serversIndexPromise) return __serversIndexPromise;
+
+    __serversIndexPromise = (async () => {
+      let list = tryGetServersFromWDWMX();
+
+      if (!list) {
+        // Adjust path if your file lives elsewhere (e.g. /data/servers2.json)
+        const res = await fetch('servers2.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error(`Could not load servers2.json: ${res.status}`);
+        list = await res.json();
+      }
+
+      const arr = Array.isArray(list) ? list : (Array.isArray(list.items) ? list.items : []);
+      const indexByCode = new Map();
+
+      arr.forEach((s, i) => {
+        const code =
+          (s && (s.code || s.server_id || s.serverId || s.id || s.value)) != null
+            ? String(s.code || s.server_id || s.serverId || s.id || s.value)
+            : null;
+
+        if (code) indexByCode.set(code, i);
+      });
+
+      return { arr, indexByCode };
+    })();
+
+    return __serversIndexPromise;
+  }
+
   // =========================
   // API: Map changes (ALL approved, across all maps)
+  // Requirements:
+  // - Only accessible in Disney view (not satellite)
+  // - List shows ALL approved changes (irrespective of currently selected date)
+  // - Highlight entries matching currently selected map/date
+  // - Clicking an entry switches to that map/date (Disney) and zooms to the change
+  // - Sorted by map/date ordering from servers2.json (same as date picker)
   // =========================
   async function loadChangesAllApproved() {
+    // Enforce Disney-only
     if (!isDisneyView()) {
       if (changesMeta) changesMeta.textContent = 'Map changes are available in Disney map view only.';
       if (changesList) {
@@ -218,12 +245,13 @@
       return;
     }
 
+    const activeCode = getActiveMapCode();
+
     if (changesMeta) {
       changesMeta.textContent = 'Highlighted changes reflect currently selected map';
     }
 
-    const activeCode = getActiveMapCode();
-
+    // Load ALL approved changes across all maps
     const url = `${API_BASE}/api/changes-feed?limit=200`;
     const res = await fetch(url, { method: 'GET' });
 
@@ -248,18 +276,28 @@
       return;
     }
 
-    // Sorting behaviour:
-    // - If your core exposes getSortKeyForCode, we sort by map date newest-first.
-    // - Otherwise we keep current “most recently approved/reported” ordering.
-    const hasMapDateKeys = items.some((it) => getMapSortKey(safeText(it.map_version || it.mapVersion || '')) !== null);
+    // Sort using servers2.json order (Late Dec 2025 at end implies older->newer; show newer maps first)
+    let serversIndex = null;
+    try {
+      serversIndex = await loadServersIndex();
+    } catch (e) {
+      console.warn('servers2.json ordering unavailable; falling back to approved_at ordering.', e);
+    }
 
-    if (hasMapDateKeys) {
+    if (serversIndex && serversIndex.indexByCode && serversIndex.indexByCode.size) {
       items.sort((a, b) => {
-        const ca = safeText(a.map_version || a.mapVersion || '');
-        const cb = safeText(b.map_version || b.mapVersion || '');
-        const ka = getMapSortKey(ca) ?? 0;
-        const kb = getMapSortKey(cb) ?? 0;
-        return kb - ka;
+        const ca = String(a.map_version || a.mapVersion || a.server_id || a.serverId || '');
+        const cb = String(b.map_version || b.mapVersion || b.server_id || b.serverId || '');
+
+        const ia = serversIndex.indexByCode.has(ca) ? serversIndex.indexByCode.get(ca) : -1;
+        const ib = serversIndex.indexByCode.has(cb) ? serversIndex.indexByCode.get(cb) : -1;
+
+        // Newer maps first (higher index = later in servers2.json)
+        if (ib !== ia) return ib - ia;
+
+        const da = new Date(a.approved_at || a.created_at || 0).getTime();
+        const db = new Date(b.approved_at || b.created_at || 0).getTime();
+        return db - da;
       });
     } else {
       items.sort((a, b) => {
@@ -270,35 +308,37 @@
     }
 
     items.forEach((it) => {
-      const mapVersion = safeText(it.map_version || it.mapVersion || '');
+      const mapVersion = safeText(it.map_version || it.mapVersion || it.server_id || it.serverId || '');
       const mapLabel = labelForMapVersion(mapVersion);
 
       const btn = document.createElement('button');
       btn.className = 'change-item';
 
+      // Highlight if matches currently selected map/date
       if (activeCode && mapVersion && String(mapVersion) === String(activeCode)) {
         btn.classList.add('change-item-active');
       }
 
-      // Main line: description
+      // Main line: description (as requested)
       const title = document.createElement('p');
       title.className = 'change-title';
       title.textContent = safeText(it.description || 'Change');
+      btn.appendChild(title);
 
       // Line 2: map date only
       const line2 = document.createElement('p');
       line2.className = 'change-sub';
-      line2.textContent = mapLabel || (mapVersion ? `Map: ${mapVersion}` : '');
+      line2.textContent = mapLabel || mapVersion || '';
+      btn.appendChild(line2);
 
-      // Line 3: Reported by X on Y (reported date = created_at)
+      // Line 3: Reported by X on Y (no time)
       const line3 = document.createElement('p');
       line3.className = 'change-sub';
-      const whoName = it.display_name ? safeText(it.display_name) : 'anonymous';
-      const reportedOn = formatDateOnly(it.created_at || it.approved_at);
-      line3.textContent = `Reported by ${whoName}${reportedOn ? ' on ' + reportedOn : ''}`;
 
-      btn.appendChild(title);
-      btn.appendChild(line2);
+      const who = safeText(it.display_name || '', '').trim() || 'anonymous';
+      const when = formatDateOnly(it.created_at || it.approved_at);
+
+      line3.textContent = `Reported by ${who}${when ? ` on ${when}` : ''}`;
       btn.appendChild(line3);
 
       btn.addEventListener('click', async () => {
@@ -308,10 +348,12 @@
 
         ensureDisneyView();
 
+        // Switch to that map/date first (irrespective of current selection)
         if (mapVersion && WDWMX.setSingleDate) {
           try { WDWMX.setSingleDate(mapVersion); } catch {}
         }
 
+        // Small delay so the layer swap settles before animating
         await sleep(60);
 
         const lng = Number(it.lng);
