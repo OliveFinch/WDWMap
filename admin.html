@@ -149,17 +149,25 @@
         return d.toLocaleString(undefined, { year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit' });
       }
 
-      async function api(path, opts) {
-        const origin = (els.workerOrigin.value || '').replace(/\/$/, '');
-        const url = origin + path;
+      async function fetchWithDetail(url, opts) {
         const res = await fetch(url, opts);
         const text = await res.text();
         let json = null;
         try { json = JSON.parse(text); } catch {}
+        return { res, text, json };
+      }
+
+      async function api(path, opts) {
+        const origin = (els.workerOrigin.value || '').replace(/\/$/, '');
+        const url = origin + path;
+
+        const { res, text, json } = await fetchWithDetail(url, opts);
+
         if (!res.ok) {
           const detail = json ? JSON.stringify(json) : text;
           throw new Error(res.status + ' ' + res.statusText + (detail ? ' — ' + detail : ''));
         }
+
         return json ?? text;
       }
 
@@ -189,11 +197,42 @@
           return;
         }
 
-        await api('/api/admin/reports/' + encodeURIComponent(id) + '/update', {
-          method: 'POST',
-          headers: getHeaders(),
-          body: JSON.stringify(body)
-        });
+        const origin = (els.workerOrigin.value || '').replace(/\/$/, '');
+
+        // 1) Preferred: PATCH /api/admin/reports/:id
+        {
+          const url = origin + '/api/admin/reports/' + encodeURIComponent(id);
+          const { res, text, json } = await fetchWithDetail(url, {
+            method: 'PATCH',
+            headers: getHeaders(),
+            body: JSON.stringify(body)
+          });
+
+          if (res.ok) return (json ?? text);
+
+          // If not found, fall back to old-style endpoint below
+          if (res.status !== 404) {
+            const detail = json ? JSON.stringify(json) : text;
+            throw new Error(res.status + ' ' + res.statusText + (detail ? ' — ' + detail : ''));
+          }
+        }
+
+        // 2) Fallback: POST /api/admin/reports/:id/update
+        {
+          const url = origin + '/api/admin/reports/' + encodeURIComponent(id) + '/update';
+          const { res, text, json } = await fetchWithDetail(url, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(body)
+          });
+
+          if (!res.ok) {
+            const detail = json ? JSON.stringify(json) : text;
+            throw new Error(res.status + ' ' + res.statusText + (detail ? ' — ' + detail : ''));
+          }
+
+          return (json ?? text);
+        }
       }
 
       async function load() {
@@ -248,7 +287,7 @@
             desc.textContent = safe(it.description);
             div.appendChild(desc);
 
-            // ------- Edit box (before approving/rejecting) -------
+            // ------- Edit box -------
             const details = document.createElement('details');
             details.className = 'editbox';
 
@@ -258,13 +297,12 @@
 
             const hint = document.createElement('div');
             hint.className = 'hint';
-            hint.textContent = 'Edits are saved back to the database via /api/admin/reports/:id/update. You can change description/category/display name, coords/zoom, and map_version/server_id if needed.';
+            hint.textContent = 'Saves via PATCH /api/admin/reports/:id (fallback to POST /api/admin/reports/:id/update if your Worker is older).';
             details.appendChild(hint);
 
             const two = document.createElement('div');
             two.className = 'two';
 
-            // Left column fields
             const colA = document.createElement('div');
 
             const fDescLabel = document.createElement('label');
@@ -292,7 +330,6 @@
             colA.appendChild(fDisplayLabel);
             colA.appendChild(fDisplay);
 
-            // Right column fields
             const colB = document.createElement('div');
 
             const fLatLabel = document.createElement('label');
@@ -355,7 +392,6 @@
 
             const resetBtn = document.createElement('button');
             resetBtn.textContent = 'Reset fields';
-            resetBtn.className = '';
 
             saveEditsBtn.addEventListener('click', async () => {
               saveEditsBtn.disabled = true;
@@ -382,7 +418,7 @@
                 });
 
                 setMsg('Saved edits for ' + it.id, 'ok');
-                await load(); // refresh list to show edits + updated_at
+                await load();
               } catch (e) {
                 setMsg('Save edits failed: ' + e.message, 'error');
               } finally {
@@ -500,7 +536,6 @@
       els.refreshBtn.addEventListener('click', load);
       els.status.addEventListener('change', load);
 
-      // Initial load
       load();
     })();
   </script>
