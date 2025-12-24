@@ -93,7 +93,7 @@
           <span class="pill">Reports</span>
           <span id="count" class="meta status"></span>
         </div>
-        <div class="small">Tip: DevTools → Network to inspect PATCH calls</div>
+        <div class="small">Tip: open DevTools → Network to see the admin API calls.</div>
       </div>
 
       <div id="list" class="grid"></div>
@@ -178,38 +178,30 @@
         return [];
       }
 
-      // IMPORTANT: Worker expects camelCase keys (serverId/mapVersion/displayName/adminNotes)
-      async function saveEdits(id, fieldsUi) {
-        // fieldsUi is in UI-friendly names; convert to Worker API payload.
-        const serverId = (fieldsUi.serverId || '').trim();
-        const payload = {
-          description: fieldsUi.description,
-          category: fieldsUi.category,
-          displayName: fieldsUi.displayName,
+      // Convert empty string -> null (so you can clear displayName)
+      function emptyToNull(s) {
+        const t = safe(s, '').trim();
+        return t === '' ? null : t;
+      }
 
-          // We treat serverId as the single map id and keep mapVersion in sync.
-          serverId: serverId || undefined,
-          mapVersion: serverId || undefined,
-
-          lat: fieldsUi.lat,
-          lng: fieldsUi.lng,
-          zoom: fieldsUi.zoom
-        };
-
-        // Remove undefined keys
+      async function saveEdits(id, fields) {
+        // IMPORTANT: Worker expects camelCase keys (serverId/mapVersion/displayName/adminNotes)
         const body = {};
-        for (const [k, v] of Object.entries(payload)) {
-          if (v === undefined) continue;
-          if (v === null) { body[k] = null; continue; }
-          if (typeof v === 'string') {
-            const t = v.trim();
-            // allow setting displayName/adminNotes empty -> null
-            if (k === 'displayName' && t === '') { body[k] = null; continue; }
-            if (t !== '') body[k] = t;
-            continue;
-          }
-          body[k] = v;
-        }
+
+        if (fields.description !== undefined) body.description = safe(fields.description).trim();
+        if (fields.category !== undefined) body.category = safe(fields.category).trim();
+
+        if (fields.displayName !== undefined) body.displayName = emptyToNull(fields.displayName);
+        if (fields.serverId !== undefined) body.serverId = safe(fields.serverId).trim();
+        if (fields.mapVersion !== undefined) body.mapVersion = safe(fields.mapVersion).trim();
+        if (fields.adminNotes !== undefined) body.adminNotes = emptyToNull(fields.adminNotes);
+
+        if (fields.lat !== undefined) body.lat = fields.lat;
+        if (fields.lng !== undefined) body.lng = fields.lng;
+        if (fields.zoom !== undefined) body.zoom = fields.zoom;
+
+        // Remove undefined (safety)
+        Object.keys(body).forEach((k) => body[k] === undefined && delete body[k]);
 
         if (!Object.keys(body).length) {
           setMsg('Nothing to save (no edits entered).', 'error');
@@ -217,34 +209,42 @@
         }
 
         const origin = (els.workerOrigin.value || '').replace(/\/$/, '');
-
-        // Your Worker supports PATCH /api/admin/reports/:id
         const url = origin + '/api/admin/reports/' + encodeURIComponent(id);
+
         const { res, text, json } = await fetchWithDetail(url, {
           method: 'PATCH',
           headers: getHeaders(),
           body: JSON.stringify(body)
         });
 
-        if (res.ok) return (json ?? text);
-
-        // fallback if needed
-        if (res.status === 404) {
-          const url2 = origin + '/api/admin/reports/' + encodeURIComponent(id) + '/update';
-          const { res: r2, text: t2, json: j2 } = await fetchWithDetail(url2, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(body)
-          });
-          if (!r2.ok) {
-            const detail = j2 ? JSON.stringify(j2) : t2;
-            throw new Error(r2.status + ' ' + r2.statusText + (detail ? ' — ' + detail : ''));
-          }
-          return (j2 ?? t2);
+        if (!res.ok) {
+          const detail = json ? JSON.stringify(json) : text;
+          throw new Error(res.status + ' ' + res.statusText + (detail ? ' — ' + detail : ''));
         }
 
-        const detail = json ? JSON.stringify(json) : text;
-        throw new Error(res.status + ' ' + res.statusText + (detail ? ' — ' + detail : ''));
+        return (json ?? text);
+      }
+
+      function makeCategorySelect(current) {
+        const sel = document.createElement('select');
+        const cur = (safe(current).trim().toLowerCase() || 'other');
+        const norm = (cur === 'general') ? 'other' : cur;
+
+        const opts = [
+          ['new', 'New (ride, road, building)'],
+          ['changed', 'Changed (layout, entrance, path)'],
+          ['removed', 'Removed (closed, demolished)'],
+          ['other', 'Other']
+        ];
+
+        for (const [val, label] of opts) {
+          const o = document.createElement('option');
+          o.value = val;
+          o.textContent = label;
+          if (val === norm) o.selected = true;
+          sel.appendChild(o);
+        }
+        return sel;
       }
 
       async function load() {
@@ -274,7 +274,7 @@
             div.className = 'item';
 
             const title = document.createElement('h3');
-            title.textContent = (safe(it.server_id) || safe(it.map_version) || 'Report') + ' — ' + safe(it.id);
+            title.textContent = (safe(it.map_version) || safe(it.server_id) || 'Report') + ' — ' + safe(it.id);
             div.appendChild(title);
 
             const meta = document.createElement('div');
@@ -290,6 +290,7 @@
             coords.className = 'small';
             coords.textContent =
               'lat=' + safe(it.lat) + ', lng=' + safe(it.lng) + ', zoom=' + safe(it.zoom) +
+              (it.map_version ? ' | map_version=' + safe(it.map_version) : '') +
               (it.server_id ? ' | server_id=' + safe(it.server_id) : '') +
               (it.category ? ' | category=' + safe(it.category) : '') +
               (it.display_name ? ' | display_name=' + safe(it.display_name) : '');
@@ -309,7 +310,7 @@
 
             const hint = document.createElement('div');
             hint.className = 'hint';
-            hint.textContent = 'Saves via PATCH /api/admin/reports/:id (Worker expects camelCase fields).';
+            hint.textContent = 'Edits save via PATCH /api/admin/reports/:id. Field names must be camelCase for the Worker (displayName, serverId, mapVersion).';
             details.appendChild(hint);
 
             const two = document.createElement('div');
@@ -326,10 +327,8 @@
 
             const fCategoryLabel = document.createElement('label');
             fCategoryLabel.style.marginTop = '10px';
-            fCategoryLabel.textContent = 'Category';
-            const fCategory = document.createElement('input');
-            fCategory.type = 'text';
-            fCategory.value = safe(it.category);
+            fCategoryLabel.textContent = 'Type';
+            const fCategory = makeCategorySelect(it.category);
             colA.appendChild(fCategoryLabel);
             colA.appendChild(fCategory);
 
@@ -373,12 +372,21 @@
             colB.appendChild(fZoomLabel);
             colB.appendChild(fZoom);
 
+            const fMapVerLabel = document.createElement('label');
+            fMapVerLabel.style.marginTop = '10px';
+            fMapVerLabel.textContent = 'mapVersion';
+            const fMapVer = document.createElement('input');
+            fMapVer.type = 'text';
+            fMapVer.value = safe(it.map_version);
+            colB.appendChild(fMapVerLabel);
+            colB.appendChild(fMapVer);
+
             const fServerIdLabel = document.createElement('label');
             fServerIdLabel.style.marginTop = '10px';
-            fServerIdLabel.textContent = 'server_id (map id)';
+            fServerIdLabel.textContent = 'serverId';
             const fServerId = document.createElement('input');
             fServerId.type = 'text';
-            fServerId.value = safe(it.server_id || it.map_version);
+            fServerId.value = safe(it.server_id);
             colB.appendChild(fServerIdLabel);
             colB.appendChild(fServerId);
 
@@ -411,12 +419,13 @@
 
                 await saveEdits(it.id, {
                   description: fDesc.value,
-                  category: fCategory.value,
-                  displayName: fDisplay.value,
+                  category: fCategory.value,        // <— this will now update category properly
+                  displayName: fDisplay.value,      // <— maps to display_name
                   lat: lat,
                   lng: lng,
                   zoom: zoom,
-                  serverId: fServerId.value
+                  mapVersion: fMapVer.value,        // <— maps to map_version
+                  serverId: fServerId.value         // <— maps to server_id
                 });
 
                 setMsg('Saved edits for ' + it.id, 'ok');
@@ -430,13 +439,22 @@
 
             resetBtn.addEventListener('click', () => {
               fDesc.value = safe(it.description);
-              fCategory.value = safe(it.category);
+              // category: reset select by recreating it
+              const newSel = makeCategorySelect(it.category);
+              fCategory.replaceWith(newSel);
+
+              // update reference for save handler: simplest is refresh the whole page state:
+              // so just instruct user to hit Save after changing; but we can keep it working by reloading
+              // We'll just reload to keep it clean.
+              setMsg('Reset fields for ' + it.id + ' (reloading list)…', 'ok');
+              load();
+
               fDisplay.value = safe(it.display_name);
               fLat.value = numOrEmpty(it.lat);
               fLng.value = numOrEmpty(it.lng);
               fZoom.value = numOrEmpty(it.zoom);
-              fServerId.value = safe(it.server_id || it.map_version);
-              setMsg('Reset fields for ' + it.id, 'ok');
+              fMapVer.value = safe(it.map_version);
+              fServerId.value = safe(it.server_id);
             });
 
             editActions.appendChild(saveEditsBtn);
@@ -445,7 +463,7 @@
 
             div.appendChild(details);
 
-            // ------- Approve/Reject -------
+            // ------- Approve/Reject actions -------
             const actions = document.createElement('div');
             actions.className = 'actions';
 
@@ -522,6 +540,7 @@
         }
       }
 
+      // Restore saved settings
       const savedOrigin = localStorage.getItem(LS_ORIGIN);
       const savedToken  = localStorage.getItem(LS_TOKEN);
       if (savedOrigin) els.workerOrigin.value = savedOrigin;
