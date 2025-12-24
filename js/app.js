@@ -34,6 +34,12 @@
   const changesMeta = document.getElementById('changes-meta');
   const changesList = document.getElementById('changes-list');
 
+  // Try to find a visible title element for the changes pane (so we can rename it)
+  const changesTitleEl =
+    document.getElementById('changes-title') ||
+    document.getElementById('recent-changes-title') ||
+    (changesBoard ? changesBoard.querySelector('[data-changes-title], h1, h2, h3') : null);
+
   // =========================
   // Helpers
   // =========================
@@ -73,6 +79,9 @@
 
   function openChangesBoard() {
     if (!changesOverlay || !changesBoard) return;
+
+    // Rename the panel title
+    if (changesTitleEl) changesTitleEl.textContent = 'Map changes';
 
     changesOverlay.style.display = 'block';
     changesBoard.style.display = 'block';
@@ -116,15 +125,13 @@
     }
   }
 
-  // We only show Recent Changes while in Disney map view.
-  // Also: if user is currently in satellite, we should not show (per your requirement).
+  // We only show Map changes while in Disney map view (not satellite)
   function isDisneyView() {
     try {
       if (typeof WDWMX.getShowingDisney === 'function') return !!WDWMX.getShowingDisney();
       if (typeof WDWMX.isShowingDisney === 'function') return !!WDWMX.isShowingDisney();
       if (typeof WDWMX.getMapMode === 'function') return (WDWMX.getMapMode() === 'disney');
     } catch {}
-    // If core.js doesn't expose a way to detect, default to "true" so it doesn't break.
     return true;
   }
 
@@ -144,7 +151,6 @@
         return true;
       }
       if (typeof WDWMX.setSatellite === 'function') {
-        // Common pattern: setSatellite(true/false)
         WDWMX.setSatellite(false);
         return true;
       }
@@ -155,21 +161,8 @@
   function normalizeItems(data) {
     if (Array.isArray(data)) return data;
     if (data && Array.isArray(data.items)) return data.items;
-    if (data && Array.isArray(data.results)) return data.results; // Worker returns {results:[...]}
+    if (data && Array.isArray(data.results)) return data.results;
     return [];
-  }
-
-  function formatWhen(iso) {
-    if (!iso) return '';
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return safeText(iso);
-    return d.toLocaleString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   }
 
   function labelForMapVersion(code) {
@@ -180,29 +173,35 @@
     return code;
   }
 
+  function formatDateOnly(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return safeText(iso);
+    return d.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit'
+    });
+  }
+
   function sleep(ms) {
     return new Promise((r) => setTimeout(r, ms));
   }
 
   // =========================
-  // API: Recent changes (ALL approved, across all maps)
-  // Requirements:
-  // - Only accessible in Disney view (not satellite)
-  // - List shows ALL approved changes (irrespective of currently selected date)
-  // - Highlight entries matching currently selected map/date
-  // - Clicking an entry switches to that map/date (Disney) and zooms to the change
+  // API: Map changes (ALL approved, across all maps)
   // =========================
   async function loadChangesAllApproved() {
-    // 1) Enforce Disney-only
+    // Enforce Disney-only
     if (!isDisneyView()) {
-      if (changesMeta) changesMeta.textContent = 'Recent changes are available in Disney map view only.';
+      if (changesMeta) changesMeta.textContent = 'Map changes are available in Disney map view only.';
       if (changesList) {
         changesList.innerHTML = '';
         const d = document.createElement('div');
         d.style.padding = '12px';
         d.style.color = '#666';
         d.style.fontSize = '13px';
-        d.textContent = 'Switch back to Disney map view (mouse icon) to view and jump to recent changes.';
+        d.textContent = 'Switch back to Disney map view (mouse icon) to view and jump to map changes.';
         changesList.appendChild(d);
       }
       return;
@@ -213,12 +212,11 @@
 
     if (changesMeta) {
       changesMeta.textContent = activeLabel
-        ? `Recent changes (highlighted: ${activeLabel})`
-        : 'Recent changes';
+        ? `Map changes (highlighted: ${activeLabel})`
+        : 'Map changes';
     }
 
-    // 2) Load ALL approved changes, irrespective of currently selected map/date.
-    // Use the Worker global feed endpoint (returns approved changes across all maps).
+    // Load ALL approved changes (global feed)
     const url = `${API_BASE}/api/changes-feed?limit=200`;
     const res = await fetch(url, { method: 'GET' });
 
@@ -250,81 +248,68 @@
       return db - da;
     });
 
-items.forEach((it) => {
-  const mapVersion = safeText(it.map_version || it.mapVersion || '');
-  const mapLabel = labelForMapVersion(mapVersion);
+    items.forEach((it) => {
+      const mapVersion = safeText(it.map_version || it.mapVersion || '');
+      const mapLabel = labelForMapVersion(mapVersion);
 
-  const btn = document.createElement('button');
-  btn.className = 'change-item';
+      const btn = document.createElement('button');
+      btn.className = 'change-item';
 
-  // Highlight items that match currently selected map/date
-  if (activeCode && mapVersion && String(mapVersion) === String(activeCode)) {
-    btn.classList.add('change-item-active');
-  }
+      // Highlight entries matching currently selected map/date
+      if (activeCode && mapVersion && String(mapVersion) === String(activeCode)) {
+        btn.classList.add('change-item-active');
+      }
 
-  // BIG line = description
-  const title = document.createElement('p');
-  title.className = 'change-title';
-  title.textContent = safeText(it.description || 'Change');
+      // Big line: description (not the date)
+      const title = document.createElement('p');
+      title.className = 'change-title';
+      title.textContent = safeText(it.description || 'Change');
 
-  // Small line = map label + date (no time) + by X
-  const sub = document.createElement('p');
-  sub.className = 'change-sub';
+      // Small line: map label + date (no time) + by X
+      const sub = document.createElement('p');
+      sub.className = 'change-sub';
 
-  const who = it.display_name ? `by ${it.display_name}` : 'by anonymous';
+      const who = it.display_name ? `by ${it.display_name}` : 'by anonymous';
+      const whenDate = formatDateOnly(it.approved_at || it.created_at);
+      const mapTag = mapLabel || (mapVersion ? `Map: ${mapVersion}` : '');
 
-  // Date only (no time)
-  const iso = it.approved_at || it.created_at;
-  let whenDate = '';
-  if (iso) {
-    const d = new Date(iso);
-    if (!Number.isNaN(d.getTime())) {
-      whenDate = d.toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: '2-digit'
+      sub.textContent = `${mapTag}${whenDate ? ' · ' + whenDate : ''}${who ? ' · ' + who : ''}`;
+
+      btn.appendChild(title);
+      btn.appendChild(sub);
+
+      btn.addEventListener('click', async () => {
+        const ol = WDWMX.ol;
+        const map = WDWMX.getMap && WDWMX.getMap();
+        if (!ol || !map) return;
+
+        // Always ensure Disney view (because jumping dates is Disney-specific)
+        ensureDisneyView();
+
+        // Switch map/date/version first
+        if (mapVersion && WDWMX.setSingleDate) {
+          try { WDWMX.setSingleDate(mapVersion); } catch {}
+        }
+
+        // Give the map a moment to swap layers before animating
+        await sleep(60);
+
+        const lng = Number(it.lng);
+        const lat = Number(it.lat);
+        const z = Number(it.zoom);
+
+        if (Number.isFinite(lng) && Number.isFinite(lat)) {
+          const target = ol.proj.fromLonLat([lng, lat]);
+          const targetZoom = Number.isFinite(z) ? z : map.getView().getZoom();
+          closeChangesBoard();
+          map.getView().animate({ center: target, zoom: targetZoom, duration: 650 });
+        } else {
+          closeChangesBoard();
+        }
       });
-    } else {
-      whenDate = safeText(iso);
-    }
-  }
 
-  const mapTag = mapLabel || (mapVersion ? `Map: ${mapVersion}` : '');
-  sub.textContent = `${mapTag}${whenDate ? ' · ' + whenDate : ''}${who ? ' · ' + who : ''}`;
-
-  btn.appendChild(title);
-  btn.appendChild(sub);
-
-  btn.addEventListener('click', async () => {
-    const ol = WDWMX.ol;
-    const map = WDWMX.getMap && WDWMX.getMap();
-    if (!ol || !map) return;
-
-    ensureDisneyView();
-
-    if (mapVersion && WDWMX.setSingleDate) {
-      try { WDWMX.setSingleDate(mapVersion); } catch {}
-    }
-
-    await sleep(60);
-
-    const lng = Number(it.lng);
-    const lat = Number(it.lat);
-    const z = Number(it.zoom);
-
-    if (Number.isFinite(lng) && Number.isFinite(lat)) {
-      const target = ol.proj.fromLonLat([lng, lat]);
-      const targetZoom = Number.isFinite(z) ? z : map.getView().getZoom();
-      closeChangesBoard();
-      map.getView().animate({ center: target, zoom: targetZoom, duration: 650 });
-    } else {
-      closeChangesBoard();
-    }
-  });
-
-  changesList.appendChild(btn);
-});
-
+      changesList.appendChild(btn);
+    });
   }
 
   // =========================
