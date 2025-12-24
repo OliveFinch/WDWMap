@@ -90,7 +90,7 @@
         d.style.padding = '12px';
         d.style.color = '#666';
         d.style.fontSize = '13px';
-        d.textContent = 'Failed to load approved changes.';
+        d.textContent = 'Failed to load map changes.';
         changesList.appendChild(d);
       }
     });
@@ -123,10 +123,9 @@
       if (typeof WDWMX.isShowingDisney === 'function') return !!WDWMX.isShowingDisney();
       if (typeof WDWMX.getMapMode === 'function') return (WDWMX.getMapMode() === 'disney');
     } catch {}
-    return true; // fail-open to avoid breaking UI if core.js doesn't expose this
+    return true; // fail-open
   }
 
-  // If core.js exposes a way to force Disney view, use it.
   function ensureDisneyView() {
     try {
       if (typeof WDWMX.setMapMode === 'function') {
@@ -152,7 +151,7 @@
   function normalizeItems(data) {
     if (Array.isArray(data)) return data;
     if (data && Array.isArray(data.items)) return data.items;
-    if (data && Array.isArray(data.results)) return data.results; // Worker returns {results:[...]}
+    if (data && Array.isArray(data.results)) return data.results;
     return [];
   }
 
@@ -173,6 +172,28 @@
 
   function sleep(ms) {
     return new Promise((r) => setTimeout(r, ms));
+  }
+
+  function normalizeCategory(v) {
+    const s = safeText(v, '').trim().toLowerCase();
+    if (!s) return 'other';
+    // Accept either your UI values or future aliases
+    if (s === 'new') return 'new';
+    if (s === 'changed' || s === 'change') return 'changed';
+    if (s === 'removed' || s === 'remove') return 'removed';
+    if (s === 'other') return 'other';
+    if (s === 'general') return 'other';
+    return s;
+  }
+
+  function prettyCategory(v) {
+    const c = normalizeCategory(v);
+    if (c === 'new') return 'New';
+    if (c === 'changed') return 'Changed';
+    if (c === 'removed') return 'Removed';
+    if (c === 'other') return 'Other';
+    // if you add more categories later, show them safely
+    return c.charAt(0).toUpperCase() + c.slice(1);
   }
 
   // =========================
@@ -196,7 +217,6 @@
       let list = tryGetServersFromWDWMX();
 
       if (!list) {
-        // Adjust path if your file lives elsewhere (e.g. /data/servers2.json)
         const res = await fetch('servers2.json', { cache: 'no-store' });
         if (!res.ok) throw new Error(`Could not load servers2.json: ${res.status}`);
         list = await res.json();
@@ -222,15 +242,8 @@
 
   // =========================
   // API: Map changes (ALL approved, across all maps)
-  // Requirements:
-  // - Only accessible in Disney view (not satellite)
-  // - List shows ALL approved changes (irrespective of currently selected date)
-  // - Highlight entries matching currently selected map/date
-  // - Clicking an entry switches to that map/date (Disney) and zooms to the change
-  // - Sorted by map/date ordering from servers2.json (same as date picker)
   // =========================
   async function loadChangesAllApproved() {
-    // Enforce Disney-only
     if (!isDisneyView()) {
       if (changesMeta) changesMeta.textContent = 'Map changes are available in Disney map view only.';
       if (changesList) {
@@ -251,7 +264,6 @@
       changesMeta.textContent = 'Highlighted changes reflect currently selected map';
     }
 
-    // Load ALL approved changes across all maps
     const url = `${API_BASE}/api/changes-feed?limit=200`;
     const res = await fetch(url, { method: 'GET' });
 
@@ -276,7 +288,7 @@
       return;
     }
 
-    // Sort using servers2.json order (Late Dec 2025 at end implies older->newer; show newer maps first)
+    // Sort using servers2.json order (newer maps first)
     let serversIndex = null;
     try {
       serversIndex = await loadServersIndex();
@@ -292,7 +304,6 @@
         const ia = serversIndex.indexByCode.has(ca) ? serversIndex.indexByCode.get(ca) : -1;
         const ib = serversIndex.indexByCode.has(cb) ? serversIndex.indexByCode.get(cb) : -1;
 
-        // Newer maps first (higher index = later in servers2.json)
         if (ib !== ia) return ib - ia;
 
         const da = new Date(a.approved_at || a.created_at || 0).getTime();
@@ -314,24 +325,26 @@
       const btn = document.createElement('button');
       btn.className = 'change-item';
 
-      // Highlight if matches currently selected map/date
       if (activeCode && mapVersion && String(mapVersion) === String(activeCode)) {
         btn.classList.add('change-item-active');
       }
 
-      // Main line: description (as requested)
+      // Main line: description
       const title = document.createElement('p');
       title.className = 'change-title';
       title.textContent = safeText(it.description || 'Change');
       btn.appendChild(title);
 
-      // Line 2: map date only
+      // Line 2: map label + category (type)
       const line2 = document.createElement('p');
       line2.className = 'change-sub';
-      line2.textContent = mapLabel || mapVersion || '';
+
+      const cat = prettyCategory(it.category);
+      const mapText = mapLabel || mapVersion || '';
+      line2.textContent = mapText ? `${mapText} · ${cat}` : cat;
       btn.appendChild(line2);
 
-      // Line 3: Reported by X on Y (no time)
+      // Line 3: Reported by X on DATE (no time)
       const line3 = document.createElement('p');
       line3.className = 'change-sub';
 
@@ -348,12 +361,10 @@
 
         ensureDisneyView();
 
-        // Switch to that map/date first (irrespective of current selection)
         if (mapVersion && WDWMX.setSingleDate) {
           try { WDWMX.setSingleDate(mapVersion); } catch {}
         }
 
-        // Small delay so the layer swap settles before animating
         await sleep(60);
 
         const lng = Number(it.lng);
@@ -429,6 +440,9 @@
       return;
     }
 
+    // IMPORTANT: use the dropdown value as category, so it shows in Map changes.
+    const chosenCategory = normalizeCategory(reportType && reportType.value);
+
     const payload = {
       serverId: code,
       mapVersion: code,
@@ -440,7 +454,7 @@
       bboxSouth: Number.isFinite(Number(state.bbox_s)) ? Number(state.bbox_s) : null,
       bboxEast: Number.isFinite(Number(state.bbox_e)) ? Number(state.bbox_e) : null,
       bboxNorth: Number.isFinite(Number(state.bbox_n)) ? Number(state.bbox_n) : null,
-      category: 'general',
+      category: chosenCategory,
       displayName: safeText(reportName && reportName.value).trim() || null
     };
 
