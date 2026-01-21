@@ -302,6 +302,59 @@
     });
   }
 
+        // Double-tap then drag up/down to zoom (mobile helper)
+      // Works even with browser zoom disabled, because it adjusts the OpenLayers view zoom directly.
+      function enableDoubleTapHoldZoom() {
+        const mapDiv = map.getTargetElement();
+        if (!mapDiv) return;
+
+        let lastTap = 0;
+        let isHoldZoom = false;
+        let startY = 0;
+        let startZoom = 0;
+
+        function moveHandler(e) {
+          if (!isHoldZoom || !e.touches || e.touches.length !== 1) return;
+          e.preventDefault();
+
+          const dy = e.touches[0].clientY - startY;
+          const view = map.getView();
+
+          // Drag up = zoom in, drag down = zoom out
+          let newZoom = startZoom - (dy / 80);
+
+          newZoom = Math.max(view.getMinZoom(), Math.min(view.getMaxZoom(), newZoom));
+          view.setZoom(newZoom);
+        }
+
+        mapDiv.addEventListener('touchstart', (e) => {
+          if (!e.touches || e.touches.length !== 1) return;
+
+          const now = Date.now();
+          const dt = now - lastTap;
+
+          // Quick second tap enables hold-to-zoom
+          if (dt > 0 && dt < 350) {
+            e.preventDefault(); // prevents iOS smart zoom
+            startY = e.touches[0].clientY;
+            startZoom = map.getView().getZoom();
+            isHoldZoom = true;
+
+            mapDiv.addEventListener('touchmove', moveHandler, { passive: false });
+          } else {
+            isHoldZoom = false;
+          }
+
+          lastTap = now;
+        }, { passive: false });
+
+        mapDiv.addEventListener('touchend', () => {
+          if (!isHoldZoom) return;
+          isHoldZoom = false;
+          mapDiv.removeEventListener('touchmove', moveHandler, { passive: false });
+        }, { passive: true });
+      }
+  
   // =====================
   // Roads
   // =====================
@@ -757,6 +810,7 @@
       lastTwoDates = [currentCode, null];
 
       initMap();
+      enableDoubleTapHoldZoom();
       updateDateUI();
 
       // Expose bridge
