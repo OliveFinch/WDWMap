@@ -302,58 +302,115 @@
     });
   }
 
-        // Double-tap then drag up/down to zoom (mobile helper)
-      // Works even with browser zoom disabled, because it adjusts the OpenLayers view zoom directly.
-      function enableDoubleTapHoldZoom() {
-        const mapDiv = map.getTargetElement();
-        if (!mapDiv) return;
+// Double-tap to zoom at finger position + optional hold-and-drag zoom (mobile helper)
+function enableDoubleTapHoldZoom() {
+  const mapDiv = map.getTargetElement();
+  if (!mapDiv) return;
 
-        let lastTap = 0;
-        let isHoldZoom = false;
-        let startY = 0;
-        let startZoom = 0;
+  let lastTap = 0;
+  let isHoldZoom = false;
 
-        function moveHandler(e) {
-          if (!isHoldZoom || !e.touches || e.touches.length !== 1) return;
-          e.preventDefault();
+  let startY = 0;
+  let startZoom = 0;
 
-          const dy = e.touches[0].clientY - startY;
-          const view = map.getView();
+  // Anchor (the thing we keep under the finger)
+  let anchorPx = null;     // [x,y] in map viewport pixels
+  let anchorCoord = null;  // map coord (EPSG:3857)
 
-          // Drag up = zoom in, drag down = zoom out
-          let newZoom = startZoom - (dy / 80);
+  // Used to detect "double tap without drag" vs hold-drag
+  let movedDuringHold = false;
 
-          newZoom = Math.max(view.getMinZoom(), Math.min(view.getMaxZoom(), newZoom));
-          view.setZoom(newZoom);
-        }
+  function clientToMapPixel(touch) {
+    const rect = mapDiv.getBoundingClientRect();
+    return [touch.clientX - rect.left, touch.clientY - rect.top];
+  }
 
-        mapDiv.addEventListener('touchstart', (e) => {
-          if (!e.touches || e.touches.length !== 1) return;
+  function centerForAnchorAtZoom(view, coord, px, zoom) {
+    const size = map.getSize();
+    if (!size) return view.getCenter();
 
-          const now = Date.now();
-          const dt = now - lastTap;
+    // OL view is not rotated in your config (pinchRotate disabled), so simple math is fine.
+    const res = view.getResolutionForZoom(zoom);
 
-          // Quick second tap enables hold-to-zoom
-          if (dt > 0 && dt < 350) {
-            e.preventDefault(); // prevents iOS smart zoom
-            startY = e.touches[0].clientY;
-            startZoom = map.getView().getZoom();
-            isHoldZoom = true;
+    // px is from top-left; map coords have +Y upwards, screen has +Y downwards
+    const dx = (px[0] - size[0] / 2) * res;
+    const dy = (size[1] / 2 - px[1]) * res;
 
-            mapDiv.addEventListener('touchmove', moveHandler, { passive: false });
-          } else {
-            isHoldZoom = false;
-          }
+    return [coord[0] - dx, coord[1] - dy];
+  }
 
-          lastTap = now;
-        }, { passive: false });
+  function applyZoomAnchored(newZoom) {
+    const view = map.getView();
+    if (!anchorPx || !anchorCoord) return;
 
-        mapDiv.addEventListener('touchend', () => {
-          if (!isHoldZoom) return;
-          isHoldZoom = false;
-          mapDiv.removeEventListener('touchmove', moveHandler, { passive: false });
-        }, { passive: true });
-      }
+    newZoom = Math.max(view.getMinZoom(), Math.min(view.getMaxZoom(), newZoom));
+    const newCenter = centerForAnchorAtZoom(view, anchorCoord, anchorPx, newZoom);
+
+    // Set center + zoom together so the anchor stays pinned under the finger
+    view.setCenter(newCenter);
+    view.setZoom(newZoom);
+  }
+
+  function moveHandler(e) {
+    if (!isHoldZoom || !e.touches || e.touches.length !== 1) return;
+
+    e.preventDefault();
+
+    const dy = e.touches[0].clientY - startY;
+    if (Math.abs(dy) > 6) movedDuringHold = true;
+
+    // Drag up = zoom in, drag down = zoom out
+    const newZoom = startZoom - (dy / 80);
+    applyZoomAnchored(newZoom);
+  }
+
+  mapDiv.addEventListener('touchstart', (e) => {
+    if (!e.touches || e.touches.length !== 1) return;
+
+    const now = Date.now();
+    const dt = now - lastTap;
+
+    if (dt > 0 && dt < 350) {
+      // Double tap detected
+      e.preventDefault(); // prevents iOS smart zoom
+
+      const touch = e.touches[0];
+      anchorPx = clientToMapPixel(touch);
+      anchorCoord = map.getCoordinateFromPixel(anchorPx);
+
+      startY = touch.clientY;
+      startZoom = map.getView().getZoom();
+      movedDuringHold = false;
+      isHoldZoom = true;
+
+      // If the user does NOT drag, we'll treat it as "double tap to zoom in"
+      // (we'll apply this on touchend if no significant movement happened)
+      mapDiv.addEventListener('touchmove', moveHandler, { passive: false });
+    } else {
+      isHoldZoom = false;
+      anchorPx = null;
+      anchorCoord = null;
+    }
+
+    lastTap = now;
+  }, { passive: false });
+
+  mapDiv.addEventListener('touchend', () => {
+    if (!isHoldZoom) return;
+
+    // If it was a quick double tap with no drag, zoom in by 1 at the tapped location
+    if (!movedDuringHold && anchorPx && anchorCoord) {
+      const view = map.getView();
+      const targetZoom = Math.min(view.getMaxZoom(), (view.getZoom() || 0) + 1);
+      const targetCenter = centerForAnchorAtZoom(view, anchorCoord, anchorPx, targetZoom);
+
+      view.animate({ center: targetCenter, zoom: targetZoom, duration: 180 });
+    }
+
+    isHoldZoom = false;
+    mapDiv.removeEventListener('touchmove', moveHandler, { passive: false });
+  }, { passive: true });
+}
   
   // =====================
   // Roads
