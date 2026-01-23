@@ -4,10 +4,6 @@
   <meta charset="UTF-8">
   <title>WDW Magic Explorer</title>
 
-<!-- Cloudflare Web Analytics -->
-  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "0afee9ed8cdf4874ade17a6cb4a77c8c"}'></script>
-  <!-- End Cloudflare Web Analytics -->
-  
   <!-- Prevent page zoom / smart zoom while keeping map gestures -->
   <meta id="viewport-meta" name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
@@ -48,6 +44,10 @@
       <img id="toggle-icon-img" src="icons/satellite.svg" alt="Satellite">
     </button>
 
+    <button id="roads-btn" class="btn-square" title="Roads overlay">
+      <img id="roads-icon-img" src="icons/roads.svg" alt="Roads">
+    </button>
+
     <button id="compare-btn" class="btn-square" title="Compare Mode">
       <img src="icons/compare.svg" alt="Compare">
     </button>
@@ -84,20 +84,8 @@
       <img src="icons/new.svg" alt="Changes">
     </button>
 
-    <button id="report-btn" class="btn-square" title="Report a change">
-      <img src="icons/report.svg" alt="Report">
-    </button>
-
     <button id="findme-btn" class="btn-square" title="Locate Me">
       <img src="icons/locateme.svg" alt="Locate Me">
-    </button>
-
-    <button id="roads-btn" class="btn-square" title="Roads overlay">
-      <img id="roads-icon-img" src="icons/roads.svg" alt="Roads">
-    </button>
-
-    <button id="quick-switch-btn" title="Quick Switch Dates" class="btn-square" style="display:none;">
-      <img src="icons/switch.svg" alt="Switch">
     </button>
   </div>
 
@@ -182,6 +170,15 @@
       <h3>Recent changes</h3>
       <button id="changes-close" type="button">Close</button>
     </header>
+
+    <!-- Call to action: report a change (moved from main map UI) -->
+    <div id="changes-cta">
+      <p class="changes-cta-text">Spotted something missing or out of date? Help keep the map accurate by reporting a change.</p>
+      <button id="report-btn" type="button" class="btn-primary">
+        Report a change
+      </button>
+    </div>
+
     <div class="meta" id="changes-meta">Loading…</div>
     <div id="changes-list"></div>
   </aside>
