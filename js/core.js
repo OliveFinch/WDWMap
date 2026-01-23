@@ -203,6 +203,9 @@
   let lastLeftCodeByPark = {}; // { [parkId]: code }
 
 
+  // Persist the last VIEWED (previously selected) map version per-park
+  let lastViewedCodeByPark = {}; // { [parkId]: code }
+
   let showingDisney = true; // false = ESRI
   let compareMode = false;
   let highlightMode = false;
@@ -300,11 +303,32 @@
     try { localStorage.setItem(getParkStorageKey('lastLeftCode'), code); } catch {}
   }
 
+
+  function loadLastViewedCode() {
+    const pid = currentParkId || 'wdw';
+    if (lastViewedCodeByPark[pid]) return lastViewedCodeByPark[pid];
+    try {
+      const v = localStorage.getItem(getParkStorageKey('lastViewedCode'));
+      if (v) {
+        lastViewedCodeByPark[pid] = v;
+        return v;
+      }
+    } catch {}
+    return null;
+  }
+
+  function saveLastViewedCode(code) {
+    const pid = currentParkId || 'wdw';
+    lastViewedCodeByPark[pid] = code;
+    try { localStorage.setItem(getParkStorageKey('lastViewedCode'), code); } catch {}
+  }
+
   function chooseLeftCodeForCompare(current) {
-    const remembered = loadLastLeftCode();
+    // Prefer the last VIEWED map version (like the old Switch Mode behaviour)
+    const remembered = loadLastViewedCode();
     if (isValidCode(remembered) && remembered !== current) return remembered;
 
-    // If remembered equals current, or is invalid, fall back to previous
+    // If there is no previous viewed date (first run), fall back to previous
     const prev = getPreviousCode(current);
     return prev === current ? current : prev;
   }
@@ -685,6 +709,7 @@
 
   function setSingleDate(newCode) {
     if (currentCode === newCode) return;
+    if (currentCode && currentCode !== newCode) saveLastViewedCode(currentCode);
     if (lastTwoDates[0] !== newCode) lastTwoDates = [newCode, lastTwoDates[0]];
     currentCode = newCode;
 
