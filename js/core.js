@@ -651,7 +651,7 @@
     map.removeLayer(disneyLayer);
     disneyLayer = makeDisneyLayer(newCode);
     disneyLayer.setVisible(visD);
-    disneyLayer.getSource().set('extent', disneyWorldExtent);
+    disneyLayer.getSource().set('extent', parkExtent);
     map.getLayers().setAt(0, disneyLayer);
 
     const esriId = getEsriIdForCode(newCode);
@@ -661,7 +661,7 @@
       esriLayer = makeEsriLayer(esriId);
       if (esriLayer) {
         esriLayer.set('esri_id', esriId);
-        esriLayer.getSource().set('extent', disneyWorldExtent);
+        esriLayer.getSource().set('extent', parkExtent);
         map.getLayers().setAt(1, esriLayer);
       }
     }
@@ -867,7 +867,7 @@
           esriLayer = makeEsriLayer(esriId);
           if (esriLayer) {
             esriLayer.set('esri_id', esriId);
-            esriLayer.getSource().set('extent', disneyWorldExtent);
+            esriLayer.getSource().set('extent', parkExtent);
             map.getLayers().setAt(1, esriLayer);
           }
         }
@@ -948,7 +948,7 @@
     navigator.geolocation.getCurrentPosition((pos) => {
       const coords = [pos.coords.longitude, pos.coords.latitude];
       const projected = ol.proj.fromLonLat(coords);
-      const within = ol.extent.containsCoordinate(disneyWorldExtent, projected);
+      const within = ol.extent.containsCoordinate(parkExtent, projected);
       if (!within) { showFindMeMessage('Outside of WDW'); return; }
 
       const feature = new ol.Feature({ geometry: new ol.geom.Point(projected) });
