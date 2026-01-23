@@ -431,6 +431,24 @@ html, body {
   background: #fff;
 }
 
+/* Call-to-action inside Recent changes */
+#changes-cta {
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+}
+
+.changes-cta-text {
+  font-size: 13px;
+  color: #444;
+  line-height: 1.35;
+  margin-bottom: 10px;
+}
+
+#changes-cta .btn-primary {
+  width: 100%;
+}
+
 #changes-list {
   height: calc(100vh - 112px);
   overflow-y: auto;
