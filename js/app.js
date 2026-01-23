@@ -65,44 +65,79 @@
     reportStatus.style.display = 'none';
   }
 
+  // =========================================
+  // Park picker (globe)
+  // =========================================
   function openParks() {
     if (!parksOverlay || !parksModal) return;
     parksOverlay.style.display = 'block';
     parksModal.style.display = 'block';
     parksOverlay.setAttribute('aria-hidden', 'false');
 
-    // Populate list once per open
-    if (parksList) {
-      const parks = (WDWMX.getParks && WDWMX.getParks()) || [
-        { parkId: 'dlr', name: 'Disneyland' },
-        { parkId: 'wdw', name: 'Walt Disney World' },
-        { parkId: 'dlp', name: 'Disneyland Paris' },
-        { parkId: 'hkdl', name: 'Hong Kong Disneyland' },
-        { parkId: 'shdr', name: 'Shanghai Disneyland' }
-      ];
+    if (!parksList) return;
 
-      const current = getParkId();
-      const desiredOrder = ['dlr','wdw','dlp','hkdl','shdr'];
-      parks.sort((a,b) => desiredOrder.indexOf(a.parkId) - desiredOrder.indexOf(b.parkId));
-      parksList.innerHTML = '';
-      parks.forEach((p) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'park-pick-btn';
-        btn.dataset.parkId = p.parkId;
-                btn.textContent = p.name;
-        if (p.parkId === current) btn.classList.add('is-current');
+    const current = getParkId();
+
+    // Explicit order (with Tokyo Disneyland inserted after WDW)
+    const desiredOrder = ['dlr', 'wdw', 'tdl', 'dlp', 'hkdl', 'shdr'];
+
+    // Base list (use WDWMX.getParks if available, but normalise names and insert Tokyo)
+    let parks = (WDWMX.getParks && WDWMX.getParks()) || [
+      { parkId: 'dlr', name: 'Disneyland' },
+      { parkId: 'wdw', name: 'Walt Disney World' },
+      { parkId: 'dlp', name: 'Disneyland Paris' },
+      { parkId: 'hkdl', name: 'Hong Kong Disneyland' },
+      { parkId: 'shdr', name: 'Shanghai Disneyland' }
+    ];
+
+    // Normalise names as you’ve standardised elsewhere
+    parks = parks.map(p => {
+      const id = p.parkId;
+      if (id === 'dlr') return { parkId: 'dlr', name: 'Disneyland' };
+      if (id === 'shdr') return { parkId: 'shdr', name: 'Shanghai Disneyland' };
+      return { parkId: id, name: p.name };
+    });
+
+    // Ensure Tokyo Disneyland exists and is disabled (not supported yet)
+    const hasTokyo = parks.some(p => p.parkId === 'tdl');
+    if (!hasTokyo) {
+      parks.push({ parkId: 'tdl', name: 'Tokyo Disneyland', disabled: true });
+    } else {
+      parks = parks.map(p => (p.parkId === 'tdl' ? { ...p, name: 'Tokyo Disneyland', disabled: true } : p));
+    }
+
+    // Sort into the desired order
+    parks.sort((a, b) => desiredOrder.indexOf(a.parkId) - desiredOrder.indexOf(b.parkId));
+
+    // Render
+    parksList.innerHTML = '';
+    parks.forEach((p) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'park-pick-btn';
+      btn.dataset.parkId = p.parkId;
+      btn.textContent = p.name;
+
+      if (p.parkId === current) btn.classList.add('is-current');
+
+      // Disabled park (Tokyo Disneyland)
+      if (p.disabled) {
+        btn.classList.add('is-disabled');
+        btn.setAttribute('aria-disabled', 'true');
+        btn.title = 'Not supported yet';
+        // No click handler
+      } else {
         btn.addEventListener('click', () => {
           // Persist selection and reload the app into the selected park
           try { localStorage.setItem('wdwmx:parkId', p.parkId); } catch (e) {}
           const url = new URL(window.location.href);
           url.searchParams.set('park', p.parkId);
-          // Keep compare/date parameters if you add them later; for now just reload with park set
           window.location.href = url.toString();
         });
-        parksList.appendChild(btn);
-      });
-    }
+      }
+
+      parksList.appendChild(btn);
+    });
   }
 
   function closeParks() {
@@ -112,7 +147,7 @@
     parksOverlay.setAttribute('aria-hidden', 'true');
   }
 
-function openReportModal() {
+  function openReportModal() {
     if (!reportOverlay || !reportModal) return;
     reportOverlay.style.display = 'block';
     reportModal.style.display = 'block';
@@ -234,7 +269,6 @@ function openReportModal() {
   function normalizeCategory(v) {
     const s = safeText(v, '').trim().toLowerCase();
     if (!s) return 'other';
-    // Accept either your UI values or future aliases
     if (s === 'new') return 'new';
     if (s === 'changed' || s === 'change') return 'changed';
     if (s === 'removed' || s === 'remove') return 'removed';
@@ -249,7 +283,6 @@ function openReportModal() {
     if (c === 'changed') return 'Changed';
     if (c === 'removed') return 'Removed';
     if (c === 'other') return 'Other';
-    // if you add more categories later, show them safely
     return c.charAt(0).toUpperCase() + c.slice(1);
   }
 
@@ -386,13 +419,11 @@ function openReportModal() {
         btn.classList.add('change-item-active');
       }
 
-      // Main line: description
       const title = document.createElement('p');
       title.className = 'change-title';
       title.textContent = safeText(it.description || 'Change');
       btn.appendChild(title);
 
-      // Line 2: map label + category (type)
       const line2 = document.createElement('p');
       line2.className = 'change-sub';
 
@@ -401,7 +432,6 @@ function openReportModal() {
       line2.textContent = mapText ? `${mapText} · ${cat}` : cat;
       btn.appendChild(line2);
 
-      // Line 3: Reported by X on DATE (no time)
       const line3 = document.createElement('p');
       line3.className = 'change-sub';
 
@@ -497,7 +527,6 @@ function openReportModal() {
       return;
     }
 
-    // IMPORTANT: use the dropdown value as category, so it shows in Map changes.
     const chosenCategory = normalizeCategory(reportType && reportType.value);
 
     const payload = {
@@ -576,12 +605,10 @@ function openReportModal() {
     if (e.key === 'Escape') {
       closeReportModal();
       closeChangesBoard();
+      closeParks();
     }
   });
 
-  // =========================
-  // Park picker (globe)
-  // =========================
   if (parksBtn) parksBtn.addEventListener('click', openParks);
   if (parksOverlay) parksOverlay.addEventListener('click', closeParks);
   if (parksClose) parksClose.addEventListener('click', closeParks);
