@@ -47,6 +47,8 @@
       minZoom: 13,
       maxZoom: 21,
       yScheme: 'xyz',
+      // Default view for DLP (tile coordinates)
+      defaultView: { z: 17, x: 66547, y: 45083 },
       boundsByZoom: {
         "13": { "minX": 4156, "maxX": 4161, "minY": 2816, "maxY": 2819 },
         "14": { "minX": 8312, "maxX": 8323, "minY": 5632, "maxY": 5639 },
@@ -143,6 +145,15 @@
     const n = Math.pow(2, z);
     const lon = (x / n) * 360 - 180;
     const latRad = Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / n)));
+    const lat = (latRad * 180) / Math.PI;
+    return [lon, lat];
+  }
+
+  // Convert XYZ tile coords to lon/lat at the tile's CENTER.
+  function tileXYZToLonLatCenter(x, y, z) {
+    const n = Math.pow(2, z);
+    const lon = ((x + 0.5) / n) * 360 - 180;
+    const latRad = Math.atan(Math.sinh(Math.PI * (1 - (2 * (y + 0.5)) / n)));
     const lat = (latRad * 180) / Math.PI;
     return [lon, lat];
   }
@@ -525,6 +536,19 @@
     const park = getCurrentPark();
     parkExtent = extentFromTileBounds(park);
 
+    // Default center/zoom: either an explicit per-park tile coordinate, or the extent centre.
+    let initialCenter = parkExtent ? ol.extent.getCenter(parkExtent) : ol.proj.fromLonLat([-81.566575, 28.386606]);
+    let initialZoom = park.minZoom + 2;
+
+    if (park && park.defaultView && Number.isFinite(park.defaultView.x) && Number.isFinite(park.defaultView.y) && Number.isFinite(park.defaultView.z)) {
+      const z = Math.max(park.minZoom, Math.min(park.maxZoom, park.defaultView.z));
+      const n = Math.pow(2, z);
+      const yxyz = (park.yScheme === 'tms') ? ((n - 1) - park.defaultView.y) : park.defaultView.y;
+      const [lon, lat] = tileXYZToLonLatCenter(park.defaultView.x, yxyz, z);
+      initialCenter = ol.proj.fromLonLat([lon, lat]);
+      initialZoom = z;
+    }
+
     if (parkExtent) {
       disneyLayer.getSource().set('extent', parkExtent);
       if (esriLayer) esriLayer.getSource().set('extent', parkExtent);
@@ -535,8 +559,8 @@
       target: 'map',
       layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
       view: new ol.View({
-        center: parkExtent ? ol.extent.getCenter(parkExtent) : ol.proj.fromLonLat([-81.566575, 28.386606]),
-        zoom: park.minZoom + 2,
+        center: initialCenter,
+        zoom: initialZoom,
         minZoom: park.minZoom,
         maxZoom: park.maxZoom,
         extent: parkExtent || undefined
