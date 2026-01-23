@@ -74,22 +74,23 @@
     // Populate list once per open
     if (parksList) {
       const parks = (WDWMX.getParks && WDWMX.getParks()) || [
+        { parkId: 'dlr', name: 'Disneyland' },
         { parkId: 'wdw', name: 'Walt Disney World' },
         { parkId: 'dlp', name: 'Disneyland Paris' },
-        { parkId: 'dlr', name: 'Disneyland Resort (California)' },
         { parkId: 'hkdl', name: 'Hong Kong Disneyland' },
-        { parkId: 'shdr', name: 'Shanghai Disney Resort' }
+        { parkId: 'shdr', name: 'Shanghai Disneyland' }
       ];
 
       const current = getParkId();
+      const desiredOrder = ['dlr','wdw','dlp','hkdl','shdr'];
+      parks.sort((a,b) => desiredOrder.indexOf(a.parkId) - desiredOrder.indexOf(b.parkId));
       parksList.innerHTML = '';
       parks.forEach((p) => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'park-pick-btn';
         btn.dataset.parkId = p.parkId;
-        const displayName = (p.parkId === 'dlr') ? 'Disneyland' : p.name;
-        btn.textContent = displayName;
+                btn.textContent = p.name;
         if (p.parkId === current) btn.classList.add('is-current');
         btn.addEventListener('click', () => {
           // Persist selection and reload the app into the selected park
