@@ -754,3 +754,12 @@ html, body {
 /* Make Recent changes layout resilient when adding callouts */
 #changes-board { flex-direction: column; }
 #changes-list { flex: 1; height: auto; }
+
+
+/* Disabled park option (e.g., Tokyo Disneyland) */
+.park-pick-btn.is-disabled {
+  opacity: 0.45;
+  filter: grayscale(1);
+  cursor: not-allowed;
+  pointer-events: none; /* blocks taps/clicks */
+}
