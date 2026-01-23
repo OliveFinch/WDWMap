@@ -197,7 +197,11 @@
   let currentCode = null;
   let leftCode = null;
   let rightCode = null;
-  let lastTwoDates = [null, null];
+  let lastTwoDates = \[null, null\];
+
+  // Persist the last chosen LEFT compare date per-park
+  let lastLeftCodeByPark = {}; // { [parkId]: code }
+
 
   let showingDisney = true; // false = ESRI
   let compareMode = false;
@@ -266,6 +270,43 @@
   function getPreviousCode(code) {
     const i = serverOptions.findIndex((o) => o.code === code);
     return i > 0 ? serverOptions[i - 1].code : serverOptions[0].code;
+  }
+
+  function isValidCode(code) {
+    return !!code && serverOptions.some((o) => o.code === code);
+  }
+
+  function getParkStorageKey(suffix) {
+    return `wdwmx_${suffix}_${currentParkId || 'wdw'}`;
+  }
+
+  function loadLastLeftCode() {
+    // Load from memory first, then localStorage (if available)
+    const pid = currentParkId || 'wdw';
+    if (lastLeftCodeByPark[pid]) return lastLeftCodeByPark[pid];
+    try {
+      const v = localStorage.getItem(getParkStorageKey('lastLeftCode'));
+      if (v) {
+        lastLeftCodeByPark[pid] = v;
+        return v;
+      }
+    } catch {}
+    return null;
+  }
+
+  function saveLastLeftCode(code) {
+    const pid = currentParkId || 'wdw';
+    lastLeftCodeByPark[pid] = code;
+    try { localStorage.setItem(getParkStorageKey('lastLeftCode'), code); } catch {}
+  }
+
+  function chooseLeftCodeForCompare(current) {
+    const remembered = loadLastLeftCode();
+    if (isValidCode(remembered) && remembered !== current) return remembered;
+
+    // If remembered equals current, or is invalid, fall back to previous
+    const prev = getPreviousCode(current);
+    return prev === current ? current : prev;
   }
 
   // =====================
@@ -832,6 +873,7 @@
 
     fillDatePopup(leftDatePopup, leftCode, (code) => {
       leftCode = code;
+      saveLastLeftCode(code);
       (highlightMode ? launchHighlightMode : launchSwipeMode)();
       updateDateUI();
     });
@@ -887,7 +929,7 @@
 
     if (compareMode) {
       rightCode = currentCode;
-      leftCode = getPreviousCode(currentCode);
+      leftCode = chooseLeftCodeForCompare(currentCode);
       highlightMode = false;
       showSensitivity = false;
       leftDateBtn.style.display = 'flex';
