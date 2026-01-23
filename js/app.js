@@ -104,15 +104,6 @@
   }
 
   // Prefer right code in compare mode, else current
-  function getActiveParkId() {
-    try {
-      if (WDWMX.getParkId) return WDWMX.getParkId();
-      if (WDWMX.getPark && WDWMX.getPark().parkId) return WDWMX.getPark().parkId;
-    } catch {}
-    return 'wdw';
-  }
-
-  // Prefer right code in compare mode, else current
   function getActiveMapCode() {
     try {
       if (WDWMX.getCompareMode && WDWMX.getCompareMode()) {
@@ -206,7 +197,7 @@
   }
 
   // =========================
-  // servers.json ordering (same as date picker)
+  // servers2.json ordering (same as date picker)
   // =========================
   let __serversIndexPromise = null;
 
@@ -226,14 +217,8 @@
       let list = tryGetServersFromWDWMX();
 
       if (!list) {
-        const parkId = getActiveParkId();
-        const fallbackUrl = 'parks/wdw/servers.json';
-        const url = (WDWMX.getServersUrl && WDWMX.getServersUrl(parkId))
-          ? WDWMX.getServersUrl(parkId)
-          : `parks/${parkId || 'wdw'}/servers.json`;
-
-        const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) throw new Error(`Could not load servers.json: ${res.status}`);
+        const res = await fetch('servers2.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error(`Could not load servers2.json: ${res.status}`);
         list = await res.json();
       }
 
@@ -279,8 +264,7 @@
       changesMeta.textContent = 'Highlighted changes reflect currently selected map';
     }
 
-    const parkId = getActiveParkId();
-    const url = `${API_BASE}/api/changes-feed?limit=200&parkId=${encodeURIComponent(parkId)}`;
+    const url = `${API_BASE}/api/changes-feed?limit=200`;
     const res = await fetch(url, { method: 'GET' });
 
     if (!res.ok) {
@@ -304,12 +288,12 @@
       return;
     }
 
-    // Sort using servers.json order (newer maps first)
+    // Sort using servers2.json order (newer maps first)
     let serversIndex = null;
     try {
       serversIndex = await loadServersIndex();
     } catch (e) {
-      console.warn('servers.json ordering unavailable; falling back to approved_at ordering.', e);
+      console.warn('servers2.json ordering unavailable; falling back to approved_at ordering.', e);
     }
 
     if (serversIndex && serversIndex.indexByCode && serversIndex.indexByCode.size) {
@@ -459,10 +443,7 @@
     // IMPORTANT: use the dropdown value as category, so it shows in Map changes.
     const chosenCategory = normalizeCategory(reportType && reportType.value);
 
-    const parkId = getActiveParkId();
-
     const payload = {
-      parkId,
       serverId: code,
       mapVersion: code,
       description: desc,
@@ -517,7 +498,12 @@
   // =========================
   reportBtn && reportBtn.addEventListener('click', () => {
     if (reportModal && reportModal.style.display === 'block') closeReportModal();
-    else openReportModal();
+    else {
+      // If the user opened the report flow from the Recent changes panel,
+      // close it first so overlays don't stack.
+      closeChangesBoard();
+      openReportModal();
+    }
   });
 
   reportClose && reportClose.addEventListener('click', closeReportModal);
