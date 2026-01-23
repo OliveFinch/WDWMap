@@ -48,18 +48,18 @@
       maxZoom: 21,
       yScheme: 'xyz',
       // Default view for DLP (tile coordinates)
-      defaultView: { z: 17, x: 66547, y: 45083 },
-      boundsByZoom: {
-        "13": { "minX": 4156, "maxX": 4161, "minY": 2816, "maxY": 2819 },
-        "14": { "minX": 8312, "maxX": 8323, "minY": 5632, "maxY": 5639 },
-        "15": { "minX": 16624, "maxX": 16647, "minY": 11264, "maxY": 11279 },
-        "16": { "minX": 33248, "maxX": 33295, "minY": 22528, "maxY": 22559 },
-        "17": { "minX": 66540, "maxX": 66566, "minY": 45056, "maxY": 45119 },
-        "18": { "minX": 133080, "maxX": 133133, "minY": 90112, "maxY": 90239 },
-        "19": { "minX": 266160, "maxX": 266267, "minY": 180317, "maxY": 180391 },
-        "20": { "minX": 532355, "maxX": 532443, "minY": 360634, "maxY": 360753 },
-        "21": { "minX": 1064774, "maxX": 1064887, "minY": 721268, "maxY": 721507 }
-      }
+defaultView: { z: 15, x: 16637, y: 11271 },
+boundsByZoom: {
+  "13": { "minX": 4156, "maxX": 4161, "minY": 2816, "maxY": 2819 },
+  "14": { "minX": 8312, "maxX": 8323, "minY": 5632, "maxY": 5639 },
+  "15": { "minX": 16624, "maxX": 16647, "minY": 11264, "maxY": 11279 },
+  "16": { "minX": 33248, "maxX": 33295, "minY": 22528, "maxY": 22559 },
+  "17": { "minX": 66496, "maxX": 66591, "minY": 45056, "maxY": 45119 },
+  "18": { "minX": 133080, "maxX": 133133, "minY": 90112, "maxY": 90239 },
+  "19": { "minX": 266160, "maxX": 266267, "minY": 180317, "maxY": 180391 },
+  "20": { "minX": 532355, "maxX": 532443, "minY": 360634, "maxY": 360753 },
+  "21": { "minX": 1064774, "maxX": 1064887, "minY": 721268, "maxY": 721507 }
+}
     },
     dlr: {
       parkId: 'dlr',
