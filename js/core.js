@@ -626,7 +626,7 @@
     settingsBtn.style.display = (compareMode && highlightMode) ? 'flex' : 'none';
 
     leftDateBtn.style.display = compareMode ? 'flex' : 'none';
-    quickSwitchBtn.style.display = (lastTwoDates[1] && !compareMode) ? 'flex' : 'none';
+    if (quickSwitchBtn) quickSwitchBtn.style.display = (lastTwoDates[1] && !compareMode) ? 'flex' : 'none';
 
     toggleIconImg.src = showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
     toggleIconImg.alt = showingDisney ? 'Satellite' : 'Disney Map';
@@ -927,9 +927,10 @@
     setRoadsLayerState();
   });
 
-  quickSwitchBtn.addEventListener('click', () => {
+  if (quickSwitchBtn) quickSwitchBtn.addEventListener('click', () => {
     if (lastTwoDates[1]) setSingleDate(lastTwoDates[1]);
   });
+
 
   // Find Me
   const findmeMessage = document.getElementById('findme-message');
