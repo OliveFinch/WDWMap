@@ -206,7 +206,7 @@
   }
 
   // =========================
-  // servers2.json ordering (same as date picker)
+  // servers.json ordering (same as date picker)
   // =========================
   let __serversIndexPromise = null;
 
@@ -227,13 +227,13 @@
 
       if (!list) {
         const parkId = getActiveParkId();
-        const fallbackUrl = 'servers2.json';
+        const fallbackUrl = 'parks/wdw/servers.json';
         const url = (WDWMX.getServersUrl && WDWMX.getServersUrl(parkId))
           ? WDWMX.getServersUrl(parkId)
-          : (parkId && parkId !== 'wdw' ? `parks/${parkId}/servers2.json` : fallbackUrl);
+          : `parks/${parkId || 'wdw'}/servers.json`;
 
         const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) throw new Error(`Could not load servers2.json: ${res.status}`);
+        if (!res.ok) throw new Error(`Could not load servers.json: ${res.status}`);
         list = await res.json();
       }
 
@@ -304,12 +304,12 @@
       return;
     }
 
-    // Sort using servers2.json order (newer maps first)
+    // Sort using servers.json order (newer maps first)
     let serversIndex = null;
     try {
       serversIndex = await loadServersIndex();
     } catch (e) {
-      console.warn('servers2.json ordering unavailable; falling back to approved_at ordering.', e);
+      console.warn('servers.json ordering unavailable; falling back to approved_at ordering.', e);
     }
 
     if (serversIndex && serversIndex.indexByCode && serversIndex.indexByCode.size) {
