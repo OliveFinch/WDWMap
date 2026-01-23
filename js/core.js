@@ -953,8 +953,15 @@
     compareMode = !compareMode;
 
     if (compareMode) {
+      // Compare LAST VIEWED (left) against CURRENT (right). If the user has not
+      // previously viewed another version for this park, fall back to previous-dated on the left.
+      const remembered = loadLastViewedCode();
       rightCode = currentCode;
-      leftCode = chooseLeftCodeForCompare(currentCode);
+      if (isValidCode(remembered) && remembered !== currentCode) {
+        leftCode = remembered;
+      } else {
+        leftCode = chooseLeftCodeForCompare(currentCode);
+      }
       highlightMode = false;
       showSensitivity = false;
       leftDateBtn.style.display = 'flex';
