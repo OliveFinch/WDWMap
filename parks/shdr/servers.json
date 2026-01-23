@@ -1,7 +1,7 @@
 [
   {
     "code": "740479929",
-    "label": "Current",
+    "label": "January 2026",
     "esri_id": "58924",
     "esri_label": "25 Sep 2025",
     "notes": "Shanghai tiles use TMS-style Y (handled in code)."
