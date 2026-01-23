@@ -118,6 +118,17 @@
   // Current park (default to WDW for now; UI switch can be added later)
   let currentParkId = 'wdw';
 
+  // Park selection: URL param takes precedence, then localStorage, then default
+  try {
+    const urlPid = new URLSearchParams(window.location.search).get('park');
+    const storedPid = localStorage.getItem('wdwmx:parkId');
+    const candidate = (urlPid || storedPid || 'wdw').toLowerCase();
+    if (PARKS[candidate]) currentParkId = candidate;
+  } catch (e) {
+    // ignore
+  }
+
+
   function getCurrentPark() {
     return PARKS[currentParkId] || PARKS.wdw;
   }
@@ -545,6 +556,11 @@
 
     // Dock quick pan
     const dock = document.getElementById('location-dock');
+    if (dock && currentParkId !== 'wdw') {
+      // Future: park-specific location buttons. For now, blank the dock for non-WDW parks.
+      dock.innerHTML = '';
+    }
+
     dock.querySelectorAll('button').forEach((btn) => {
       btn.addEventListener('click', () => {
         const [lonStr, latStr] = (btn.dataset.coords || '').split(',');
@@ -1108,6 +1124,8 @@
     window.WDWMX.getServersUrl = (parkId) => getServersUrl(parkId);
     window.WDWMX.getParkId = () => currentParkId;
     window.WDWMX.getPark = () => getCurrentPark();
+    window.WDWMX.getParks = () => Object.values(PARKS).map(p => ({ parkId: p.parkId, name: p.name }));
+
   } catch (err) {
     alert('Failed to load servers.json: ' + err);
   }
