@@ -387,8 +387,8 @@ html, body {
   top: 0;
   right: 0;
   height: 100vh;
-  width: fit-content;
-  max-width: 92vw;
+  width: min(360px, 92vw);
+  max-width:  92vw;
   background: rgba(255,255,255,0.98);
   border-left: 1.5px solid #ccc;
   box-shadow: -6px 0 24px #0002;
@@ -754,11 +754,3 @@ html, body {
 /* Make Recent changes layout resilient when adding callouts */
 #changes-board { flex-direction: column; }
 #changes-list { flex: 1; height: auto; }
-
-/* Disabled park option (e.g., Tokyo Disneyland) */
-.park-pick-btn.is-disabled {
-  opacity: 0.45;
-  filter: grayscale(1);
-  cursor: not-allowed;
-  pointer-events: none; /* blocks taps/clicks */
-}
