@@ -8,13 +8,182 @@
   // =====================
   // Core config
   // =====================
-  const DISNEY_TILE_URL = (code) =>
-    `https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/${code}/{z}/{x}/{y}.jpg`;
 
   const ESRI_TILE_URL = (esriId) =>
     `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${esriId}/{z}/{y}/{x}`;
 
   const ROADS_TILE_URL = 'https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}';
+
+  // =====================
+  // Park configuration (prep for multi-park support)
+  // =====================
+  // tileTemplate supports {code} (optional) and {z}/{x}/{y}
+  // yScheme: 'xyz' (standard) or 'tms' (server expects flipped Y)
+  const PARKS = {
+    wdw: {
+      parkId: 'wdw',
+      name: 'Walt Disney World',
+      tileTemplate: 'https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/{code}/{z}/{x}/{y}.jpg',
+      minZoom: 11,
+      maxZoom: 20,
+      yScheme: 'xyz',
+      boundsByZoom: {
+        "11": { "minX": 555, "maxX": 564, "minY": 851, "maxY": 859 },
+        "12": { "minX": 1118, "maxX": 1125, "minY": 1706, "maxY": 1715 },
+        "13": { "minX": 2228, "maxX": 2251, "minY": 3412, "maxY": 3431 },
+        "14": { "minX": 4456, "maxX": 4503, "minY": 6824, "maxY": 6863 },
+        "15": { "minX": 8928, "maxX": 8987, "minY": 13672, "maxY": 13699 },
+        "16": { "minX": 17856, "maxX": 17975, "minY": 27344, "maxY": 27399 },
+        "17": { "minX": 35712, "maxX": 35951, "minY": 54688, "maxY": 54799 },
+        "18": { "minX": 71424, "maxX": 71903, "minY": 109376, "maxY": 109599 },
+        "19": { "minX": 143264, "maxX": 143455, "minY": 218752, "maxY": 219199 },
+        "20": { "minX": 286528, "maxX": 286911, "minY": 437504, "maxY": 438399 }
+      }
+    },
+    dlp: {
+      parkId: 'dlp',
+      name: 'Disneyland Paris',
+      tileTemplate: 'https://media.disneylandparis.com/mapTiles/images/{z}/{x}/{y}.jpg',
+      minZoom: 13,
+      maxZoom: 21,
+      yScheme: 'xyz',
+      boundsByZoom: {
+        "13": { "minX": 4156, "maxX": 4161, "minY": 2816, "maxY": 2819 },
+        "14": { "minX": 8312, "maxX": 8323, "minY": 5632, "maxY": 5639 },
+        "15": { "minX": 16624, "maxX": 16647, "minY": 11264, "maxY": 11279 },
+        "16": { "minX": 33248, "maxX": 33295, "minY": 22528, "maxY": 22559 },
+        "17": { "minX": 66540, "maxX": 66566, "minY": 45056, "maxY": 45119 },
+        "18": { "minX": 133080, "maxX": 133133, "minY": 90112, "maxY": 90239 },
+        "19": { "minX": 266160, "maxX": 266267, "minY": 180317, "maxY": 180391 },
+        "20": { "minX": 532355, "maxX": 532443, "minY": 360634, "maxY": 360753 },
+        "21": { "minX": 1064774, "maxX": 1064887, "minY": 721268, "maxY": 721507 }
+      }
+    },
+    dlr: {
+      parkId: 'dlr',
+      name: 'Disneyland Resort (California)',
+      tileTemplate: 'https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/disneyland/538595539/{z}/{x}/{y}.jpg',
+      minZoom: 14,
+      maxZoom: 20,
+      yScheme: 'xyz',
+      boundsByZoom: {
+        "14": { "minX": 2818, "maxX": 2831, "minY": 6549, "maxY": 6560 },
+        "15": { "minX": 5636, "maxX": 5663, "minY": 13102, "maxY": 13117 },
+        "16": { "minX": 11272, "maxX": 11327, "minY": 26208, "maxY": 26231 },
+        "17": { "minX": 22544, "maxX": 22655, "minY": 52416, "maxY": 52463 },
+        "18": { "minX": 45088, "maxX": 45311, "minY": 104832, "maxY": 104927 },
+        "19": { "minX": 90176, "maxX": 90623, "minY": 209664, "maxY": 209855 },
+        "20": { "minX": 180352, "maxX": 181247, "minY": 419328, "maxY": 419739 }
+      }
+    },
+    hkdl: {
+      parkId: 'hkdl',
+      name: 'Hong Kong Disneyland',
+      tileTemplate: 'https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/hkdl/42/{z}/{x}/{y}.jpg',
+      minZoom: 14,
+      maxZoom: 20,
+      yScheme: 'xyz',
+      boundsByZoom: {
+        "14": { "minX": 13380, "maxX": 13383, "minY": 7148, "maxY": 7150 },
+        "15": { "minX": 26762, "maxX": 26765, "minY": 14297, "maxY": 14300 },
+        "16": { "minX": 53524, "maxX": 53531, "minY": 28594, "maxY": 28601 },
+        "17": { "minX": 107048, "maxX": 107063, "minY": 57188, "maxY": 57203 },
+        "18": { "minX": 214096, "maxX": 214127, "minY": 114376, "maxY": 114407 },
+        "19": { "minX": 428207, "maxX": 428242, "minY": 228770, "maxY": 228807 },
+        "20": { "minX": 856414, "maxX": 856485, "minY": 457569, "maxY": 457615 }
+      }
+    },
+    shdr: {
+      parkId: 'shdr',
+      name: 'Shanghai Disney Resort',
+      tileTemplate: 'https://secure.cdn1.wdpromedia.com/media/maps/prod/shdr-baidu-mob-en/740479929/{z}/{x}/{y}.jpg',
+      minZoom: 12,
+      maxZoom: 21,
+      yScheme: 'tms', // server expects flipped Y
+      boundsByZoom: {
+        "12": { "minX": 825, "maxX": 827, "minY": 220, "maxY": 222 },
+        "13": { "minX": 1651, "maxX": 1655, "minY": 441, "maxY": 444 },
+        "14": { "minX": 3302, "maxX": 3310, "minY": 882, "maxY": 889 },
+        "15": { "minX": 6609, "maxX": 6617, "minY": 1768, "maxY": 1776 },
+        "16": { "minX": 13218, "maxX": 13235, "minY": 3536, "maxY": 3553 },
+        "17": { "minX": 26447, "maxX": 26459, "minY": 7084, "maxY": 7095 },
+        "18": { "minX": 52895, "maxX": 52919, "minY": 14168, "maxY": 14191 },
+        "19": { "minX": 105791, "maxX": 105839, "minY": 28336, "maxY": 28383 },
+        "20": { "minX": 211583, "maxX": 211679, "minY": 56672, "maxY": 56767 },
+        "21": { "minX": 423167, "maxX": 423359, "minY": 113344, "maxY": 113535 }
+      }
+    }
+  };
+
+  // Current park (default to WDW for now; UI switch can be added later)
+  let currentParkId = 'wdw';
+
+  function getCurrentPark() {
+    return PARKS[currentParkId] || PARKS.wdw;
+  }
+
+  // Convert XYZ tile coords to lon/lat at the tile's NW corner.
+  function tileXYZToLonLat(x, y, z) {
+    const n = Math.pow(2, z);
+    const lon = (x / n) * 360 - 180;
+    const latRad = Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / n)));
+    const lat = (latRad * 180) / Math.PI;
+    return [lon, lat];
+  }
+
+  // Build a tight EPSG:3857 extent from tile bounds (using highest available zoom).
+  // For TMS servers, bounds are in server Y, so we convert them to XYZ for calculations.
+  function extentFromTileBounds(park) {
+    if (!park || !park.boundsByZoom) return null;
+
+    const zoomKeys = Object.keys(park.boundsByZoom)
+      .map((k) => parseInt(k, 10))
+      .filter((n) => Number.isFinite(n))
+      .sort((a, b) => b - a);
+
+    if (!zoomKeys.length) return null;
+
+    const z = zoomKeys[0];
+    const b = park.boundsByZoom[String(z)];
+    if (!b) return null;
+
+    const n = Math.pow(2, z);
+
+    const minX = b.minX;
+    const maxX = b.maxX;
+
+    let minYxyz = b.minY;
+    let maxYxyz = b.maxY;
+
+    if (park.yScheme === 'tms') {
+      minYxyz = (n - 1) - b.maxY;
+      maxYxyz = (n - 1) - b.minY;
+    }
+
+    const nw = tileXYZToLonLat(minX, minYxyz, z);
+    const ne = tileXYZToLonLat(maxX + 1, minYxyz, z);
+    const sw = tileXYZToLonLat(minX, maxYxyz + 1, z);
+    const se = tileXYZToLonLat(maxX + 1, maxYxyz + 1, z);
+
+    const p1 = ol.proj.fromLonLat(nw);
+    const p2 = ol.proj.fromLonLat(ne);
+    const p3 = ol.proj.fromLonLat(sw);
+    const p4 = ol.proj.fromLonLat(se);
+
+    const xs = [p1[0], p2[0], p3[0], p4[0]];
+    const ys = [p1[1], p2[1], p3[1], p4[1]];
+
+    const minE = [Math.min(...xs), Math.min(...ys)];
+    const maxE = [Math.max(...xs), Math.max(...ys)];
+
+    // Small padding so panning doesn't feel like it hits a hard wall
+    const padX = (maxE[0] - minE[0]) * 0.02;
+    const padY = (maxE[1] - minE[1]) * 0.02;
+
+    return [minE[0] - padX, minE[1] - padY, maxE[0] + padX, maxE[1] + padY];
+  }
+
+
 
   // =====================
   // App State
@@ -63,13 +232,8 @@
   const infoIcon = document.getElementById('info-icon');
   const infoOverlay = document.getElementById('info-overlay');
   const infoClose = document.getElementById('info-close');
-
-  // Extent
-  const disneyWorldExtent = ol.proj.transformExtent(
-    [-81.9200, 28.1772, -81.2244, 28.6390],
-    'EPSG:4326',
-    'EPSG:3857'
-  );
+  // Extent (dynamic per park)
+  let parkExtent = null;
 
   // Sensitivity (reversed slider mapping)
   function sliderToThreshold(val) {
@@ -103,13 +267,29 @@
   // Layers
   // =====================
   function makeDisneyLayer(code) {
+    const park = getCurrentPark();
+    const tpl = String(park.tileTemplate || '');
+
     return new ol.layer.Tile({
       source: new ol.source.XYZ({
-        url: DISNEY_TILE_URL(code),
-        minZoom: 0,
-        maxZoom: 20,
+        minZoom: park.minZoom,
+        maxZoom: park.maxZoom,
+        tileUrlFunction: function (tileCoord) {
+          if (!tileCoord) return '';
+          const z = tileCoord[0];
+          const x = tileCoord[1];
+          const y = tileCoord[2];
+
+          const n = Math.pow(2, z);
+          const yy = (park.yScheme === 'tms') ? ((n - 1) - y) : y;
+
+          let url = tpl;
+          if (url.indexOf('{code}') >= 0) url = url.replace('{code}', String(code));
+          url = url.replace('{z}', String(z)).replace('{x}', String(x)).replace('{y}', String(yy));
+          return url;
+        }
       }),
-      visible: true,
+      visible: true
     });
   }
 
@@ -167,8 +347,13 @@
   }
 
   function makeHighlightLayer(baseCode, compareCode) {
-    const baseUrlTpl = DISNEY_TILE_URL(baseCode);
-    const compareUrlTpl = DISNEY_TILE_URL(compareCode);
+    const park = getCurrentPark();
+    const baseUrlTpl = (park.tileTemplate.indexOf('{code}') >= 0)
+      ? park.tileTemplate.replace('{code}', String(baseCode))
+      : park.tileTemplate;
+    const compareUrlTpl = (park.tileTemplate.indexOf('{code}') >= 0)
+      ? park.tileTemplate.replace('{code}', String(compareCode))
+      : park.tileTemplate;
 
     return new ol.layer.Tile({
       source: new ol.source.XYZ({
@@ -180,7 +365,7 @@
           const compareUrl = compareUrlTpl
             .replace('{z}', zxy[0])
             .replace('{x}', zxy[1])
-            .replace('{y}', zxy[2]);
+            .replace('{y}', String((park.yScheme === 'tms') ? ((Math.pow(2, zxy[0]) - 1) - zxy[2]) : zxy[2]));
 
           const baseImg = new Image();
           baseImg.crossOrigin = 'anonymous';
@@ -256,19 +441,24 @@
     esriLayer = makeEsriLayer(getEsriIdForCode(currentCode));
     roadsLayer = makeRoadsLayer();
 
-    disneyLayer.getSource().set('extent', disneyWorldExtent);
-    if (esriLayer) esriLayer.getSource().set('extent', disneyWorldExtent);
-    roadsLayer.getSource().set('extent', disneyWorldExtent);
+    const park = getCurrentPark();
+    parkExtent = extentFromTileBounds(park);
+
+    if (parkExtent) {
+      disneyLayer.getSource().set('extent', parkExtent);
+      if (esriLayer) esriLayer.getSource().set('extent', parkExtent);
+      roadsLayer.getSource().set('extent', parkExtent);
+    }
 
     map = new ol.Map({
       target: 'map',
       layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
       view: new ol.View({
-        center: ol.proj.fromLonLat([-81.566575, 28.386606]),
-        zoom: 13,
-        minZoom: 0,
-        maxZoom: 20,
-        extent: disneyWorldExtent
+        center: parkExtent ? ol.extent.getCenter(parkExtent) : ol.proj.fromLonLat([-81.566575, 28.386606]),
+        zoom: park.minZoom + 2,
+        minZoom: park.minZoom,
+        maxZoom: park.maxZoom,
+        extent: parkExtent || undefined
       }),
       controls: ol.control.defaults.defaults({ zoom: false }),
       interactions: ol.interaction.defaults.defaults({
@@ -302,115 +492,58 @@
     });
   }
 
-// Double-tap to zoom at finger position + optional hold-and-drag zoom (mobile helper)
-function enableDoubleTapHoldZoom() {
-  const mapDiv = map.getTargetElement();
-  if (!mapDiv) return;
+        // Double-tap then drag up/down to zoom (mobile helper)
+      // Works even with browser zoom disabled, because it adjusts the OpenLayers view zoom directly.
+      function enableDoubleTapHoldZoom() {
+        const mapDiv = map.getTargetElement();
+        if (!mapDiv) return;
 
-  let lastTap = 0;
-  let isHoldZoom = false;
+        let lastTap = 0;
+        let isHoldZoom = false;
+        let startY = 0;
+        let startZoom = 0;
 
-  let startY = 0;
-  let startZoom = 0;
+        function moveHandler(e) {
+          if (!isHoldZoom || !e.touches || e.touches.length !== 1) return;
+          e.preventDefault();
 
-  // Anchor (the thing we keep under the finger)
-  let anchorPx = null;     // [x,y] in map viewport pixels
-  let anchorCoord = null;  // map coord (EPSG:3857)
+          const dy = e.touches[0].clientY - startY;
+          const view = map.getView();
 
-  // Used to detect "double tap without drag" vs hold-drag
-  let movedDuringHold = false;
+          // Drag up = zoom in, drag down = zoom out
+          let newZoom = startZoom - (dy / 80);
 
-  function clientToMapPixel(touch) {
-    const rect = mapDiv.getBoundingClientRect();
-    return [touch.clientX - rect.left, touch.clientY - rect.top];
-  }
+          newZoom = Math.max(view.getMinZoom(), Math.min(view.getMaxZoom(), newZoom));
+          view.setZoom(newZoom);
+        }
 
-  function centerForAnchorAtZoom(view, coord, px, zoom) {
-    const size = map.getSize();
-    if (!size) return view.getCenter();
+        mapDiv.addEventListener('touchstart', (e) => {
+          if (!e.touches || e.touches.length !== 1) return;
 
-    // OL view is not rotated in your config (pinchRotate disabled), so simple math is fine.
-    const res = view.getResolutionForZoom(zoom);
+          const now = Date.now();
+          const dt = now - lastTap;
 
-    // px is from top-left; map coords have +Y upwards, screen has +Y downwards
-    const dx = (px[0] - size[0] / 2) * res;
-    const dy = (size[1] / 2 - px[1]) * res;
+          // Quick second tap enables hold-to-zoom
+          if (dt > 0 && dt < 350) {
+            e.preventDefault(); // prevents iOS smart zoom
+            startY = e.touches[0].clientY;
+            startZoom = map.getView().getZoom();
+            isHoldZoom = true;
 
-    return [coord[0] - dx, coord[1] - dy];
-  }
+            mapDiv.addEventListener('touchmove', moveHandler, { passive: false });
+          } else {
+            isHoldZoom = false;
+          }
 
-  function applyZoomAnchored(newZoom) {
-    const view = map.getView();
-    if (!anchorPx || !anchorCoord) return;
+          lastTap = now;
+        }, { passive: false });
 
-    newZoom = Math.max(view.getMinZoom(), Math.min(view.getMaxZoom(), newZoom));
-    const newCenter = centerForAnchorAtZoom(view, anchorCoord, anchorPx, newZoom);
-
-    // Set center + zoom together so the anchor stays pinned under the finger
-    view.setCenter(newCenter);
-    view.setZoom(newZoom);
-  }
-
-  function moveHandler(e) {
-    if (!isHoldZoom || !e.touches || e.touches.length !== 1) return;
-
-    e.preventDefault();
-
-    const dy = e.touches[0].clientY - startY;
-    if (Math.abs(dy) > 6) movedDuringHold = true;
-
-    // Drag up = zoom in, drag down = zoom out
-    const newZoom = startZoom - (dy / 80);
-    applyZoomAnchored(newZoom);
-  }
-
-  mapDiv.addEventListener('touchstart', (e) => {
-    if (!e.touches || e.touches.length !== 1) return;
-
-    const now = Date.now();
-    const dt = now - lastTap;
-
-    if (dt > 0 && dt < 350) {
-      // Double tap detected
-      e.preventDefault(); // prevents iOS smart zoom
-
-      const touch = e.touches[0];
-      anchorPx = clientToMapPixel(touch);
-      anchorCoord = map.getCoordinateFromPixel(anchorPx);
-
-      startY = touch.clientY;
-      startZoom = map.getView().getZoom();
-      movedDuringHold = false;
-      isHoldZoom = true;
-
-      // If the user does NOT drag, we'll treat it as "double tap to zoom in"
-      // (we'll apply this on touchend if no significant movement happened)
-      mapDiv.addEventListener('touchmove', moveHandler, { passive: false });
-    } else {
-      isHoldZoom = false;
-      anchorPx = null;
-      anchorCoord = null;
-    }
-
-    lastTap = now;
-  }, { passive: false });
-
-  mapDiv.addEventListener('touchend', () => {
-    if (!isHoldZoom) return;
-
-    // If it was a quick double tap with no drag, zoom in by 1 at the tapped location
-    if (!movedDuringHold && anchorPx && anchorCoord) {
-      const view = map.getView();
-      const targetZoom = Math.min(view.getMaxZoom(), (view.getZoom() || 0) + 1);
-      const targetCenter = centerForAnchorAtZoom(view, anchorCoord, anchorPx, targetZoom);
-
-      view.animate({ center: targetCenter, zoom: targetZoom, duration: 180 });
-    }
-
-    isHoldZoom = false;
-    mapDiv.removeEventListener('touchmove', moveHandler, { passive: false });
-  }, { passive: true });
-}
+        mapDiv.addEventListener('touchend', () => {
+          if (!isHoldZoom) return;
+          isHoldZoom = false;
+          mapDiv.removeEventListener('touchmove', moveHandler, { passive: false });
+        }, { passive: true });
+      }
   
   // =====================
   // Roads
@@ -878,6 +1011,9 @@ function enableDoubleTapHoldZoom() {
       window.WDWMX.getCompareMode = () => compareMode;
       window.WDWMX.getLabelForCode = (code) => getLabelForCode(code);
       window.WDWMX.setSingleDate = (code) => setSingleDate(code);
+      window.WDWMX.getServers = () => serverOptions;
+      window.WDWMX.getParkId = () => currentParkId;
+      window.WDWMX.getPark = () => getCurrentPark();
     })
     .catch((err) => {
       alert('Failed to load servers2.json: ' + err);
