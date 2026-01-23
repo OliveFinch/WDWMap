@@ -104,6 +104,15 @@
   }
 
   // Prefer right code in compare mode, else current
+  function getActiveParkId() {
+    try {
+      if (WDWMX.getParkId) return WDWMX.getParkId();
+      if (WDWMX.getPark && WDWMX.getPark().parkId) return WDWMX.getPark().parkId;
+    } catch {}
+    return 'wdw';
+  }
+
+  // Prefer right code in compare mode, else current
   function getActiveMapCode() {
     try {
       if (WDWMX.getCompareMode && WDWMX.getCompareMode()) {
@@ -217,7 +226,13 @@
       let list = tryGetServersFromWDWMX();
 
       if (!list) {
-        const res = await fetch('servers2.json', { cache: 'no-store' });
+        const parkId = getActiveParkId();
+        const fallbackUrl = 'servers2.json';
+        const url = (WDWMX.getServersUrl && WDWMX.getServersUrl(parkId))
+          ? WDWMX.getServersUrl(parkId)
+          : (parkId && parkId !== 'wdw' ? `parks/${parkId}/servers2.json` : fallbackUrl);
+
+        const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) throw new Error(`Could not load servers2.json: ${res.status}`);
         list = await res.json();
       }
@@ -264,7 +279,8 @@
       changesMeta.textContent = 'Highlighted changes reflect currently selected map';
     }
 
-    const url = `${API_BASE}/api/changes-feed?limit=200`;
+    const parkId = getActiveParkId();
+    const url = `${API_BASE}/api/changes-feed?limit=200&parkId=${encodeURIComponent(parkId)}`;
     const res = await fetch(url, { method: 'GET' });
 
     if (!res.ok) {
@@ -443,7 +459,10 @@
     // IMPORTANT: use the dropdown value as category, so it shows in Map changes.
     const chosenCategory = normalizeCategory(reportType && reportType.value);
 
+    const parkId = getActiveParkId();
+
     const payload = {
+      parkId,
       serverId: code,
       mapVersion: code,
       description: desc,
