@@ -24,6 +24,11 @@
   <meta property="og:description" content="Explore historical Disney World maps with custom overlays.">
   <meta property="og:image" content="icon-512.png">
   <meta property="og:type" content="website">
+
+    <script defer src="https://static.cloudflareinsights.com/beacon.min.js"
+    data-cf-beacon='{"token": "0afee9ed8cdf4874ade17a6cb4a77c8c", "spa": true}'>
+  </script>
+  
 </head>
 
 <body>
@@ -44,11 +49,11 @@
       <img id="toggle-icon-img" src="icons/satellite.svg" alt="Satellite">
     </button>
 
+    
     <button id="roads-btn" class="btn-square" title="Roads overlay">
       <img id="roads-icon-img" src="icons/roads.svg" alt="Roads">
     </button>
-
-    <button id="compare-btn" class="btn-square" title="Compare Mode">
+<button id="compare-btn" class="btn-square" title="Compare Mode">
       <img src="icons/compare.svg" alt="Compare">
     </button>
 
@@ -83,11 +88,14 @@
     <button id="changes-btn" class="btn-square" title="Recent changes">
       <img src="icons/new.svg" alt="Changes">
     </button>
-
-    <button id="findme-btn" class="btn-square" title="Locate Me">
+<button id="findme-btn" class="btn-square" title="Locate Me">
       <img src="icons/locateme.svg" alt="Locate Me">
     </button>
-  </div>
+
+    <button id="parks-btn" class="btn-square" title="Switch Park">
+      <img src="icons/globe.svg" alt="Parks">
+    </button>
+</div>
 
   <div id="findme-message"></div>
   <div id="current-date-display"></div>
@@ -170,18 +178,25 @@
       <h3>Recent changes</h3>
       <button id="changes-close" type="button">Close</button>
     </header>
-
-    <!-- Call to action: report a change (moved from main map UI) -->
-    <div id="changes-cta">
-      <p class="changes-cta-text">Spotted something missing or out of date? Help keep the map accurate by reporting a change.</p>
-      <button id="report-btn" type="button" class="btn-primary">
-        Report a change
-      </button>
-    </div>
-
     <div class="meta" id="changes-meta">Loading…</div>
+
+    <div class="changes-cta">
+      <div class="changes-cta-text">Want to report something that looks out of date?</div>
+      <button id="report-btn" type="button" class="changes-cta-btn">Report a change</button>
+    </div>
     <div id="changes-list"></div>
   </aside>
+
+
+  <div id="parks-overlay" aria-hidden="true"></div>
+  <div id="parks-modal" role="dialog" aria-modal="true" aria-label="Choose a park">
+    <header>
+      <h3>Choose a park</h3>
+</header>
+    <div class="body">
+      <div id="parks-list" class="parks-list"></div>
+    </div>
+  </div>
 
   <div id="report-overlay" aria-hidden="true"></div>
   <div id="report-modal" role="dialog" aria-modal="true" aria-label="Report a change">
