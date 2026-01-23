@@ -34,9 +34,19 @@
   const changesMeta = document.getElementById('changes-meta');
   const changesList = document.getElementById('changes-list');
 
+  const parksBtn = document.getElementById('parks-btn');
+  const parksOverlay = document.getElementById('parks-overlay');
+  const parksModal = document.getElementById('parks-modal');
+  const parksClose = document.getElementById('parks-close');
+  const parksList = document.getElementById('parks-list');
+
   // =========================
   // Helpers
   // =========================
+  function getParkId() {
+    try { return (WDWMX.getParkId && WDWMX.getParkId()) || 'wdw'; } catch (e) { return 'wdw'; }
+  }
+
   function safeText(v, fallback = '') {
     if (v === null || v === undefined) return fallback;
     return String(v);
@@ -55,7 +65,51 @@
     reportStatus.style.display = 'none';
   }
 
-  function openReportModal() {
+  function openParks() {
+    if (!parksOverlay || !parksModal) return;
+    parksOverlay.style.display = 'block';
+    parksModal.style.display = 'block';
+    parksOverlay.setAttribute('aria-hidden', 'false');
+
+    // Populate list once per open
+    if (parksList) {
+      const parks = (WDWMX.getParks && WDWMX.getParks()) || [
+        { parkId: 'wdw', name: 'Walt Disney World' },
+        { parkId: 'dlp', name: 'Disneyland Paris' },
+        { parkId: 'dlr', name: 'Disneyland Resort (California)' },
+        { parkId: 'hkdl', name: 'Hong Kong Disneyland' },
+        { parkId: 'shdr', name: 'Shanghai Disney Resort' }
+      ];
+
+      const current = getParkId();
+      parksList.innerHTML = '';
+      parks.forEach((p) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'park-pick-btn';
+        btn.dataset.parkId = p.parkId;
+        btn.textContent = p.name + (p.parkId === current ? ' (current)' : '');
+        btn.addEventListener('click', () => {
+          // Persist selection and reload the app into the selected park
+          try { localStorage.setItem('wdwmx:parkId', p.parkId); } catch (e) {}
+          const url = new URL(window.location.href);
+          url.searchParams.set('park', p.parkId);
+          // Keep compare/date parameters if you add them later; for now just reload with park set
+          window.location.href = url.toString();
+        });
+        parksList.appendChild(btn);
+      });
+    }
+  }
+
+  function closeParks() {
+    if (!parksOverlay || !parksModal) return;
+    parksOverlay.style.display = 'none';
+    parksModal.style.display = 'none';
+    parksOverlay.setAttribute('aria-hidden', 'true');
+  }
+
+function openReportModal() {
     if (!reportOverlay || !reportModal) return;
     reportOverlay.style.display = 'block';
     reportModal.style.display = 'block';
@@ -75,7 +129,7 @@
     if (!changesOverlay || !changesBoard) return;
 
     changesOverlay.style.display = 'block';
-    changesBoard.style.display = 'block';
+    changesBoard.style.display = 'flex';
     changesOverlay.setAttribute('aria-hidden', 'false');
 
     if (changesMeta) changesMeta.textContent = 'Loading…';
@@ -444,6 +498,7 @@
     const chosenCategory = normalizeCategory(reportType && reportType.value);
 
     const payload = {
+      parkId: getParkId(),
       serverId: code,
       mapVersion: code,
       description: desc,
@@ -498,12 +553,7 @@
   // =========================
   reportBtn && reportBtn.addEventListener('click', () => {
     if (reportModal && reportModal.style.display === 'block') closeReportModal();
-    else {
-      // If the user opened the report flow from the Recent changes panel,
-      // close it first so overlays don't stack.
-      closeChangesBoard();
-      openReportModal();
-    }
+    else openReportModal();
   });
 
   reportClose && reportClose.addEventListener('click', closeReportModal);
@@ -525,4 +575,11 @@
       closeChangesBoard();
     }
   });
+
+  // =========================
+  // Park picker (globe)
+  // =========================
+  if (parksBtn) parksBtn.addEventListener('click', openParks);
+  if (parksOverlay) parksOverlay.addEventListener('click', closeParks);
+  if (parksClose) parksClose.addEventListener('click', closeParks);
 })();
