@@ -88,7 +88,9 @@
         btn.type = 'button';
         btn.className = 'park-pick-btn';
         btn.dataset.parkId = p.parkId;
-        btn.textContent = p.name + (p.parkId === current ? ' (current)' : '');
+        const displayName = (p.parkId === 'dlr') ? 'Disneyland' : p.name;
+        btn.textContent = displayName;
+        if (p.parkId === current) btn.classList.add('is-current');
         btn.addEventListener('click', () => {
           // Persist selection and reload the app into the selected park
           try { localStorage.setItem('wdwmx:parkId', p.parkId); } catch (e) {}
