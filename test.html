@@ -4,10 +4,6 @@
   <meta charset="UTF-8">
   <title>WDW Magic Explorer</title>
 
-<!-- Cloudflare Web Analytics -->
-  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "0afee9ed8cdf4874ade17a6cb4a77c8c"}'></script>
-  <!-- End Cloudflare Web Analytics -->
-  
   <!-- Prevent page zoom / smart zoom while keeping map gestures -->
   <meta id="viewport-meta" name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
@@ -46,6 +42,10 @@
 
     <button id="toggle-btn" class="btn-square" title="Switch Disney/Satellite">
       <img id="toggle-icon-img" src="icons/satellite.svg" alt="Satellite">
+    </button>
+
+    <button id="roads-btn" class="btn-square" title="Roads overlay">
+      <img id="roads-icon-img" src="icons/roads.svg" alt="Roads">
     </button>
 
     <button id="compare-btn" class="btn-square" title="Compare Mode">
@@ -90,10 +90,6 @@
 
     <button id="findme-btn" class="btn-square" title="Locate Me">
       <img src="icons/locateme.svg" alt="Locate Me">
-    </button>
-
-    <button id="roads-btn" class="btn-square" title="Roads overlay">
-      <img id="roads-icon-img" src="icons/roads.svg" alt="Roads">
     </button>
 
     <button id="quick-switch-btn" title="Quick Switch Dates" class="btn-square" style="display:none;">
