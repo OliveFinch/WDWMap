@@ -953,13 +953,16 @@
     compareMode = !compareMode;
 
     if (compareMode) {
-      // Compare LAST VIEWED (left) against CURRENT (right). If the user has not
-      // previously viewed another version for this park, fall back to previous-dated on the left.
+      // If the user has previously viewed another version for this park, flip the
+      // sides so CURRENT is on the left and LAST VIEWED is on the right.
+      // If there is no last-viewed value yet, keep the existing fallback:
+      // previous-dated on the left, current on the right.
       const remembered = loadLastViewedCode();
-      rightCode = currentCode;
       if (isValidCode(remembered) && remembered !== currentCode) {
-        leftCode = remembered;
+        leftCode = currentCode;
+        rightCode = remembered;
       } else {
+        rightCode = currentCode;
         leftCode = chooseLeftCodeForCompare(currentCode);
       }
       highlightMode = false;
