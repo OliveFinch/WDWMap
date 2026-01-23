@@ -84,10 +84,6 @@
       <img src="icons/new.svg" alt="Changes">
     </button>
 
-    <button id="report-btn" class="btn-square" title="Report a change">
-      <img src="icons/report.svg" alt="Report">
-    </button>
-
     <button id="findme-btn" class="btn-square" title="Locate Me">
       <img src="icons/locateme.svg" alt="Locate Me">
     </button>
@@ -178,6 +174,17 @@
       <h3>Recent changes</h3>
       <button id="changes-close" type="button">Close</button>
     </header>
+
+    <!-- Call to action: report a change (moved from main map UI) -->
+    <div id="changes-cta">
+      <div class="changes-cta-text">
+        Spotted something missing or out of date? Help keep the map accurate by reporting a change.
+      </div>
+      <button id="report-btn" type="button" class="btn-primary">
+        Report a change
+      </button>
+    </div>
+
     <div class="meta" id="changes-meta">Loading…</div>
     <div id="changes-list"></div>
   </aside>
