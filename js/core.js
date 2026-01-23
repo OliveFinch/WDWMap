@@ -62,7 +62,7 @@
     dlr: {
       parkId: 'dlr',
       name: 'Disneyland Resort (California)',
-      tileTemplate: 'https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/disneyland/538595539/{z}/{x}/{y}.jpg',
+      tileTemplate: 'https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/disneyland/{code}/{z}/{x}/{y}.jpg',
       minZoom: 14,
       maxZoom: 20,
       yScheme: 'xyz',
@@ -79,7 +79,7 @@
     hkdl: {
       parkId: 'hkdl',
       name: 'Hong Kong Disneyland',
-      tileTemplate: 'https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/hkdl/42/{z}/{x}/{y}.jpg',
+      tileTemplate: 'https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/hkdl/{code}/{z}/{x}/{y}.jpg',
       minZoom: 14,
       maxZoom: 20,
       yScheme: 'xyz',
@@ -96,7 +96,7 @@
     shdr: {
       parkId: 'shdr',
       name: 'Shanghai Disney Resort',
-      tileTemplate: 'https://secure.cdn1.wdpromedia.com/media/maps/prod/shdr-baidu-mob-en/740479929/{z}/{x}/{y}.jpg',
+      tileTemplate: 'https://secure.cdn1.wdpromedia.com/media/maps/prod/shdr-baidu-mob-en/{code}/{z}/{x}/{y}.jpg',
       minZoom: 12,
       maxZoom: 21,
       yScheme: 'tms', // server expects flipped Y
@@ -120,6 +120,11 @@
 
   function getCurrentPark() {
     return PARKS[currentParkId] || PARKS.wdw;
+  }
+
+  function getServersUrl(parkId) {
+    const pid = parkId || currentParkId || 'wdw';
+    return `parks/${pid}/servers.json`;
   }
 
   // Convert XYZ tile coords to lon/lat at the tile's NW corner.
@@ -990,32 +995,44 @@
   });
 
   // =====================
-  // Boot
-  // =====================
-  fetch('servers2.json')
-    .then((r) => r.json())
-    .then((json) => {
-      serverOptions = json;
-      currentCode = serverOptions[serverOptions.length - 1].code;
-      lastTwoDates = [currentCode, null];
+// Boot
+// =====================
+(async function boot() {
+  // NOTE: Park switching UI will come later; for now we load the active park's servers list.
+  const primaryUrl = getServersUrl(currentParkId);
+  const fallbackUrl = getServersUrl('wdw');
 
-      initMap();
-      enableDoubleTapHoldZoom();
-      updateDateUI();
+  try {
+    let res = await fetch(primaryUrl, { cache: 'no-store' });
+    if (!res.ok) {
+      // If the park file isn't present yet, fall back to WDW so the app still starts.
+      res = await fetch(fallbackUrl, { cache: 'no-store' });
+    }
+    if (!res.ok) throw new Error(`${res.status}`);
 
-      // Expose bridge
-      window.WDWMX.ol = ol;
-      window.WDWMX.getMap = () => map;
-      window.WDWMX.getCurrentCode = () => currentCode;
-      window.WDWMX.getRightCode = () => rightCode;
-      window.WDWMX.getCompareMode = () => compareMode;
-      window.WDWMX.getLabelForCode = (code) => getLabelForCode(code);
-      window.WDWMX.setSingleDate = (code) => setSingleDate(code);
-      window.WDWMX.getServers = () => serverOptions;
-      window.WDWMX.getParkId = () => currentParkId;
-      window.WDWMX.getPark = () => getCurrentPark();
-    })
-    .catch((err) => {
-      alert('Failed to load servers2.json: ' + err);
-    });
+    serverOptions = await res.json();
+    currentCode = serverOptions[serverOptions.length - 1].code;
+    lastTwoDates = [currentCode, null];
+
+    initMap();
+    enableDoubleTapHoldZoom();
+    updateDateUI();
+
+    // Expose bridge
+    window.WDWMX.ol = ol;
+    window.WDWMX.getMap = () => map;
+    window.WDWMX.getCurrentCode = () => currentCode;
+    window.WDWMX.getRightCode = () => rightCode;
+    window.WDWMX.getCompareMode = () => compareMode;
+    window.WDWMX.getLabelForCode = (code) => getLabelForCode(code);
+    window.WDWMX.setSingleDate = (code) => setSingleDate(code);
+    window.WDWMX.getServers = () => serverOptions;
+    window.WDWMX.getServersUrl = (parkId) => getServersUrl(parkId);
+    window.WDWMX.getParkId = () => currentParkId;
+    window.WDWMX.getPark = () => getCurrentPark();
+  } catch (err) {
+    alert('Failed to load servers.json: ' + err);
+  }
+})();
+
 })();
