@@ -387,7 +387,8 @@ html, body {
   top: 0;
   right: 0;
   height: 100vh;
-  width: min(420px, 92vw);
+  width: fit-content;
+  max-width: 92vw;
   background: rgba(255,255,255,0.98);
   border-left: 1.5px solid #ccc;
   box-shadow: -6px 0 24px #0002;
@@ -478,7 +479,8 @@ html, body {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: min(520px, 92vw);
+  width: fit-content;
+  max-width: 92vw;
   max-height: 86vh;
   overflow: auto;
   background: #fff;
@@ -666,7 +668,8 @@ html, body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(420px, 92vw);
+  width: fit-content;
+  max-width: 92vw;
   max-height: min(520px, 80vh);
   background: rgba(255,255,255,0.98);
   border: 1px solid #d6d6d6;
@@ -713,6 +716,9 @@ html, body {
 .parks-list {
   display: grid;
   gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
 }
 
 .park-pick-btn {
@@ -726,7 +732,19 @@ html, body {
   padding: 12px 12px;
   cursor: pointer;
   font-size: 14px;
+  line-height: 1.2;
+  white-space: nowrap;
 }
+
+.park-pick-btn.is-current {
+  border-color: #23287b;
+  background: rgba(35, 40, 123, 0.08);
+}
+
+.park-pick-btn.is-current:hover {
+  background: rgba(35, 40, 123, 0.12);
+}
+
 
 .park-pick-btn:hover {
   background: #f7f7f7;
