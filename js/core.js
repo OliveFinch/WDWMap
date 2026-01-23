@@ -197,7 +197,7 @@
   let currentCode = null;
   let leftCode = null;
   let rightCode = null;
-  let lastTwoDates = \[null, null\];
+  let lastTwoDates = [null, null];
 
   // Persist the last chosen LEFT compare date per-park
   let lastLeftCodeByPark = {}; // { [parkId]: code }
