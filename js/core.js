@@ -1139,11 +1139,123 @@
   });
 
   // Info overlay
-  infoIcon.addEventListener('click', () => { infoOverlay.style.display = 'block'; });
   infoClose.addEventListener('click', () => { infoOverlay.style.display = 'none'; });
   infoOverlay.addEventListener('click', (e) => { if (e.target === infoOverlay) infoOverlay.style.display = 'none'; });
+
+  // =====================
+  // Service Mode (activated by clicking info icon 4 times in 1.5s)
+  // =====================
+  let serviceMode = false;
+  let infoClickTimes = [];
+  const serviceModeOverlay = document.getElementById('service-mode-overlay');
+  const serviceModeCenter = document.getElementById('service-mode-center');
+  const serviceModePointer = document.getElementById('service-mode-pointer');
+  const serviceModeClose = document.getElementById('service-mode-close');
+
+  function formatCoord(lon, lat, zoom) {
+    return `${lon.toFixed(6)}, ${lat.toFixed(6)} (z${zoom.toFixed(1)})`;
+  }
+
+  function updateServiceModeCenter() {
+    if (!serviceMode || !map) return;
+    const view = map.getView();
+    const center = ol.proj.toLonLat(view.getCenter());
+    const zoom = view.getZoom();
+    serviceModeCenter.textContent = formatCoord(center[0], center[1], zoom);
+  }
+
+  function updateServiceModePointer(evt) {
+    if (!serviceMode || !map) return;
+    const coord = ol.proj.toLonLat(evt.coordinate);
+    const zoom = map.getView().getZoom();
+    serviceModePointer.textContent = formatCoord(coord[0], coord[1], zoom);
+  }
+
+  function copyCoordinatesToClipboard(evt) {
+    if (!serviceMode || !map) return;
+    const coord = ol.proj.toLonLat(evt.coordinate);
+    const zoom = map.getView().getZoom();
+    const text = `[${coord[0].toFixed(6)}, ${coord[1].toFixed(6)}], zoom: ${zoom.toFixed(1)}`;
+
+    navigator.clipboard.writeText(text).then(() => {
+      // Flash the hint to indicate copy success
+      const hint = document.getElementById('service-mode-hint');
+      const original = hint.textContent;
+      hint.textContent = 'Copied to clipboard!';
+      hint.style.color = '#0f0';
+      setTimeout(() => {
+        hint.textContent = original;
+        hint.style.color = '#ff0';
+      }, 1200);
+    }).catch(() => {
+      // Fallback: show alert if clipboard fails
+      alert('Coordinates: ' + text);
+    });
+  }
+
+  function enableServiceMode() {
+    serviceMode = true;
+    serviceModeOverlay.style.display = 'block';
+    document.body.classList.add('service-mode-active');
+
+    // Initial center update
+    updateServiceModeCenter();
+    serviceModePointer.textContent = 'Move mouse over map';
+
+    // Listen for map events
+    map.on('moveend', updateServiceModeCenter);
+    map.on('pointermove', updateServiceModePointer);
+    map.on('click', copyCoordinatesToClipboard);
+  }
+
+  function disableServiceMode() {
+    serviceMode = false;
+    serviceModeOverlay.style.display = 'none';
+    document.body.classList.remove('service-mode-active');
+
+    // Remove listeners
+    map.un('moveend', updateServiceModeCenter);
+    map.un('pointermove', updateServiceModePointer);
+    map.un('click', copyCoordinatesToClipboard);
+  }
+
+  function checkForServiceModeActivation() {
+    const now = Date.now();
+    // Remove clicks older than 1.5 seconds
+    infoClickTimes = infoClickTimes.filter(t => now - t < 1500);
+    infoClickTimes.push(now);
+
+    // If 4 clicks within 1.5 seconds, toggle service mode
+    if (infoClickTimes.length >= 4) {
+      infoClickTimes = [];
+      if (serviceMode) {
+        disableServiceMode();
+      } else {
+        enableServiceMode();
+      }
+      return true; // Prevent normal info overlay
+    }
+    return false;
+  }
+
+  infoIcon.addEventListener('click', () => {
+    if (!checkForServiceModeActivation()) {
+      infoOverlay.style.display = 'block';
+    }
+  });
+
+  if (serviceModeClose) {
+    serviceModeClose.addEventListener('click', disableServiceMode);
+  }
+
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && infoOverlay.style.display === 'block') infoOverlay.style.display = 'none';
+    if (e.key === 'Escape') {
+      if (serviceMode) {
+        disableServiceMode();
+      } else if (infoOverlay.style.display === 'block') {
+        infoOverlay.style.display = 'none';
+      }
+    }
   });
 
   // =====================
