@@ -287,51 +287,36 @@
   }
 
   // =========================
-  // servers2.json ordering (same as date picker)
+  // servers ordering (uses current park's servers from WDWMX)
   // =========================
-  let __serversIndexPromise = null;
-
-  function tryGetServersFromWDWMX() {
+  function getServersIndex() {
+    // Get servers directly from WDWMX for the current park (no caching across parks)
+    let list = null;
     try {
-      if (typeof WDWMX.getServers === 'function') return WDWMX.getServers();
-      if (Array.isArray(WDWMX.servers)) return WDWMX.servers;
-      if (Array.isArray(WDWMX.SERVERS)) return WDWMX.SERVERS;
+      if (typeof WDWMX.getServers === 'function') list = WDWMX.getServers();
+      else if (Array.isArray(WDWMX.servers)) list = WDWMX.servers;
+      else if (Array.isArray(WDWMX.SERVERS)) list = WDWMX.SERVERS;
     } catch {}
-    return null;
-  }
 
-  async function loadServersIndex() {
-    if (__serversIndexPromise) return __serversIndexPromise;
+    if (!list) return { arr: [], indexByCode: new Map() };
 
-    __serversIndexPromise = (async () => {
-      let list = tryGetServersFromWDWMX();
+    const arr = Array.isArray(list) ? list : (Array.isArray(list.items) ? list.items : []);
+    const indexByCode = new Map();
 
-      if (!list) {
-        const res = await fetch('servers2.json', { cache: 'no-store' });
-        if (!res.ok) throw new Error(`Could not load servers2.json: ${res.status}`);
-        list = await res.json();
-      }
+    arr.forEach((s, i) => {
+      const code =
+        (s && (s.code || s.server_id || s.serverId || s.id || s.value)) != null
+          ? String(s.code || s.server_id || s.serverId || s.id || s.value)
+          : null;
 
-      const arr = Array.isArray(list) ? list : (Array.isArray(list.items) ? list.items : []);
-      const indexByCode = new Map();
+      if (code) indexByCode.set(code, i);
+    });
 
-      arr.forEach((s, i) => {
-        const code =
-          (s && (s.code || s.server_id || s.serverId || s.id || s.value)) != null
-            ? String(s.code || s.server_id || s.serverId || s.id || s.value)
-            : null;
-
-        if (code) indexByCode.set(code, i);
-      });
-
-      return { arr, indexByCode };
-    })();
-
-    return __serversIndexPromise;
+    return { arr, indexByCode };
   }
 
   // =========================
-  // API: Map changes (ALL approved, across all maps)
+  // API: Map changes (filtered by current park)
   // =========================
   async function loadChangesAllApproved() {
     if (!isDisneyView()) {
@@ -348,13 +333,15 @@
       return;
     }
 
+    const currentPark = getParkId();
     const activeCode = getActiveMapCode();
 
     if (changesMeta) {
       changesMeta.textContent = 'Highlighted changes reflect currently selected map';
     }
 
-    const url = `${API_BASE}/api/changes-feed?limit=200`;
+    // Pass parkId to API to filter changes by park
+    const url = `${API_BASE}/api/changes-feed?limit=200&parkId=${encodeURIComponent(currentPark)}`;
     const res = await fetch(url, { method: 'GET' });
 
     if (!res.ok) {
@@ -363,7 +350,14 @@
     }
 
     const data = await res.json();
-    const items = normalizeItems(data);
+    let items = normalizeItems(data);
+
+    // Also filter client-side in case API doesn't support parkId param yet
+    items = items.filter(it => {
+      const itemPark = safeText(it.parkId || it.park_id || 'wdw').toLowerCase();
+      // Include items that match current park OR have no parkId (legacy WDW data)
+      return itemPark === currentPark || (currentPark === 'wdw' && !it.parkId && !it.park_id);
+    });
 
     if (!changesList) return;
     changesList.innerHTML = '';
@@ -373,18 +367,17 @@
       empty.style.padding = '12px';
       empty.style.color = '#666';
       empty.style.fontSize = '13px';
-      empty.textContent = 'No approved changes yet.';
+      if (currentPark === 'wdw') {
+        empty.textContent = 'No approved changes yet.';
+      } else {
+        empty.textContent = 'No changes reported for this park yet. Be the first to report a change!';
+      }
       changesList.appendChild(empty);
       return;
     }
 
-    // Sort using servers2.json order (newer maps first)
-    let serversIndex = null;
-    try {
-      serversIndex = await loadServersIndex();
-    } catch (e) {
-      console.warn('servers2.json ordering unavailable; falling back to approved_at ordering.', e);
-    }
+    // Sort using current park's servers order (newer maps first)
+    const serversIndex = getServersIndex();
 
     if (serversIndex && serversIndex.indexByCode && serversIndex.indexByCode.size) {
       items.sort((a, b) => {
