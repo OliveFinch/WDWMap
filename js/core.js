@@ -32,9 +32,8 @@
       { coords: [-81.518325, 28.370757], zoom: 17.5, icon: 'icons/locations/disney-springs.svg', alt: 'Disney Springs' }
     ],
     dlr: [
-      { coords: [-117.918967, 33.812511], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'Disneyland' },
-      { coords: [-117.922780, 33.806280], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'California Adventure' },
-      { coords: [-117.922050, 33.809500], zoom: 18.5, icon: 'icons/locations/marker.svg', alt: 'Downtown Disney' }
+      { coords: [-117.918958, 33.812624], zoom: 18.6, icon: 'icons/locations/marker.svg', alt: 'Disneyland' },
+      { coords: [-117.919703, 33.806176], zoom: 18.2, icon: 'icons/locations/marker.svg', alt: 'California Adventure' }
     ],
     dlp: [
       { coords: [2.775880, 48.872100], zoom: 17.5, icon: 'icons/locations/marker.svg', alt: 'Disneyland Park' },
@@ -58,6 +57,7 @@
       minZoom: 11,
       maxZoom: 20,
       yScheme: 'xyz',
+      // Default center uses extent center (no override needed for WDW)
       boundsByZoom: {
         "11": { "minX": 555, "maxX": 564, "minY": 851, "maxY": 859 },
         "12": { "minX": 1118, "maxX": 1125, "minY": 1706, "maxY": 1715 },
@@ -78,6 +78,8 @@
       minZoom: 13,
       maxZoom: 21,
       yScheme: 'xyz',
+      defaultCenter: [2.781550, 48.869457],
+      defaultZoom: 16.4,
       boundsByZoom: {
         "13": { "minX": 4156, "maxX": 4161, "minY": 2816, "maxY": 2819 },
         "14": { "minX": 8312, "maxX": 8323, "minY": 5632, "maxY": 5639 },
@@ -97,6 +99,8 @@
       minZoom: 14,
       maxZoom: 20,
       yScheme: 'xyz',
+      defaultCenter: [-117.918931, 33.809312],
+      defaultZoom: 17.0,
       boundsByZoom: {
         "14": { "minX": 2818, "maxX": 2831, "minY": 6549, "maxY": 6560 },
         "15": { "minX": 5636, "maxX": 5663, "minY": 13102, "maxY": 13117 },
@@ -114,6 +118,8 @@
       minZoom: 14,
       maxZoom: 20,
       yScheme: 'xyz',
+      defaultCenter: [114.041581, 22.312646],
+      defaultZoom: 18.3,
       boundsByZoom: {
         "14": { "minX": 13380, "maxX": 13383, "minY": 7148, "maxY": 7150 },
         "15": { "minX": 26762, "maxX": 26765, "minY": 14297, "maxY": 14300 },
@@ -131,6 +137,7 @@
       minZoom: 9,
       maxZoom: 21,
       yScheme: 'tms', // server expects flipped Y
+      // TODO: Update defaultCenter with correct Shanghai coordinates from Service Mode
       boundsByZoom: {
         "9": { "minX": 103, "maxX": 103, "minY": 27, "maxY": 27 },
         "10": { "minX": 206, "maxX": 206, "minY": 55, "maxY": 55 },
@@ -565,12 +572,27 @@
       roadsLayer.getSource().set('extent', parkExtent);
     }
 
+    // Determine initial center and zoom - prefer park's defaultCenter/defaultZoom if set
+    let initialCenter;
+    let initialZoom;
+
+    if (park.defaultCenter && park.defaultZoom) {
+      initialCenter = ol.proj.fromLonLat(park.defaultCenter);
+      initialZoom = park.defaultZoom;
+    } else if (parkExtent) {
+      initialCenter = ol.extent.getCenter(parkExtent);
+      initialZoom = park.minZoom + 2;
+    } else {
+      initialCenter = ol.proj.fromLonLat([-81.566575, 28.386606]);
+      initialZoom = park.minZoom + 2;
+    }
+
     map = new ol.Map({
       target: 'map',
       layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
       view: new ol.View({
-        center: parkExtent ? ol.extent.getCenter(parkExtent) : ol.proj.fromLonLat([-81.566575, 28.386606]),
-        zoom: park.minZoom + 2,
+        center: initialCenter,
+        zoom: initialZoom,
         minZoom: park.minZoom,
         maxZoom: park.maxZoom,
         extent: parkExtent || undefined
