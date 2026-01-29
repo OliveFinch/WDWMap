@@ -1167,54 +1167,45 @@
 
   // =====================
   // Service Mode (activated by clicking info icon 4 times in 1.5s)
+  // Shows current map center coordinates - click anywhere to copy
   // =====================
   let serviceMode = false;
   let infoClickTimes = [];
   const serviceModeOverlay = document.getElementById('service-mode-overlay');
   const serviceModeCenter = document.getElementById('service-mode-center');
-  const serviceModePointer = document.getElementById('service-mode-pointer');
   const serviceModeClose = document.getElementById('service-mode-close');
-
-  function formatCoord(lon, lat, zoom) {
-    return `${lon.toFixed(6)}, ${lat.toFixed(6)} (z${zoom.toFixed(1)})`;
-  }
 
   function updateServiceModeCenter() {
     if (!serviceMode || !map) return;
     const view = map.getView();
     const center = ol.proj.toLonLat(view.getCenter());
     const zoom = view.getZoom();
-    let text = formatCoord(center[0], center[1], zoom);
+    const coordText = `[${center[0].toFixed(6)}, ${center[1].toFixed(6)}], zoom: ${zoom.toFixed(1)}`;
+    let display = coordText;
     // Shanghai uses Baidu coordinate system - coordinates are not real-world lat/lon
     if (currentParkId === 'shdr') {
-      text += ' [Baidu coords - not WGS84]';
+      display += '\n[Baidu coords - not WGS84]';
     }
-    serviceModeCenter.textContent = text;
+    serviceModeCenter.textContent = display;
+    // Store for clipboard
+    serviceModeCenter.dataset.copyText = coordText;
   }
 
-  function updateServiceModePointer(evt) {
+  function copyCenterToClipboard() {
     if (!serviceMode || !map) return;
-    const coord = ol.proj.toLonLat(evt.coordinate);
-    const zoom = map.getView().getZoom();
-    serviceModePointer.textContent = formatCoord(coord[0], coord[1], zoom);
-  }
-
-  function copyCoordinatesToClipboard(evt) {
-    if (!serviceMode || !map) return;
-    const coord = ol.proj.toLonLat(evt.coordinate);
-    const zoom = map.getView().getZoom();
-    const text = `[${coord[0].toFixed(6)}, ${coord[1].toFixed(6)}], zoom: ${zoom.toFixed(1)}`;
+    const text = serviceModeCenter.dataset.copyText || '';
+    if (!text) return;
 
     navigator.clipboard.writeText(text).then(() => {
       // Flash the hint to indicate copy success
       const hint = document.getElementById('service-mode-hint');
       const original = hint.textContent;
-      hint.textContent = 'Copied to clipboard!';
+      hint.textContent = 'Copied: ' + text;
       hint.style.color = '#0f0';
       setTimeout(() => {
         hint.textContent = original;
         hint.style.color = '#ff0';
-      }, 1200);
+      }, 1500);
     }).catch(() => {
       // Fallback: show alert if clipboard fails
       alert('Coordinates: ' + text);
@@ -1228,12 +1219,10 @@
 
     // Initial center update
     updateServiceModeCenter();
-    serviceModePointer.textContent = 'Move mouse over map';
 
     // Listen for map events - use 'postrender' for real-time updates during pan/zoom
     map.on('postrender', updateServiceModeCenter);
-    map.on('pointermove', updateServiceModePointer);
-    map.on('click', copyCoordinatesToClipboard);
+    map.on('click', copyCenterToClipboard);
   }
 
   function disableServiceMode() {
@@ -1243,8 +1232,7 @@
 
     // Remove listeners
     map.un('postrender', updateServiceModeCenter);
-    map.un('pointermove', updateServiceModePointer);
-    map.un('click', copyCoordinatesToClipboard);
+    map.un('click', copyCenterToClipboard);
   }
 
   function checkForServiceModeActivation() {
