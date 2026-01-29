@@ -32,9 +32,8 @@
       { coords: [-81.518325, 28.370757], zoom: 17.5, icon: 'icons/locations/disney-springs.svg', alt: 'Disney Springs' }
     ],
     dlr: [
-      { coords: [-117.918967, 33.812511], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'Disneyland' },
-      { coords: [-117.922780, 33.806280], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'California Adventure' },
-      { coords: [-117.922050, 33.809500], zoom: 18.5, icon: 'icons/locations/marker.svg', alt: 'Downtown Disney' }
+      { coords: [-117.918958, 33.812624], zoom: 18.6, icon: 'icons/locations/marker.svg', alt: 'Disneyland' },
+      { coords: [-117.919703, 33.806176], zoom: 18.2, icon: 'icons/locations/marker.svg', alt: 'California Adventure' }
     ],
     dlp: [
       { coords: [2.775880, 48.872100], zoom: 17.5, icon: 'icons/locations/marker.svg', alt: 'Disneyland Park' },
@@ -58,6 +57,7 @@
       minZoom: 11,
       maxZoom: 20,
       yScheme: 'xyz',
+      // Default center uses extent center (no override needed for WDW)
       boundsByZoom: {
         "11": { "minX": 555, "maxX": 564, "minY": 851, "maxY": 859 },
         "12": { "minX": 1118, "maxX": 1125, "minY": 1706, "maxY": 1715 },
@@ -78,6 +78,8 @@
       minZoom: 13,
       maxZoom: 21,
       yScheme: 'xyz',
+      defaultCenter: [2.781550, 48.869457],
+      defaultZoom: 16.4,
       boundsByZoom: {
         "13": { "minX": 4156, "maxX": 4161, "minY": 2816, "maxY": 2819 },
         "14": { "minX": 8312, "maxX": 8323, "minY": 5632, "maxY": 5639 },
@@ -97,6 +99,8 @@
       minZoom: 14,
       maxZoom: 20,
       yScheme: 'xyz',
+      defaultCenter: [-117.918931, 33.809312],
+      defaultZoom: 17.0,
       boundsByZoom: {
         "14": { "minX": 2818, "maxX": 2831, "minY": 6549, "maxY": 6560 },
         "15": { "minX": 5636, "maxX": 5663, "minY": 13102, "maxY": 13117 },
@@ -114,6 +118,8 @@
       minZoom: 14,
       maxZoom: 20,
       yScheme: 'xyz',
+      defaultCenter: [114.041581, 22.312646],
+      defaultZoom: 18.3,
       boundsByZoom: {
         "14": { "minX": 13380, "maxX": 13383, "minY": 7148, "maxY": 7150 },
         "15": { "minX": 26762, "maxX": 26765, "minY": 14297, "maxY": 14300 },
@@ -131,6 +137,7 @@
       minZoom: 9,
       maxZoom: 21,
       yScheme: 'tms', // server expects flipped Y
+      // TODO: Update defaultCenter with correct Shanghai coordinates from Service Mode
       boundsByZoom: {
         "9": { "minX": 103, "maxX": 103, "minY": 27, "maxY": 27 },
         "10": { "minX": 206, "maxX": 206, "minY": 55, "maxY": 55 },
@@ -565,15 +572,31 @@
       roadsLayer.getSource().set('extent', parkExtent);
     }
 
+    // Determine initial center and zoom - prefer park's defaultCenter/defaultZoom if set
+    let initialCenter;
+    let initialZoom;
+
+    if (park.defaultCenter && park.defaultZoom) {
+      initialCenter = ol.proj.fromLonLat(park.defaultCenter);
+      initialZoom = park.defaultZoom;
+    } else if (parkExtent) {
+      initialCenter = ol.extent.getCenter(parkExtent);
+      initialZoom = park.minZoom + 2;
+    } else {
+      initialCenter = ol.proj.fromLonLat([-81.566575, 28.386606]);
+      initialZoom = park.minZoom + 2;
+    }
+
     map = new ol.Map({
       target: 'map',
       layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
       view: new ol.View({
-        center: parkExtent ? ol.extent.getCenter(parkExtent) : ol.proj.fromLonLat([-81.566575, 28.386606]),
-        zoom: park.minZoom + 2,
+        center: initialCenter,
+        zoom: initialZoom,
         minZoom: park.minZoom,
         maxZoom: park.maxZoom,
-        extent: parkExtent || undefined
+        extent: parkExtent || undefined,
+        constrainOnlyCenter: true  // Allows zooming out while keeping center in bounds
       }),
       controls: ol.control.defaults.defaults({ zoom: false }),
       interactions: ol.interaction.defaults.defaults({
@@ -1144,49 +1167,45 @@
 
   // =====================
   // Service Mode (activated by clicking info icon 4 times in 1.5s)
+  // Shows current map center coordinates - click anywhere to copy
   // =====================
   let serviceMode = false;
   let infoClickTimes = [];
   const serviceModeOverlay = document.getElementById('service-mode-overlay');
   const serviceModeCenter = document.getElementById('service-mode-center');
-  const serviceModePointer = document.getElementById('service-mode-pointer');
   const serviceModeClose = document.getElementById('service-mode-close');
-
-  function formatCoord(lon, lat, zoom) {
-    return `${lon.toFixed(6)}, ${lat.toFixed(6)} (z${zoom.toFixed(1)})`;
-  }
 
   function updateServiceModeCenter() {
     if (!serviceMode || !map) return;
     const view = map.getView();
     const center = ol.proj.toLonLat(view.getCenter());
     const zoom = view.getZoom();
-    serviceModeCenter.textContent = formatCoord(center[0], center[1], zoom);
+    const coordText = `[${center[0].toFixed(6)}, ${center[1].toFixed(6)}], zoom: ${zoom.toFixed(1)}`;
+    let display = coordText;
+    // Shanghai uses Baidu coordinate system - coordinates are not real-world lat/lon
+    if (currentParkId === 'shdr') {
+      display += '\n[Baidu coords - not WGS84]';
+    }
+    serviceModeCenter.textContent = display;
+    // Store for clipboard
+    serviceModeCenter.dataset.copyText = coordText;
   }
 
-  function updateServiceModePointer(evt) {
+  function copyCenterToClipboard() {
     if (!serviceMode || !map) return;
-    const coord = ol.proj.toLonLat(evt.coordinate);
-    const zoom = map.getView().getZoom();
-    serviceModePointer.textContent = formatCoord(coord[0], coord[1], zoom);
-  }
-
-  function copyCoordinatesToClipboard(evt) {
-    if (!serviceMode || !map) return;
-    const coord = ol.proj.toLonLat(evt.coordinate);
-    const zoom = map.getView().getZoom();
-    const text = `[${coord[0].toFixed(6)}, ${coord[1].toFixed(6)}], zoom: ${zoom.toFixed(1)}`;
+    const text = serviceModeCenter.dataset.copyText || '';
+    if (!text) return;
 
     navigator.clipboard.writeText(text).then(() => {
       // Flash the hint to indicate copy success
       const hint = document.getElementById('service-mode-hint');
       const original = hint.textContent;
-      hint.textContent = 'Copied to clipboard!';
+      hint.textContent = 'Copied: ' + text;
       hint.style.color = '#0f0';
       setTimeout(() => {
         hint.textContent = original;
         hint.style.color = '#ff0';
-      }, 1200);
+      }, 1500);
     }).catch(() => {
       // Fallback: show alert if clipboard fails
       alert('Coordinates: ' + text);
@@ -1200,12 +1219,10 @@
 
     // Initial center update
     updateServiceModeCenter();
-    serviceModePointer.textContent = 'Move mouse over map';
 
-    // Listen for map events
-    map.on('moveend', updateServiceModeCenter);
-    map.on('pointermove', updateServiceModePointer);
-    map.on('click', copyCoordinatesToClipboard);
+    // Listen for map events - use 'postrender' for real-time updates during pan/zoom
+    map.on('postrender', updateServiceModeCenter);
+    map.on('click', copyCenterToClipboard);
   }
 
   function disableServiceMode() {
@@ -1214,9 +1231,8 @@
     document.body.classList.remove('service-mode-active');
 
     // Remove listeners
-    map.un('moveend', updateServiceModeCenter);
-    map.un('pointermove', updateServiceModePointer);
-    map.un('click', copyCoordinatesToClipboard);
+    map.un('postrender', updateServiceModeCenter);
+    map.un('click', copyCenterToClipboard);
   }
 
   function checkForServiceModeActivation() {
