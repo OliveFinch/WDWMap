@@ -1200,11 +1200,11 @@
       // Flash the hint to indicate copy success
       const hint = document.getElementById('service-mode-hint');
       const original = hint.textContent;
-      hint.textContent = 'Copied: ' + text;
-      hint.style.color = '#0f0';
+      hint.textContent = 'Copied!';
+      hint.style.fontWeight = 'bold';
       setTimeout(() => {
         hint.textContent = original;
-        hint.style.color = '#ff0';
+        hint.style.fontWeight = 'normal';
       }, 1500);
     }).catch(() => {
       // Fallback: show alert if clipboard fails
@@ -1215,7 +1215,6 @@
   function enableServiceMode() {
     serviceMode = true;
     serviceModeOverlay.style.display = 'block';
-    document.body.classList.add('service-mode-active');
 
     // Initial center update
     updateServiceModeCenter();
@@ -1228,7 +1227,6 @@
   function disableServiceMode() {
     serviceMode = false;
     serviceModeOverlay.style.display = 'none';
-    document.body.classList.remove('service-mode-active');
 
     // Remove listeners
     map.un('postrender', updateServiceModeCenter);
