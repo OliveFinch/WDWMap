@@ -19,6 +19,37 @@
   // =====================
   // tileTemplate supports {code} (optional) and {z}/{x}/{y}
   // yScheme: 'xyz' (standard) or 'tms' (server expects flipped Y)
+  // Park-specific quick-access locations (lon, lat, zoom, icon, alt)
+  // Non-WDW parks use the generic marker icon until custom icons are added
+  const PARK_LOCATIONS = {
+    wdw: [
+      { coords: [-81.581203, 28.418714], zoom: 17.5, icon: 'icons/locations/magic-kingdom.svg', alt: 'Magic Kingdom' },
+      { coords: [-81.549385, 28.371715], zoom: 17, icon: 'icons/locations/epcot.svg', alt: 'Epcot' },
+      { coords: [-81.560472, 28.356850], zoom: 17, icon: 'icons/locations/hollywood-studios.svg', alt: 'Hollywood Studios' },
+      { coords: [-81.590567, 28.358037], zoom: 17, icon: 'icons/locations/animal-kingdom.svg', alt: 'Animal Kingdom' },
+      { coords: [-81.529080, 28.366055], zoom: 18.5, icon: 'icons/locations/typhoon-lagoon.svg', alt: 'Typhoon Lagoon' },
+      { coords: [-81.574719, 28.351948], zoom: 18.5, icon: 'icons/locations/blizzard-beach.svg', alt: 'Blizzard Beach' },
+      { coords: [-81.518325, 28.370757], zoom: 17.5, icon: 'icons/locations/disney-springs.svg', alt: 'Disney Springs' }
+    ],
+    dlr: [
+      { coords: [-117.918967, 33.812511], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'Disneyland' },
+      { coords: [-117.922780, 33.806280], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'California Adventure' },
+      { coords: [-117.922050, 33.809500], zoom: 18.5, icon: 'icons/locations/marker.svg', alt: 'Downtown Disney' }
+    ],
+    dlp: [
+      { coords: [2.775880, 48.872100], zoom: 17.5, icon: 'icons/locations/marker.svg', alt: 'Disneyland Park' },
+      { coords: [2.780500, 48.867200], zoom: 17.5, icon: 'icons/locations/marker.svg', alt: 'Walt Disney Studios' },
+      { coords: [2.785800, 48.869800], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'Disney Village' }
+    ],
+    hkdl: [
+      { coords: [114.044360, 22.312680], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'Hong Kong Disneyland' }
+    ],
+    shdr: [
+      { coords: [121.669550, 31.148050], zoom: 17.5, icon: 'icons/locations/marker.svg', alt: 'Shanghai Disneyland' },
+      { coords: [121.672800, 31.143800], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'Disneytown' }
+    ]
+  };
+
   const PARKS = {
     wdw: {
       parkId: 'wdw',
@@ -557,28 +588,48 @@
     window.addEventListener('resize', updateSwipeUI);
     window.addEventListener('scroll', updateSwipeUI, { passive: true });
 
-    // Dock quick pan
+    // Dock quick pan - populate based on current park
     const dock = document.getElementById('location-dock');
-    if (dock && currentParkId !== 'wdw') {
-      // Future: park-specific location buttons. For now, blank the dock for non-WDW parks.
-      dock.innerHTML = '';
-    }
+    if (dock) {
+      const locations = PARK_LOCATIONS[currentParkId] || [];
 
-    dock.querySelectorAll('button').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const [lonStr, latStr] = (btn.dataset.coords || '').split(',');
-        const lon = parseFloat(lonStr);
-        const lat = parseFloat(latStr);
-        if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
+      if (currentParkId !== 'wdw') {
+        // Clear the hardcoded WDW buttons and populate with park-specific locations
+        dock.innerHTML = '';
 
-        const target = ol.proj.fromLonLat([lon, lat]);
-        const targetZoom = Number.isFinite(parseFloat(btn.dataset.zoom))
-          ? parseFloat(btn.dataset.zoom)
-          : 16;
+        locations.forEach((loc) => {
+          const btn = document.createElement('button');
+          btn.dataset.coords = loc.coords.join(',');
+          btn.dataset.zoom = String(loc.zoom);
 
-        map.getView().animate({ center: target, zoom: targetZoom, duration: 600 });
+          const img = document.createElement('img');
+          img.src = loc.icon;
+          img.alt = loc.alt;
+          // Fallback to a generic marker if park-specific icon doesn't exist
+          img.onerror = function() { this.src = 'icons/locations/marker.svg'; };
+
+          btn.appendChild(img);
+          dock.appendChild(btn);
+        });
+      }
+
+      // Attach click handlers to all dock buttons (WDW has them in HTML, others are dynamic)
+      dock.querySelectorAll('button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const [lonStr, latStr] = (btn.dataset.coords || '').split(',');
+          const lon = parseFloat(lonStr);
+          const lat = parseFloat(latStr);
+          if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
+
+          const target = ol.proj.fromLonLat([lon, lat]);
+          const targetZoom = Number.isFinite(parseFloat(btn.dataset.zoom))
+            ? parseFloat(btn.dataset.zoom)
+            : 16;
+
+          map.getView().animate({ center: target, zoom: targetZoom, duration: 600 });
+        });
       });
-    });
+    }
   }
 
         // Double-tap then drag up/down to zoom (mobile helper)
@@ -1046,7 +1097,11 @@
       const coords = [pos.coords.longitude, pos.coords.latitude];
       const projected = ol.proj.fromLonLat(coords);
       const within = ol.extent.containsCoordinate(parkExtent, projected);
-      if (!within) { showFindMeMessage('Outside of WDW'); return; }
+      if (!within) {
+        const parkName = getCurrentPark().name || 'the park';
+        showFindMeMessage('Outside of ' + parkName);
+        return;
+      }
 
       const feature = new ol.Feature({ geometry: new ol.geom.Point(projected) });
       const layer = new ol.layer.Vector({
