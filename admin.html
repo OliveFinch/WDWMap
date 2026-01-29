@@ -76,6 +76,18 @@
           </select>
         </div>
 
+        <div class="field">
+          <label for="parkFilter">Park</label>
+          <select id="parkFilter">
+            <option value="">All parks</option>
+            <option value="wdw">Walt Disney World</option>
+            <option value="dlr">Disneyland</option>
+            <option value="dlp">Disneyland Paris</option>
+            <option value="hkdl">Hong Kong Disneyland</option>
+            <option value="shdr">Shanghai Disneyland</option>
+          </select>
+        </div>
+
         <div class="inline">
           <button id="saveBtn">Save</button>
           <button id="refreshBtn" class="primary">Refresh</button>
@@ -108,11 +120,20 @@
         workerOrigin: document.getElementById('workerOrigin'),
         adminToken: document.getElementById('adminToken'),
         status: document.getElementById('status'),
+        parkFilter: document.getElementById('parkFilter'),
         saveBtn: document.getElementById('saveBtn'),
         refreshBtn: document.getElementById('refreshBtn'),
         list: document.getElementById('list'),
         msg: document.getElementById('msg'),
         count: document.getElementById('count'),
+      };
+
+      const PARK_NAMES = {
+        wdw: 'Walt Disney World',
+        dlr: 'Disneyland',
+        dlp: 'Disneyland Paris',
+        hkdl: 'Hong Kong Disneyland',
+        shdr: 'Shanghai Disneyland'
       };
 
       const LS_ORIGIN = 'wdwmx_admin_origin';
@@ -190,6 +211,7 @@
 
         if (fields.description !== undefined) body.description = safe(fields.description).trim();
         if (fields.category !== undefined) body.category = safe(fields.category).trim();
+        if (fields.parkId !== undefined) body.parkId = safe(fields.parkId).trim();
 
         if (fields.displayName !== undefined) body.displayName = emptyToNull(fields.displayName);
         if (fields.serverId !== undefined) body.serverId = safe(fields.serverId).trim();
@@ -255,7 +277,10 @@
 
         try {
           const status = els.status.value;
-          const data = await api('/api/admin/reports?status=' + encodeURIComponent(status), {
+          const parkId = els.parkFilter.value;
+          let apiUrl = '/api/admin/reports?status=' + encodeURIComponent(status);
+          if (parkId) apiUrl += '&parkId=' + encodeURIComponent(parkId);
+          const data = await api(apiUrl, {
             method: 'GET',
             headers: getHeaders()
           });
@@ -273,14 +298,23 @@
             const div = document.createElement('div');
             div.className = 'item';
 
+            const parkId = safe(it.park_id, 'wdw');
+            const parkName = PARK_NAMES[parkId] || parkId;
+
             const title = document.createElement('h3');
-            title.textContent = (safe(it.map_version) || safe(it.server_id) || 'Report') + ' — ' + safe(it.id);
+            title.textContent = parkName + ' — ' + (safe(it.map_version) || safe(it.server_id) || 'Report');
             div.appendChild(title);
+
+            const idLine = document.createElement('div');
+            idLine.className = 'small';
+            idLine.textContent = 'ID: ' + safe(it.id);
+            div.appendChild(idLine);
 
             const meta = document.createElement('div');
             meta.className = 'meta';
             meta.textContent =
               'Status: ' + safe(it.status) +
+              ' | Park: ' + parkId +
               ' | Created: ' + (fmtWhen(it.created_at) || '') +
               (it.approved_at ? (' | Approved: ' + fmtWhen(it.approved_at)) : '') +
               (it.updated_at ? (' | Updated: ' + fmtWhen(it.updated_at)) : '');
@@ -390,6 +424,20 @@
             colB.appendChild(fServerIdLabel);
             colB.appendChild(fServerId);
 
+            const fParkIdLabel = document.createElement('label');
+            fParkIdLabel.style.marginTop = '10px';
+            fParkIdLabel.textContent = 'parkId';
+            const fParkId = document.createElement('select');
+            ['wdw', 'dlr', 'dlp', 'hkdl', 'shdr'].forEach(p => {
+              const o = document.createElement('option');
+              o.value = p;
+              o.textContent = PARK_NAMES[p] || p;
+              if (p === parkId) o.selected = true;
+              fParkId.appendChild(o);
+            });
+            colB.appendChild(fParkIdLabel);
+            colB.appendChild(fParkId);
+
             two.appendChild(colA);
             two.appendChild(colB);
             details.appendChild(two);
@@ -419,13 +467,14 @@
 
                 await saveEdits(it.id, {
                   description: fDesc.value,
-                  category: fCategory.value,        // <— this will now update category properly
-                  displayName: fDisplay.value,      // <— maps to display_name
+                  category: fCategory.value,
+                  displayName: fDisplay.value,
                   lat: lat,
                   lng: lng,
                   zoom: zoom,
-                  mapVersion: fMapVer.value,        // <— maps to map_version
-                  serverId: fServerId.value         // <— maps to server_id
+                  mapVersion: fMapVer.value,
+                  serverId: fServerId.value,
+                  parkId: fParkId.value
                 });
 
                 setMsg('Saved edits for ' + it.id, 'ok');
@@ -455,6 +504,7 @@
               fZoom.value = numOrEmpty(it.zoom);
               fMapVer.value = safe(it.map_version);
               fServerId.value = safe(it.server_id);
+              fParkId.value = parkId;
             });
 
             editActions.appendChild(saveEditsBtn);
@@ -554,6 +604,7 @@
 
       els.refreshBtn.addEventListener('click', load);
       els.status.addEventListener('change', load);
+      els.parkFilter.addEventListener('change', load);
 
       load();
     })();
