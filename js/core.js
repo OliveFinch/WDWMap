@@ -595,7 +595,8 @@
         zoom: initialZoom,
         minZoom: park.minZoom,
         maxZoom: park.maxZoom,
-        extent: parkExtent || undefined
+        extent: parkExtent || undefined,
+        constrainOnlyCenter: true  // Allows zooming out while keeping center in bounds
       }),
       controls: ol.control.defaults.defaults({ zoom: false }),
       interactions: ol.interaction.defaults.defaults({
@@ -1183,7 +1184,12 @@
     const view = map.getView();
     const center = ol.proj.toLonLat(view.getCenter());
     const zoom = view.getZoom();
-    serviceModeCenter.textContent = formatCoord(center[0], center[1], zoom);
+    let text = formatCoord(center[0], center[1], zoom);
+    // Shanghai uses Baidu coordinate system - coordinates are not real-world lat/lon
+    if (currentParkId === 'shdr') {
+      text += ' [Baidu coords - not WGS84]';
+    }
+    serviceModeCenter.textContent = text;
   }
 
   function updateServiceModePointer(evt) {
@@ -1224,8 +1230,8 @@
     updateServiceModeCenter();
     serviceModePointer.textContent = 'Move mouse over map';
 
-    // Listen for map events
-    map.on('moveend', updateServiceModeCenter);
+    // Listen for map events - use 'postrender' for real-time updates during pan/zoom
+    map.on('postrender', updateServiceModeCenter);
     map.on('pointermove', updateServiceModePointer);
     map.on('click', copyCoordinatesToClipboard);
   }
@@ -1236,7 +1242,7 @@
     document.body.classList.remove('service-mode-active');
 
     // Remove listeners
-    map.un('moveend', updateServiceModeCenter);
+    map.un('postrender', updateServiceModeCenter);
     map.un('pointermove', updateServiceModePointer);
     map.un('click', copyCoordinatesToClipboard);
   }
