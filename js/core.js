@@ -137,7 +137,10 @@
       minZoom: 9,
       maxZoom: 21,
       yScheme: 'tms', // server expects flipped Y
-      // TODO: Update defaultCenter with correct Shanghai coordinates from Service Mode
+      // Shanghai uses Baidu coordinates - these are the "fake" WGS84 coords that map to correct tiles
+      // Calculated from tile bounds center at zoom 17: X=26453, TMS-Y=7089
+      defaultCenter: [-107.344, -83.052],
+      defaultZoom: 17,
       boundsByZoom: {
         "9": { "minX": 103, "maxX": 103, "minY": 27, "maxY": 27 },
         "10": { "minX": 206, "maxX": 206, "minY": 55, "maxY": 55 },
