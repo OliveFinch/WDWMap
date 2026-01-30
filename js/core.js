@@ -41,11 +41,21 @@
       { coords: [2.785800, 48.869800], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'Disney Village' }
     ],
     hkdl: [
-      { coords: [114.044360, 22.312680], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'Hong Kong Disneyland' }
+      { coords: [114.044360, 22.312680], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'Hong Kong Disneyland' },
+      { coords: [114.037813, 22.321810], zoom: 17.7, icon: 'icons/locations/marker.svg', alt: 'Inspiration Lake' },
+      { coords: [114.044085, 22.307825], zoom: 18.8, icon: 'icons/locations/marker.svg', alt: 'Hong Kong Disneyland Hotel' },
+      { coords: [114.038344, 22.307541], zoom: 19.0, icon: 'icons/locations/marker.svg', alt: 'Disney Explorers Lodge' },
+      { coords: [114.038344, 22.307541], zoom: 19.0, icon: 'icons/locations/marker.svg', alt: "Disney's Hollywood Hotel" },
+      { coords: [114.028908, 22.332418], zoom: 17.9, icon: 'icons/locations/marker.svg', alt: 'Disneyland Transportation Centre' },
+      { coords: [114.028908, 22.332418], zoom: 17.9, icon: 'icons/locations/marker.svg', alt: 'Sunny Bay Station & Car Park' }
     ],
     shdr: [
-      { coords: [121.669550, 31.148050], zoom: 17.5, icon: 'icons/locations/marker.svg', alt: 'Shanghai Disneyland' },
-      { coords: [121.672800, 31.143800], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'Disneytown' }
+      { coords: [-107.344478, -83.052295], zoom: 19.0, icon: 'icons/locations/marker.svg', alt: 'Disneyland Park' },
+      { coords: [-107.344134, -83.052279], zoom: 18.7, icon: 'icons/locations/marker.svg', alt: 'Wishing Star Park' },
+      { coords: [-107.340660, -83.052978], zoom: 19.6, icon: 'icons/locations/marker.svg', alt: 'Shanghai Disneyland Hotel' },
+      { coords: [-107.348179, -83.052638], zoom: 19.5, icon: 'icons/locations/marker.svg', alt: 'Toy Story Hotel' },
+      { coords: [-107.343507, -83.052561], zoom: 19.7, icon: 'icons/locations/marker.svg', alt: 'Disneytown' },
+      { coords: [-107.339308, -83.053227], zoom: 19.8, icon: 'icons/locations/marker.svg', alt: 'Visitor Center & Parking' }
     ]
   };
 
@@ -138,9 +148,8 @@
       maxZoom: 21,
       yScheme: 'tms', // server expects flipped Y
       // Shanghai uses Baidu coordinates - these are the "fake" WGS84 coords that map to correct tiles
-      // Calculated from tile bounds center at zoom 17: X=26453, TMS-Y=7089
-      defaultCenter: [-107.344, -83.052],
-      defaultZoom: 17,
+      defaultCenter: [-107.343981, -83.052561],
+      defaultZoom: 17.7,
       boundsByZoom: {
         "9": { "minX": 103, "maxX": 103, "minY": 27, "maxY": 27 },
         "10": { "minX": 206, "maxX": 206, "minY": 55, "maxY": 55 },
@@ -627,6 +636,7 @@
           const btn = document.createElement('button');
           btn.dataset.coords = loc.coords.join(',');
           btn.dataset.zoom = String(loc.zoom);
+          btn.title = loc.alt; // Tooltip on hover
 
           const img = document.createElement('img');
           img.src = loc.icon;
