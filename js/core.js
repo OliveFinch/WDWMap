@@ -32,26 +32,27 @@
       { coords: [-81.518325, 28.370757], zoom: 17.5, icon: 'icons/locations/disney-springs.svg', alt: 'Disney Springs' }
     ],
     dlr: [
-      { coords: [-117.918958, 33.812624], zoom: 18.6, icon: 'icons/locations/marker.svg', alt: 'Disneyland' },
-      { coords: [-117.919703, 33.806176], zoom: 18.2, icon: 'icons/locations/marker.svg', alt: 'California Adventure' }
+      { coords: [-117.918958, 33.812624], zoom: 18.6, icon: 'icons/locations/dlr/dlr-castle.svg', alt: 'Disneyland' },
+      { coords: [-117.919703, 33.806176], zoom: 18.2, icon: 'icons/locations/dlr/california-adventure.svg', alt: 'California Adventure' },
+      { coords: [-117.922899, 33.809130], zoom: 18.9, icon: 'icons/locations/dlr/downtown-disney.svg', alt: 'Downtown Disney' }
     ],
     dlp: [
-      { coords: [2.775880, 48.872100], zoom: 17.5, icon: 'icons/locations/marker.svg', alt: 'Disneyland Park' },
-      { coords: [2.780500, 48.867200], zoom: 17.5, icon: 'icons/locations/marker.svg', alt: 'Walt Disney Studios' },
+      { coords: [2.775880, 48.872100], zoom: 17.5, icon: 'icons/locations/dlp/disney_studios_paris.svg', alt: 'Disneyland Park' },
+      { coords: [2.780500, 48.867200], zoom: 17.5, icon: 'icons/locations/dlp/disneyland_park_paris.svg', alt: 'Walt Disney Studios' },
       { coords: [2.785800, 48.869800], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'Disney Village' }
     ],
     hkdl: [
-      { coords: [114.044360, 22.312680], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'Hong Kong Disneyland' },
+      { coords: [114.041407, 22.312656], zoom: 18.6, icon: 'icons/locations/hkdl/hkdl-castle.svg', alt: 'Hong Kong Disneyland' },
       { coords: [114.037813, 22.321810], zoom: 17.7, icon: 'icons/locations/marker.svg', alt: 'Inspiration Lake' },
       { coords: [114.044085, 22.307825], zoom: 18.8, icon: 'icons/locations/marker.svg', alt: 'Hong Kong Disneyland Hotel' },
       { coords: [114.038344, 22.307541], zoom: 19.0, icon: 'icons/locations/marker.svg', alt: 'Disney Explorers Lodge' },
-      { coords: [114.038344, 22.307541], zoom: 19.0, icon: 'icons/locations/marker.svg', alt: "Disney's Hollywood Hotel" },
+      { coords: [114.036762, 22.308802], zoom: 19.0, icon: 'icons/locations/marker.svg', alt: "Disney's Hollywood Hotel" },
       { coords: [114.028908, 22.332418], zoom: 17.9, icon: 'icons/locations/marker.svg', alt: 'Disneyland Transportation Centre' },
-      { coords: [114.028908, 22.332418], zoom: 17.9, icon: 'icons/locations/marker.svg', alt: 'Sunny Bay Station & Car Park' }
+      { coords: [114.045671, 22.316173], zoom: 18.0, icon: 'icons/locations/marker.svg', alt: 'Sunny Bay Station & Car Park' }
     ],
     shdr: [
-      { coords: [-107.344478, -83.052295], zoom: 19.0, icon: 'icons/locations/marker.svg', alt: 'Disneyland Park' },
-      { coords: [-107.344134, -83.052279], zoom: 18.7, icon: 'icons/locations/marker.svg', alt: 'Wishing Star Park' },
+      { coords: [-107.344478, -83.052295], zoom: 19.0, icon: 'icons/locations/shdr/shdr-castle.svg', alt: 'Disneyland Park' },
+      { coords: [-107.338827, -83.052508], zoom: 18.7, icon: 'icons/locations/marker.svg', alt: 'Wishing Star Park' },
       { coords: [-107.340660, -83.052978], zoom: 19.6, icon: 'icons/locations/marker.svg', alt: 'Shanghai Disneyland Hotel' },
       { coords: [-107.348179, -83.052638], zoom: 19.5, icon: 'icons/locations/marker.svg', alt: 'Toy Story Hotel' },
       { coords: [-107.343507, -83.052561], zoom: 19.7, icon: 'icons/locations/marker.svg', alt: 'Disneytown' },
