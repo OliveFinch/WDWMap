@@ -37,8 +37,8 @@
       { coords: [-117.922899, 33.809130], zoom: 18.9, icon: 'icons/locations/dlr/downtown-disney.svg', alt: 'Downtown Disney' }
     ],
     dlp: [
-      { coords: [2.775880, 48.872100], zoom: 17.5, icon: 'icons/locations/dlp/disney_studios_paris.svg', alt: 'Disneyland Park' },
-      { coords: [2.780500, 48.867200], zoom: 17.5, icon: 'icons/locations/dlp/disneyland_park_paris.svg', alt: 'Walt Disney Studios' },
+      { coords: [2.775880, 48.872100], zoom: 17.5, icon: 'icons/locations/dlp/disneyland_park_paris.svg', alt: 'Disneyland Park' },
+      { coords: [2.780500, 48.867200], zoom: 17.5, icon: 'icons/locations/dlp/disney_studios_paris.svg', alt: 'Walt Disney Studios' },
       { coords: [2.785800, 48.869800], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'Disney Village' }
     ],
     hkdl: [
