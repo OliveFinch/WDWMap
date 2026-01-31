@@ -15,6 +15,29 @@
   const ROADS_TILE_URL = 'https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}';
 
   // =====================
+  // Tokyo Disney Resort Configuration (testing)
+  // Update these values when CloudFront cookies expire
+  // =====================
+  const TDR_CONFIG = {
+    // Base URL for TDR map tiles (date code may need updating)
+    tileBaseUrl: 'https://contents-portal.tokyodisneyresort.jp/limited/map-image/20260122183830/daytime/',
+    // Required User-Agent header
+    userAgent: 'Disney Resort/3.10.9 (jp.tokyodisneyresort.portalapp; build:4; iOS 26.2.1) Alamofire/5.10.2',
+    // CloudFront signed cookies (time-limited, update when expired)
+    cookies: {
+      'CloudFront-Signature': 'cwTUHMSzbLVk8hGDDQKJRIdzeS9J4FTjvt8~A4kBUL9cyslMKXoEA9~M8OGDvnyZu6g8vjn6ssJ8DgrD35Njt2DJLN1KpV6k4PapQEe2Rpa-oWWfl6xAsu39QEF1wGRdvAcGh1QvP2DSq8wIij7101f7lye55iE~FCJBNShCh-ukO5jZkokgCkKWw7C9SHOnU6FLoXi4CC3yFAA65p-p2cYrSFk-o3PvaVEL8L2Hpa4kiJMnwiU6FQupYMCclgC3093LB32ow8od~2jGYKCop1a0dV7P84Hd9JmbCALE0JDLNrRrJNFzDyHSlrONobdrKzMcDjv8zvcpqrp4NUVUag__',
+      'CloudFront-Key-Pair-Id': 'APKAIJUGP2GGEWDAPMTQ',
+      'CloudFront-Policy': 'eyJTdGF0ZW1lbnQiOiBbeyJSZXNvdXJjZSI6Imh0dHBzOi8vY29udGVudHMtcG9ydGFsLnRva3lvZGlzbmV5cmVzb3J0LmpwLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NzI0NDIzNzl9LCJJcEFkZHJlc3MiOnsiQVdTOlNvdXJjZUlwIjoiMC4wLjAuMC8wIn19fV19'
+    },
+    // Proxy URL - tiles are fetched through this worker to add required headers
+    // Change this to your deployed worker URL
+    proxyUrl: '/tdr-tiles/'
+  };
+
+  // Expose TDR config for the proxy worker
+  window.WDWMX.TDR_CONFIG = TDR_CONFIG;
+
+  // =====================
   // Park configuration (prep for multi-park support)
   // =====================
   // tileTemplate supports {code} (optional) and {z}/{x}/{y}
@@ -57,6 +80,11 @@
       { coords: [-107.348179, -83.052638], zoom: 19.5, icon: 'icons/locations/marker.svg', alt: 'Toy Story Hotel' },
       { coords: [-107.343507, -83.052561], zoom: 19.7, icon: 'icons/locations/marker.svg', alt: 'Disneytown' },
       { coords: [-107.339308, -83.053227], zoom: 19.8, icon: 'icons/locations/marker.svg', alt: 'Visitor Center & Parking' }
+    ],
+    tdr: [
+      { coords: [139.879377, 35.632877], zoom: 18.5, icon: 'icons/locations/marker.svg', alt: 'Tokyo Disneyland' },
+      { coords: [139.889420, 35.626553], zoom: 18.5, icon: 'icons/locations/marker.svg', alt: 'Tokyo DisneySea' },
+      { coords: [139.884055, 35.630610], zoom: 18.5, icon: 'icons/locations/marker.svg', alt: 'Ikspiari' }
     ]
   };
 
@@ -165,6 +193,27 @@
         "19": { "minX": 105791, "maxX": 105839, "minY": 28336, "maxY": 28383 },
         "20": { "minX": 211583, "maxX": 211679, "minY": 56672, "maxY": 56767 },
         "21": { "minX": 423167, "maxX": 423359, "minY": 113344, "maxY": 113535 }
+      }
+    },
+    tdr: {
+      parkId: 'tdr',
+      name: 'Tokyo Disney Resort (testing)',
+      // TDR uses a proxy due to CloudFront authentication requirements
+      // Tile format: z{z}/{x}_{y}.jpg (handled specially in makeDisneyLayer)
+      tileTemplate: 'tdr-proxy', // Special marker - actual URL built in makeDisneyLayer
+      minZoom: 15,
+      maxZoom: 20,
+      yScheme: 'xyz',
+      defaultCenter: [139.884055, 35.630610],
+      defaultZoom: 17.0,
+      // Approximate bounds for Tokyo Disney Resort area
+      boundsByZoom: {
+        "15": { "minX": 29115, "maxX": 29125, "minY": 12905, "maxY": 12915 },
+        "16": { "minX": 58230, "maxX": 58250, "minY": 25810, "maxY": 25830 },
+        "17": { "minX": 116460, "maxX": 116500, "minY": 51620, "maxY": 51660 },
+        "18": { "minX": 232920, "maxX": 233000, "minY": 103240, "maxY": 103320 },
+        "19": { "minX": 465840, "maxX": 466000, "minY": 206480, "maxY": 206640 },
+        "20": { "minX": 931680, "maxX": 932000, "minY": 412960, "maxY": 413280 }
       }
     }
   };
@@ -405,6 +454,9 @@
     const park = getCurrentPark();
     const tpl = String(park.tileTemplate || '');
 
+    // TDR uses a special proxy for CloudFront authentication
+    const isTdr = (park.parkId === 'tdr');
+
     return new ol.layer.Tile({
       source: new ol.source.XYZ({
         minZoom: park.minZoom,
@@ -417,6 +469,11 @@
 
           const n = Math.pow(2, z);
           const yy = (park.yScheme === 'tms') ? ((n - 1) - y) : y;
+
+          // TDR: use proxy URL with special tile format z{z}/{x}_{y}.jpg
+          if (isTdr) {
+            return TDR_CONFIG.proxyUrl + `z${z}/${x}_${yy}.jpg`;
+          }
 
           let url = tpl;
           if (url.indexOf('{code}') >= 0) url = url.replace('{code}', String(code));
