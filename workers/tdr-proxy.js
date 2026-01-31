@@ -29,11 +29,11 @@ const TDR_CONFIG = {
   }
 };
 
-// Build cookie string from config
+// Build cookie string from config (no space after semicolon to match curl format)
 function buildCookieString() {
   return Object.entries(TDR_CONFIG.cookies)
     .map(([name, value]) => `${name}=${value}`)
-    .join('; ');
+    .join(';');
 }
 
 export default {
