@@ -78,10 +78,10 @@
 
     const current = getParkId();
 
-    // Explicit order (with Tokyo Disneyland inserted after WDW)
-    const desiredOrder = ['dlr', 'wdw', 'tdl', 'dlp', 'hkdl', 'shdr'];
+    // Explicit order
+    const desiredOrder = ['dlr', 'wdw', 'tdr', 'dlp', 'hkdl', 'shdr'];
 
-    // Base list (use WDWMX.getParks if available, but normalise names and insert Tokyo)
+    // Base list (use WDWMX.getParks if available, but normalise names)
     let parks = (WDWMX.getParks && WDWMX.getParks()) || [
       { parkId: 'dlr', name: 'Disneyland' },
       { parkId: 'wdw', name: 'Walt Disney World' },
@@ -90,21 +90,13 @@
       { parkId: 'shdr', name: 'Shanghai Disneyland' }
     ];
 
-    // Normalise names as you’ve standardised elsewhere
+    // Normalise names as you've standardised elsewhere
     parks = parks.map(p => {
       const id = p.parkId;
       if (id === 'dlr') return { parkId: 'dlr', name: 'Disneyland' };
       if (id === 'shdr') return { parkId: 'shdr', name: 'Shanghai Disneyland' };
       return { parkId: id, name: p.name };
     });
-
-    // Ensure Tokyo Disneyland exists and is disabled (not supported yet)
-    const hasTokyo = parks.some(p => p.parkId === 'tdl');
-    if (!hasTokyo) {
-      parks.push({ parkId: 'tdl', name: 'Tokyo Disneyland', disabled: true });
-    } else {
-      parks = parks.map(p => (p.parkId === 'tdl' ? { ...p, name: 'Tokyo Disneyland', disabled: true } : p));
-    }
 
     // Sort into the desired order
     parks.sort((a, b) => desiredOrder.indexOf(a.parkId) - desiredOrder.indexOf(b.parkId));
@@ -120,21 +112,13 @@
 
       if (p.parkId === current) btn.classList.add('is-current');
 
-      // Disabled park (Tokyo Disneyland)
-      if (p.disabled) {
-        btn.classList.add('is-disabled');
-        btn.setAttribute('aria-disabled', 'true');
-        btn.title = 'Not supported yet';
-        // No click handler
-      } else {
-        btn.addEventListener('click', () => {
-          // Persist selection and reload the app into the selected park
-          try { localStorage.setItem('wdwmx:parkId', p.parkId); } catch (e) {}
-          const url = new URL(window.location.href);
-          url.searchParams.set('park', p.parkId);
-          window.location.href = url.toString();
-        });
-      }
+      btn.addEventListener('click', () => {
+        // Persist selection and reload the app into the selected park
+        try { localStorage.setItem('wdwmx:parkId', p.parkId); } catch (e) {}
+        const url = new URL(window.location.href);
+        url.searchParams.set('park', p.parkId);
+        window.location.href = url.toString();
+      });
 
       parksList.appendChild(btn);
     });
