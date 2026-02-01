@@ -88,8 +88,8 @@
       { coords: [-107.339308, -83.053227], zoom: 19.8, icon: 'icons/locations/marker.svg', alt: 'Visitor Center & Parking' }
     ],
     tdr: [
-      { coords: [139.879377, 35.632877], zoom: 18.5, icon: 'icons/locations/marker.svg', alt: 'Tokyo Disneyland' },
-      { coords: [139.889420, 35.626553], zoom: 18.5, icon: 'icons/locations/marker.svg', alt: 'Tokyo DisneySea' },
+      { coords: [139.879377, 35.632877], zoom: 18.5, icon: 'icons/locations/tdr/tdr-castle.svg', alt: 'Tokyo Disneyland' },
+      { coords: [139.889420, 35.626553], zoom: 18.5, icon: 'icons/locations/tdr/disneysea.svg', alt: 'Tokyo DisneySea' },
       { coords: [139.884055, 35.630610], zoom: 18.5, icon: 'icons/locations/marker.svg', alt: 'Ikspiari' }
     ]
   };
