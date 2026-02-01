@@ -2,8 +2,8 @@
 // TDR Configuration - UPDATE THESE WHEN EXPIRED
 // =====================
 const TDR_CONFIG = {
-  // Base URL for TDR map tiles
-  tileBaseUrl: 'https://contents-portal.tokyodisneyresort.jp/limited/map-image/20260122183830/daytime/',
+  // Base URL for TDR map tiles - {mode} is replaced with 'daytime' or 'nighttime'
+  tileBaseUrl: 'https://contents-portal.tokyodisneyresort.jp/limited/map-image/20260122183830/{mode}/',
   // Required User-Agent header
   userAgent: 'Disney Resort/3.10.9 (jp.tokyodisneyresort.portalapp; build:4; iOS 26.2.1) Alamofire/5.10.2',
   // CloudFront signed cookies (time-limited)
@@ -48,7 +48,7 @@ export default {
 
     // -------------------------
     // TDR Tile Proxy
-    // GET /tdr-tiles/z{zoom}/{x}_{y}.jpg
+    // GET /tdr-tiles/z{zoom}/{x}_{y}.jpg?mode=daytime|nighttime
     // -------------------------
     if (url.pathname.startsWith("/tdr-tiles/")) {
       const tilePath = url.pathname.replace(/^\/tdr-tiles\//, '');
@@ -57,7 +57,11 @@ export default {
         return new Response('Invalid tile path', { status: 400, headers: cors });
       }
 
-      const tileUrl = TDR_CONFIG.tileBaseUrl + tilePath;
+      // Get mode from query parameter (default to daytime)
+      const mode = url.searchParams.get('mode') || 'daytime';
+      const validMode = (mode === 'nighttime') ? 'nighttime' : 'daytime';
+
+      const tileUrl = TDR_CONFIG.tileBaseUrl.replace('{mode}', validMode) + tilePath;
 
       try {
         const tileResponse = await fetch(tileUrl, {

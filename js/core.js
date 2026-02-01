@@ -15,12 +15,13 @@
   const ROADS_TILE_URL = 'https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}';
 
   // =====================
-  // Tokyo Disney Resort Configuration (testing)
+  // Tokyo Disney Resort Configuration
   // Update these values when CloudFront cookies expire
   // =====================
   const TDR_CONFIG = {
     // Base URL for TDR map tiles (date code may need updating)
-    tileBaseUrl: 'https://contents-portal.tokyodisneyresort.jp/limited/map-image/20260122183830/daytime/',
+    // {mode} will be replaced with 'daytime' or 'nighttime'
+    tileBaseUrl: 'https://contents-portal.tokyodisneyresort.jp/limited/map-image/20260122183830/{mode}/',
     // Required User-Agent header
     userAgent: 'Disney Resort/3.10.9 (jp.tokyodisneyresort.portalapp; build:4; iOS 26.2.1) Alamofire/5.10.2',
     // CloudFront signed cookies (time-limited, update when expired)
@@ -30,8 +31,14 @@
       'CloudFront-Policy': 'eyJTdGF0ZW1lbnQiOiBbeyJSZXNvdXJjZSI6Imh0dHBzOi8vY29udGVudHMtcG9ydGFsLnRva3lvZGlzbmV5cmVzb3J0LmpwLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NzI0NDIzNzl9LCJJcEFkZHJlc3MiOnsiQVdTOlNvdXJjZUlwIjoiMC4wLjAuMC8wIn19fV19'
     },
     // Proxy URL - tiles are fetched through this worker to add required headers
+    // ?mode=daytime or ?mode=nighttime is appended
     proxyUrl: 'https://wdw-magic-explorer-api.gullet-erase2v.workers.dev/tdr-tiles/'
   };
+
+  // TDR state: 'daytime' or 'nighttime'
+  let tdrTimeMode = 'daytime';
+  // TDR rotation: 0, 90, 180, or 270 degrees
+  let tdrRotation = 0;
 
   // Expose TDR config for the proxy worker
   window.WDWMX.TDR_CONFIG = TDR_CONFIG;
@@ -196,7 +203,7 @@
     },
     tdr: {
       parkId: 'tdr',
-      name: 'Tokyo Disney Resort (testing)',
+      name: 'Tokyo Disney Resort',
       // TDR uses a proxy due to CloudFront authentication requirements
       // Tile format: z{z}/{x}_{y}.jpg (handled specially in makeDisneyLayer)
       tileTemplate: 'tdr-proxy', // Special marker - actual URL built in makeDisneyLayer
@@ -357,6 +364,9 @@
   const infoIcon = document.getElementById('info-icon');
   const infoOverlay = document.getElementById('info-overlay');
   const infoClose = document.getElementById('info-close');
+  const daynightBtn = document.getElementById('daynight-btn');
+  const daynightIconImg = document.getElementById('daynight-icon-img');
+  const rotateBtn = document.getElementById('rotate-btn');
   // Extent (dynamic per park)
   let parkExtent = null;
 
@@ -469,9 +479,9 @@
           const n = Math.pow(2, z);
           const yy = (park.yScheme === 'tms') ? ((n - 1) - y) : y;
 
-          // TDR: use proxy URL with special tile format z{z}/{x}_{y}.jpg
+          // TDR: use proxy URL with special tile format z{z}/{x}_{y}.jpg?mode=daytime/nighttime
           if (isTdr) {
-            return TDR_CONFIG.proxyUrl + `z${z}/${x}_${yy}.jpg`;
+            return TDR_CONFIG.proxyUrl + `z${z}/${x}_${yy}.jpg?mode=${tdrTimeMode}`;
           }
 
           let url = tpl;
@@ -1171,6 +1181,49 @@
     if (lastTwoDates[1]) setSingleDate(lastTwoDates[1]);
   });
 
+  // TDR Day/Night toggle
+  function refreshTdrLayer() {
+    if (currentParkId !== 'tdr') return;
+
+    const visD = disneyLayer.getVisible();
+    map.removeLayer(disneyLayer);
+    disneyLayer = makeDisneyLayer(currentCode);
+    disneyLayer.setVisible(visD);
+    disneyLayer.getSource().set('extent', parkExtent);
+    map.getLayers().setAt(0, disneyLayer);
+    setRoadsLayerState();
+  }
+
+  if (daynightBtn) {
+    daynightBtn.addEventListener('click', () => {
+      if (currentParkId !== 'tdr') return;
+      tdrTimeMode = (tdrTimeMode === 'daytime') ? 'nighttime' : 'daytime';
+      daynightBtn.classList.toggle('active-btn', tdrTimeMode === 'nighttime');
+      daynightBtn.title = tdrTimeMode === 'daytime' ? 'Switch to Night Mode' : 'Switch to Day Mode';
+      refreshTdrLayer();
+    });
+  }
+
+  // TDR Rotate 90°
+  if (rotateBtn) {
+    rotateBtn.addEventListener('click', () => {
+      if (currentParkId !== 'tdr') return;
+      tdrRotation = (tdrRotation + 90) % 360;
+      const view = map.getView();
+      view.animate({
+        rotation: tdrRotation * (Math.PI / 180),
+        duration: 300
+      });
+    });
+  }
+
+  // Show/hide TDR buttons based on current park
+  function updateTdrButtons() {
+    const isTdr = (currentParkId === 'tdr');
+    if (daynightBtn) daynightBtn.style.display = isTdr ? 'flex' : 'none';
+    if (rotateBtn) rotateBtn.style.display = isTdr ? 'flex' : 'none';
+  }
+
 
   // Find Me
   const findmeMessage = document.getElementById('findme-message');
@@ -1365,6 +1418,7 @@
     initMap();
     enableDoubleTapHoldZoom();
     updateDateUI();
+    updateTdrButtons();
 
     // Expose bridge
     window.WDWMX.ol = ol;
