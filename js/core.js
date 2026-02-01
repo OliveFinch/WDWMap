@@ -88,9 +88,9 @@
       { coords: [-107.339308, -83.053227], zoom: 19.8, icon: 'icons/locations/marker.svg', alt: 'Visitor Center & Parking' }
     ],
     tdr: [
-      { coords: [139.879377, 35.632877], zoom: 18.5, icon: 'icons/locations/marker.svg', alt: 'Tokyo Disneyland' },
-      { coords: [139.889420, 35.626553], zoom: 18.5, icon: 'icons/locations/marker.svg', alt: 'Tokyo DisneySea' },
-      { coords: [139.884055, 35.630610], zoom: 18.5, icon: 'icons/locations/marker.svg', alt: 'Ikspiari' }
+      { coords: [139.880790, 35.632283], zoom: 18.2, rotation: 200, icon: 'icons/locations/marker.svg', alt: 'Tokyo Disneyland' },
+      { coords: [139.885709, 35.625239], zoom: 17.5, rotation: 140, icon: 'icons/locations/marker.svg', alt: 'Tokyo DisneySea' },
+      { coords: [139.887318, 35.633259], zoom: 18.0, rotation: 270, icon: 'icons/locations/marker.svg', alt: 'Ikspiari' }
     ]
   };
 
@@ -677,7 +677,7 @@
         extent: parkExtent || undefined,
         constrainOnlyCenter: true  // Allows zooming out while keeping center in bounds
       }),
-      controls: ol.control.defaults.defaults({ zoom: false }),
+      controls: ol.control.defaults.defaults({ zoom: false, rotate: false }),
       interactions: ol.interaction.defaults.defaults({
         altShiftDragRotate: false,
         pinchRotate: false
@@ -703,6 +703,9 @@
           const btn = document.createElement('button');
           btn.dataset.coords = loc.coords.join(',');
           btn.dataset.zoom = String(loc.zoom);
+          if (loc.rotation !== undefined) {
+            btn.dataset.rotation = String(loc.rotation);
+          }
           btn.title = loc.alt; // Tooltip on hover
 
           const img = document.createElement('img');
@@ -729,7 +732,19 @@
             ? parseFloat(btn.dataset.zoom)
             : 16;
 
-          map.getView().animate({ center: target, zoom: targetZoom, duration: 600 });
+          // Apply rotation if specified (for TDR locations)
+          const rotationDeg = parseFloat(btn.dataset.rotation);
+          if (Number.isFinite(rotationDeg)) {
+            tdrRotation = rotationDeg;
+            map.getView().animate({
+              center: target,
+              zoom: targetZoom,
+              rotation: rotationDeg * (Math.PI / 180),
+              duration: 600
+            });
+          } else {
+            map.getView().animate({ center: target, zoom: targetZoom, duration: 600 });
+          }
         });
       });
     }
