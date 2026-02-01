@@ -66,8 +66,8 @@
       { coords: [-117.922899, 33.809130], zoom: 18.9, icon: 'icons/locations/dlr/downtown-disney.svg', alt: 'Downtown Disney' }
     ],
     dlp: [
-      { coords: [2.775880, 48.872100], zoom: 17.5, icon: 'icons/locations/dlp/disney_studios_paris.svg', alt: 'Disneyland Park' },
-      { coords: [2.780500, 48.867200], zoom: 17.5, icon: 'icons/locations/dlp/disneyland_park_paris.svg', alt: 'Walt Disney Studios' },
+      { coords: [2.775880, 48.872100], zoom: 17.5, icon: 'icons/locations/dlp/disneyland_park_paris.svg', alt: 'Disneyland Park' },
+      { coords: [2.780500, 48.867200], zoom: 17.5, icon: 'icons/locations/dlp/disney_studios_paris.svg', alt: 'Walt Disney Studios' },
       { coords: [2.785800, 48.869800], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'Disney Village' }
     ],
     hkdl: [
@@ -88,8 +88,8 @@
       { coords: [-107.339308, -83.053227], zoom: 19.8, icon: 'icons/locations/marker.svg', alt: 'Visitor Center & Parking' }
     ],
     tdr: [
-      { coords: [139.880790, 35.632283], zoom: 18.2, rotation: 200, icon: 'icons/locations/marker.svg', alt: 'Tokyo Disneyland' },
-      { coords: [139.885709, 35.625239], zoom: 17.5, rotation: 140, icon: 'icons/locations/marker.svg', alt: 'Tokyo DisneySea' },
+      { coords: [139.880790, 35.632283], zoom: 18.2, rotation: 200, icon: 'icons/locations/tdr/tdr-castle.svg', alt: 'Tokyo Disneyland' },
+      { coords: [139.885709, 35.625239], zoom: 17.5, rotation: 140, icon: 'icons/locations/tdr/disneysea.svg', alt: 'Tokyo DisneySea' },
       { coords: [139.887318, 35.633259], zoom: 18.0, rotation: 270, icon: 'icons/locations/marker.svg', alt: 'Ikspiari' }
     ]
   };
@@ -121,7 +121,7 @@
       name: 'Disneyland Paris',
       tileTemplate: 'https://media.disneylandparis.com/mapTiles/images/{z}/{x}/{y}.jpg',
       minZoom: 13,
-      maxZoom: 21,
+      maxZoom: 20,
       yScheme: 'xyz',
       defaultCenter: [2.781550, 48.869457],
       defaultZoom: 16.4,
@@ -133,8 +133,7 @@
 "17": { "minX": 66496,  "maxX": 66591,  "minY": 45056,  "maxY": 45119 },
 "18": { "minX": 132992, "maxX": 133183, "minY": 90112,  "maxY": 90239 },
 "19": { "minX": 265984, "maxX": 266367, "minY": 180224, "maxY": 180479 },
-"20": { "minX": 531968, "maxX": 532735, "minY": 360448, "maxY": 360959 },
-"21": { "minX": 1063936,"maxX": 1065471,"minY": 720896, "maxY": 721919 }
+"20": { "minX": 531968, "maxX": 532735, "minY": 360448, "maxY": 360959 }
       }
     },
     dlr: {
@@ -180,7 +179,7 @@
       name: 'Shanghai Disney Resort',
       tileTemplate: 'https://secure.cdn1.wdpromedia.com/media/maps/prod/shdr-baidu-mob-en/{code}/{z}/{x}/{y}.jpg',
       minZoom: 9,
-      maxZoom: 21,
+      maxZoom: 20,
       yScheme: 'tms', // server expects flipped Y
       // Shanghai uses Baidu coordinates - these are the "fake" WGS84 coords that map to correct tiles
       defaultCenter: [-107.343981, -83.052561],
@@ -197,8 +196,7 @@
         "17": { "minX": 26447, "maxX": 26459, "minY": 7084, "maxY": 7095 },
         "18": { "minX": 52895, "maxX": 52919, "minY": 14168, "maxY": 14191 },
         "19": { "minX": 105791, "maxX": 105839, "minY": 28336, "maxY": 28383 },
-        "20": { "minX": 211583, "maxX": 211679, "minY": 56672, "maxY": 56767 },
-        "21": { "minX": 423167, "maxX": 423359, "minY": 113344, "maxY": 113535 }
+        "20": { "minX": 211583, "maxX": 211679, "minY": 56672, "maxY": 56767 }
       }
     },
     tdr: {
