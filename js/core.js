@@ -30,8 +30,7 @@
       'CloudFront-Policy': 'eyJTdGF0ZW1lbnQiOiBbeyJSZXNvdXJjZSI6Imh0dHBzOi8vY29udGVudHMtcG9ydGFsLnRva3lvZGlzbmV5cmVzb3J0LmpwLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NzI0NDIzNzl9LCJJcEFkZHJlc3MiOnsiQVdTOlNvdXJjZUlwIjoiMC4wLjAuMC8wIn19fV19'
     },
     // Proxy URL - tiles are fetched through this worker to add required headers
-    // Change this to your deployed worker URL
-    proxyUrl: '/tdr-tiles/'
+    proxyUrl: 'https://wdw-magic-explorer-api.gullet-erase2v.workers.dev/tdr-tiles/'
   };
 
   // Expose TDR config for the proxy worker
