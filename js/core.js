@@ -179,7 +179,7 @@
       parkId: 'shdr',
       name: 'Shanghai Disney Resort',
       tileTemplate: 'https://secure.cdn1.wdpromedia.com/media/maps/prod/shdr-baidu-mob-en/{code}/{z}/{x}/{y}.jpg',
-      minZoom: 9,
+      minZoom: 14,
       maxZoom: 20,
       yScheme: 'tms', // server expects flipped Y
       // Shanghai uses Baidu coordinates - these are the "fake" WGS84 coords that map to correct tiles
@@ -206,11 +206,11 @@
       // TDR uses a proxy due to CloudFront authentication requirements
       // Tile format: z{z}/{x}_{y}.jpg (handled specially in makeDisneyLayer)
       tileTemplate: 'tdr-proxy', // Special marker - actual URL built in makeDisneyLayer
-      minZoom: 15,
+      minZoom: 16,
       maxZoom: 20,
       yScheme: 'xyz',
-      defaultCenter: [139.884055, 35.630610],
-      defaultZoom: 17.0,
+      defaultCenter: [139.882183, 35.630487],
+      defaultZoom: 16.1,
       // Approximate bounds for Tokyo Disney Resort area
       boundsByZoom: {
         "15": { "minX": 29115, "maxX": 29125, "minY": 12905, "maxY": 12915 },
