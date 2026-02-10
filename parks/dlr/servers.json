@@ -1,5 +1,15 @@
 [
   { "code": "51", "label": "Unknown", "esri_id": "10", "esri_label": "20 Feb 2014" },
-  { "code": "538595539", "label": "Jan 2026", "esri_id": "23880", "esri_label": "25 Sep 2025" },
-  { "code": "407370045", "label": "Feb 2026", "esri_id": "23880", "esri_label": "25 Sep 2025" }
+  { "code": "51", "label": "Satellite Only", "esri_id": "10", "esri_label": "20 Feb 2014" },
+  { "code": "51", "label": "Satellite Only", "esri_id": "14342", "esri_label": "31 May 2017" },
+  { "code": "51", "label": "Satellite Only", "esri_id": "13161", "esri_label": "8 Jan 2018" },
+  { "code": "51", "label": "Satellite Only", "esri_id": "119", "esri_label": "27 Jun 2018" },
+  { "code": "538595539", "label": "Satellite Only", "esri_id": "11334", "esri_label": "26 Jun 2019" },
+  { "code": "538595539", "label": "Satellite Only", "esri_id": "7110", "esri_label": "10 Jun 2020" },
+  { "code": "538595539", "label": "Satellite Only", "esri_id": "47963", "esri_label": "14 Oct 2020" },
+  { "code": "538595539", "label": "Satellite Only", "esri_id": "44988", "esri_label": "2 Nov 2022" },
+  { "code": "538595539", "label": "Satellite Only", "esri_id": "32553", "esri_label": "15 Aug 2023" },
+  { "code": "538595539", "label": "Satellite Only", "esri_id": "13851", "esri_label": "29 Jun 2024" },
+  { "code": "407370045", "label": "Satellite Only", "esri_id": "11334", "esri_label": "18 Dec 2025" },
+  { "code": "407370045", "label": "Satellite Only", "esri_id": "11135", "esri_label": "29 Jan 2026" }
 ]
