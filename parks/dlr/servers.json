@@ -10,6 +10,6 @@
   { "code": "538595539", "label": "Satellite Only", "esri_id": "44988", "esri_label": "2 Nov 2022" },
   { "code": "538595539", "label": "Satellite Only", "esri_id": "32553", "esri_label": "15 Aug 2023" },
   { "code": "538595539", "label": "Satellite Only", "esri_id": "13851", "esri_label": "29 Jun 2024" },
-  { "code": "407370045", "label": "Satellite Only", "esri_id": "11334", "esri_label": "18 Dec 2025" },
-  { "code": "407370045", "label": "Satellite Only", "esri_id": "11135", "esri_label": "29 Jan 2026" }
+  { "code": "538595539", "label": "Jan 2026", "esri_id": "11334", "esri_label": "18 Dec 2025" },
+  { "code": "407370045", "label": "Feb 2026", "esri_id": "11135", "esri_label": "29 Jan 2026" }
 ]
