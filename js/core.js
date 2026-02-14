@@ -211,7 +211,6 @@
       yScheme: 'xyz',
       defaultCenter: [139.884055, 35.630610],
       defaultZoom: 17.0,
- main
       // Approximate bounds for Tokyo Disney Resort area
       boundsByZoom: {
         "15": { "minX": 29115, "maxX": 29125, "minY": 12905, "maxY": 12915 },
