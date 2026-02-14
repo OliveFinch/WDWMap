@@ -368,6 +368,10 @@
   const rotateBtn = document.getElementById('rotate-btn');
   const datePrevBtn = document.getElementById('date-prev-btn');
   const dateNextBtn = document.getElementById('date-next-btn');
+  const dateNavRow = document.getElementById('date-nav-row');
+  const singleDateLabel = document.getElementById('single-date-label');
+  const leftDateLabel = document.getElementById('left-date-label');
+  const rightDateLabel = document.getElementById('right-date-label');
   // Extent (dynamic per park)
   let parkExtent = null;
 
@@ -803,7 +807,9 @@
             didDrag = false;
 
             // Resolve the pixel to a map coordinate for anchor
-            const pixel = map.getEventPixel({ clientX: tapX, clientY: tapY });
+            // Calculate pixel relative to the map element, not the viewport
+            const rect = mapDiv.getBoundingClientRect();
+            const pixel = [tapX - rect.left, tapY - rect.top];
             zoomCenter = map.getCoordinateFromPixel(pixel);
 
             mapDiv.addEventListener('touchmove', moveHandler, { passive: false });
@@ -895,14 +901,20 @@
   // Dates + modes
   // =====================
   function updateDateUI() {
+    // Toggle compare-mode class on containers
+    currentDateDisplay.classList.toggle('compare-mode', compareMode);
+    dateNavRow.classList.toggle('compare-mode', compareMode);
+
     if (!compareMode) {
-      currentDateDisplay.textContent = showingDisney
+      const label = showingDisney
         ? getLabelForCode(currentCode)
         : (getEsriLabelForCode(currentCode) || (getLabelForCode(currentCode) + ' (Satellite)'));
+      singleDateLabel.textContent = label;
     } else {
       const leftLabel = showingDisney ? getLabelForCode(leftCode) : (getEsriLabelForCode(leftCode) || getLabelForCode(leftCode));
       const rightLabel = showingDisney ? getLabelForCode(rightCode) : (getEsriLabelForCode(rightCode) || getLabelForCode(rightCode));
-      currentDateDisplay.textContent = `${leftLabel}  vs  ${rightLabel}`;
+      leftDateLabel.textContent = leftLabel;
+      rightDateLabel.textContent = rightLabel;
     }
 
     currentDateDisplay.style.display = 'block';
@@ -1338,38 +1350,29 @@
   });
 
   // Tapping the date display opens date picker
-  currentDateDisplay.addEventListener('click', () => {
-    if (datePopup.style.display === 'block') { hidePopup(datePopup); return; }
+  // Helper to show date popup centered below an element
+  function showDatePopupBelow(popupEl, anchorEl, fillFn) {
+    if (popupEl.style.display === 'block') { hidePopup(popupEl); return; }
+    fillFn();
 
-    if (!compareMode) {
-      fillDatePopup(datePopup, currentCode, setSingleDate);
-    } else {
-      fillDatePopup(datePopup, rightCode, (code) => {
-        rightCode = code;
-        (highlightMode ? launchHighlightMode : launchSwipeMode)();
-        updateDateUI();
-      });
-    }
-
-    // Position popup below the date display
-    const r = currentDateDisplay.getBoundingClientRect();
+    const r = anchorEl.getBoundingClientRect();
     const gap = 8;
-    const prevDisplay = datePopup.style.display;
-    const prevVis = datePopup.style.visibility;
-    datePopup.style.display = 'block';
-    datePopup.style.visibility = 'hidden';
-    const pw = datePopup.offsetWidth;
-    datePopup.style.display = prevDisplay;
-    datePopup.style.visibility = prevVis;
+    const prevDisplay = popupEl.style.display;
+    const prevVis = popupEl.style.visibility;
+    popupEl.style.display = 'block';
+    popupEl.style.visibility = 'hidden';
+    const pw = popupEl.offsetWidth;
+    popupEl.style.display = prevDisplay;
+    popupEl.style.visibility = prevVis;
 
     const left = Math.max(8, Math.min(window.innerWidth - pw - 8, r.left + (r.width / 2) - (pw / 2)));
-    datePopup.style.left = left + 'px';
-    datePopup.style.top = Math.max(8, r.bottom + gap) + 'px';
-    showPopup(datePopup);
+    popupEl.style.left = left + 'px';
+    popupEl.style.top = Math.max(8, r.bottom + gap) + 'px';
+    showPopup(popupEl);
 
     const close = (e) => {
-      if (!datePopup.contains(e.target) && e.target !== currentDateDisplay) {
-        hidePopup(datePopup);
+      if (!popupEl.contains(e.target) && !currentDateDisplay.contains(e.target)) {
+        hidePopup(popupEl);
         document.removeEventListener('mousedown', close, true);
         document.removeEventListener('touchstart', close, true);
       }
@@ -1378,6 +1381,55 @@
       document.addEventListener('mousedown', close, true);
       document.addEventListener('touchstart', close, true);
     }, 0);
+  }
+
+  // Single mode: click on single-date-label or currentDateDisplay opens date picker
+  singleDateLabel.addEventListener('click', (e) => {
+    if (compareMode) return;
+    e.stopPropagation();
+    showDatePopupBelow(datePopup, currentDateDisplay, () => {
+      fillDatePopup(datePopup, currentCode, setSingleDate);
+    });
+  });
+
+  // Compare mode: click on left-date-label opens left date picker
+  leftDateLabel.addEventListener('click', (e) => {
+    if (!compareMode) return;
+    e.stopPropagation();
+    showDatePopupBelow(leftDatePopup, leftDateLabel, () => {
+      fillDatePopup(leftDatePopup, leftCode, (code) => {
+        leftCode = code;
+        saveLastLeftCode(code);
+        (highlightMode ? launchHighlightMode : launchSwipeMode)();
+        updateDateUI();
+      });
+    });
+  });
+
+  // Compare mode: click on right-date-label opens right date picker
+  rightDateLabel.addEventListener('click', (e) => {
+    if (!compareMode) return;
+    e.stopPropagation();
+    showDatePopupBelow(datePopup, rightDateLabel, () => {
+      fillDatePopup(datePopup, rightCode, (code) => {
+        rightCode = code;
+        (highlightMode ? launchHighlightMode : launchSwipeMode)();
+        updateDateUI();
+      });
+    });
+  });
+
+  // Fallback: clicking on currentDateDisplay itself (not a label)
+  currentDateDisplay.addEventListener('click', (e) => {
+    // If click was on a label, the label handler already ran
+    if (e.target !== currentDateDisplay) return;
+
+    if (!compareMode) {
+      showDatePopupBelow(datePopup, currentDateDisplay, () => {
+        fillDatePopup(datePopup, currentCode, setSingleDate);
+      });
+    }
+    // In compare mode, clicking on "vs" or the container does nothing
   });
 
   // Date navigation arrows

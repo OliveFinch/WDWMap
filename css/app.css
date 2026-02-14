@@ -198,6 +198,37 @@ html, body {
   text-underline-offset: 3px;
 }
 
+/* Single mode: show single-date-label, hide compare elements */
+#single-date-label { display: inline; }
+#left-date-label, #vs-label, #right-date-label { display: none; }
+
+/* Compare mode: hide single, show compare elements */
+#current-date-display.compare-mode #single-date-label { display: none; }
+#current-date-display.compare-mode #left-date-label,
+#current-date-display.compare-mode #vs-label,
+#current-date-display.compare-mode #right-date-label { display: inline; }
+
+#left-date-label, #right-date-label {
+  cursor: pointer;
+}
+
+#left-date-label:hover, #right-date-label:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+#vs-label {
+  opacity: 0.7;
+  font-size: 0.85em;
+  margin: 0 8px;
+}
+
+/* Compare mode needs wider container */
+#date-nav-row.compare-mode {
+  width: 380px;
+}
+
 .date-nav-arrow {
   display: flex;
   align-items: center;
@@ -660,6 +691,13 @@ html, body {
     top: 10px;
     /* Mobile: 8 chars * ~10px ≈ 80px + 2 arrows (26px each) + gaps = ~180px */
     width: 180px;
+    gap: 6px;
+  }
+
+  /* Compare mode on mobile: wider with doubled arrow spacing */
+  #date-nav-row.compare-mode {
+    width: 280px;
+    gap: 12px;
   }
 
   #current-date-display {
@@ -667,6 +705,15 @@ html, body {
     padding: 0 2px;
     /* Truncate to ~8 chars on mobile */
     max-width: 80px;
+  }
+
+  #current-date-display.compare-mode {
+    max-width: none;
+  }
+
+  #current-date-display.compare-mode #vs-label {
+    margin: 0 4px;
+    font-size: 0.8em;
   }
 
   .date-nav-arrow {
