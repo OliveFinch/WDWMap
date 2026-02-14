@@ -209,8 +209,10 @@
       minZoom: 16,
       maxZoom: 20,
       yScheme: 'xyz',
-      defaultCenter: [139.882183, 35.630487],
-      defaultZoom: 16.1,
+      defaultCenter: [139.880952, 35.631740],
+      defaultZoom: 16.2,
+      defaultRotation: 200, // degrees clockwise
+ main
       // Approximate bounds for Tokyo Disney Resort area
       boundsByZoom: {
         "15": { "minX": 29115, "maxX": 29125, "minY": 12905, "maxY": 12915 },
@@ -655,6 +657,7 @@
     // Determine initial center and zoom - prefer park's defaultCenter/defaultZoom if set
     let initialCenter;
     let initialZoom;
+    let initialRotation = 0;
 
     if (park.defaultCenter && park.defaultZoom) {
       initialCenter = ol.proj.fromLonLat(park.defaultCenter);
@@ -667,12 +670,22 @@
       initialZoom = park.minZoom + 2;
     }
 
+    // Apply default rotation if set (e.g., TDR)
+    if (park.defaultRotation) {
+      initialRotation = park.defaultRotation * (Math.PI / 180);
+      // Keep tdrRotation in sync for the rotate button
+      if (park.parkId === 'tdr') {
+        tdrRotation = park.defaultRotation;
+      }
+    }
+
     map = new ol.Map({
       target: 'map',
       layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
       view: new ol.View({
         center: initialCenter,
         zoom: initialZoom,
+        rotation: initialRotation,
         minZoom: park.minZoom,
         maxZoom: park.maxZoom,
         extent: parkExtent || undefined,
