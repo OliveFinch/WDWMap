@@ -4,6 +4,7 @@
     "label": "January 2026",
     "esri_id": "",
     "esri_label": "",
-    "notes": "Tokyo Disney Resort tiles require CloudFront authentication via proxy worker."
+    "notes": "Tokyo Disney Resort tiles require CloudFront authentication via proxy worker.",
+    "active": 1
   }
 ]

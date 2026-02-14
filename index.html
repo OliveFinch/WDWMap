@@ -34,17 +34,12 @@
 <body>
   <div id="map"></div>
 
+  <!-- Hidden date buttons (kept for JS references, no longer visible) -->
+  <button id="left-date-btn" type="button" style="display:none!important;"></button>
+  <button id="date-btn" type="button" style="display:none!important;"></button>
+
   <!-- TOP RIGHT -->
   <div class="group-top-right" id="grp-top-right">
-    <div class="date-row">
-      <button id="left-date-btn" type="button" class="btn-square" title="Choose left date" style="display:none;">
-        <img src="icons/date_left.svg" alt="Left Date Selector">
-      </button>
-      <button id="date-btn" type="button" class="btn-square" title="Choose date">
-        <img src="icons/date_right.svg" alt="Date Selector">
-      </button>
-    </div>
-
     <button id="toggle-btn" class="btn-square" title="Switch Disney/Satellite">
       <img id="toggle-icon-img" src="icons/satellite.svg" alt="Satellite">
     </button>
@@ -107,11 +102,11 @@
 
   <div id="findme-message"></div>
   <div id="date-nav-row">
-    <button id="date-prev-btn" class="date-nav-arrow" title="Previous date" style="display:none;">
+    <button id="date-prev-btn" class="date-nav-arrow" title="Previous date">
       <svg viewBox="0 0 24 24" width="18" height="18"><polyline points="15,6 9,12 15,18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
     <div id="current-date-display"></div>
-    <button id="date-next-btn" class="date-nav-arrow" title="Next date" style="display:none;">
+    <button id="date-next-btn" class="date-nav-arrow" title="Next date">
       <svg viewBox="0 0 24 24" width="18" height="18"><polyline points="9,6 15,12 9,18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
   </div>

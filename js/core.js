@@ -752,27 +752,37 @@
 
         // Double-tap then drag up/down to zoom (mobile helper)
       // Works even with browser zoom disabled, because it adjusts the OpenLayers view zoom directly.
+      // Zooms centered on the finger position (like Google/Apple Maps).
       function enableDoubleTapHoldZoom() {
         const mapDiv = map.getTargetElement();
         if (!mapDiv) return;
 
         let lastTap = 0;
+        let lastTapXY = null;
         let isHoldZoom = false;
+        let didDrag = false;
         let startY = 0;
         let startZoom = 0;
+        let zoomCenter = null; // map coordinate where the finger tapped
 
         function moveHandler(e) {
           if (!isHoldZoom || !e.touches || e.touches.length !== 1) return;
           e.preventDefault();
+          didDrag = true;
 
           const dy = e.touches[0].clientY - startY;
           const view = map.getView();
 
           // Drag up = zoom in, drag down = zoom out
           let newZoom = startZoom - (dy / 80);
-
           newZoom = Math.max(view.getMinZoom(), Math.min(view.getMaxZoom(), newZoom));
-          view.setZoom(newZoom);
+
+          // Zoom anchored at the finger position
+          view.animate({
+            zoom: newZoom,
+            center: zoomCenter,
+            duration: 0
+          });
         }
 
         mapDiv.addEventListener('touchstart', (e) => {
@@ -780,13 +790,20 @@
 
           const now = Date.now();
           const dt = now - lastTap;
+          const tapX = e.touches[0].clientX;
+          const tapY = e.touches[0].clientY;
 
           // Quick second tap enables hold-to-zoom
-          if (dt > 0 && dt < 350) {
+          if (dt > 0 && dt < 350 && lastTapXY) {
             e.preventDefault(); // prevents iOS smart zoom
-            startY = e.touches[0].clientY;
+            startY = tapY;
             startZoom = map.getView().getZoom();
             isHoldZoom = true;
+            didDrag = false;
+
+            // Resolve the pixel to a map coordinate for anchor
+            const pixel = map.getEventPixel({ clientX: tapX, clientY: tapY });
+            zoomCenter = map.getCoordinateFromPixel(pixel);
 
             mapDiv.addEventListener('touchmove', moveHandler, { passive: false });
           } else {
@@ -794,11 +811,25 @@
           }
 
           lastTap = now;
+          lastTapXY = [tapX, tapY];
         }, { passive: false });
 
         mapDiv.addEventListener('touchend', () => {
           if (!isHoldZoom) return;
+
+          // If user double-tapped without dragging, zoom in one level at that point
+          if (!didDrag && zoomCenter) {
+            const view = map.getView();
+            const newZoom = Math.min(view.getMaxZoom(), startZoom + 1);
+            view.animate({
+              zoom: newZoom,
+              center: zoomCenter,
+              duration: 250
+            });
+          }
+
           isHoldZoom = false;
+          didDrag = false;
           mapDiv.removeEventListener('touchmove', moveHandler, { passive: false });
         }, { passive: true });
       }
@@ -878,7 +909,6 @@
     highlightBtn.style.display = (showingDisney && compareMode) ? 'flex' : 'none';
     settingsBtn.style.display = (compareMode && highlightMode) ? 'flex' : 'none';
 
-    leftDateBtn.style.display = compareMode ? 'flex' : 'none';
     if (quickSwitchBtn) quickSwitchBtn.style.display = (lastTwoDates[1] && !compareMode) ? 'flex' : 'none';
 
     toggleIconImg.src = showingDisney ? 'icons/satellite.svg' : 'icons/mouse.svg';
@@ -898,26 +928,26 @@
 
   function updateDateNavArrows() {
     if (!serverOptions.length) {
-      datePrevBtn.style.display = 'none';
-      dateNextBtn.style.display = 'none';
+      datePrevBtn.classList.add('disabled');
+      dateNextBtn.classList.add('disabled');
       return;
     }
 
+    let canPrev, canNext;
+
     if (!compareMode) {
-      // Single mode: prev = older (lower index), next = newer (higher index)
       const idx = serverOptions.findIndex(o => o.code === currentCode);
-      datePrevBtn.style.display = (idx > 0) ? 'flex' : 'none';
-      dateNextBtn.style.display = (idx < serverOptions.length - 1) ? 'flex' : 'none';
+      canPrev = idx > 0;
+      canNext = idx < serverOptions.length - 1;
     } else {
-      // Compare mode: arrows navigate both left and right dates
-      // Prev = older direction (lower indices), next = newer direction (higher indices)
       const leftIdx = serverOptions.findIndex(o => o.code === leftCode);
       const rightIdx = serverOptions.findIndex(o => o.code === rightCode);
-      // Show prev if either side can go older
-      datePrevBtn.style.display = (leftIdx > 0 || rightIdx > 0) ? 'flex' : 'none';
-      // Show next if either side can go newer
-      dateNextBtn.style.display = (leftIdx < serverOptions.length - 1 || rightIdx < serverOptions.length - 1) ? 'flex' : 'none';
+      canPrev = leftIdx > 0 || rightIdx > 0;
+      canNext = leftIdx < serverOptions.length - 1 || rightIdx < serverOptions.length - 1;
     }
+
+    datePrevBtn.classList.toggle('disabled', !canPrev);
+    dateNextBtn.classList.toggle('disabled', !canNext);
   }
 
   function setSingleDate(newCode) {
@@ -1180,7 +1210,6 @@
       }
       highlightMode = false;
       showSensitivity = false;
-      leftDateBtn.style.display = 'flex';
       launchSwipeMode();
     } else {
       highlightMode = false;
@@ -1189,7 +1218,6 @@
       swipeThumb.style.display = 'none';
       swipeHandle.style.display = 'none';
       sensitivityRow.style.display = 'none';
-      leftDateBtn.style.display = 'none';
     }
 
     updateDateUI();
@@ -1308,8 +1336,52 @@
     }, () => showFindMeMessage('Unable to get location'), { enableHighAccuracy: true });
   });
 
+  // Tapping the date display opens date picker
+  currentDateDisplay.addEventListener('click', () => {
+    if (datePopup.style.display === 'block') { hidePopup(datePopup); return; }
+
+    if (!compareMode) {
+      fillDatePopup(datePopup, currentCode, setSingleDate);
+    } else {
+      fillDatePopup(datePopup, rightCode, (code) => {
+        rightCode = code;
+        (highlightMode ? launchHighlightMode : launchSwipeMode)();
+        updateDateUI();
+      });
+    }
+
+    // Position popup below the date display
+    const r = currentDateDisplay.getBoundingClientRect();
+    const gap = 8;
+    const prevDisplay = datePopup.style.display;
+    const prevVis = datePopup.style.visibility;
+    datePopup.style.display = 'block';
+    datePopup.style.visibility = 'hidden';
+    const pw = datePopup.offsetWidth;
+    datePopup.style.display = prevDisplay;
+    datePopup.style.visibility = prevVis;
+
+    const left = Math.max(8, Math.min(window.innerWidth - pw - 8, r.left + (r.width / 2) - (pw / 2)));
+    datePopup.style.left = left + 'px';
+    datePopup.style.top = Math.max(8, r.bottom + gap) + 'px';
+    showPopup(datePopup);
+
+    const close = (e) => {
+      if (!datePopup.contains(e.target) && e.target !== currentDateDisplay) {
+        hidePopup(datePopup);
+        document.removeEventListener('mousedown', close, true);
+        document.removeEventListener('touchstart', close, true);
+      }
+    };
+    setTimeout(() => {
+      document.addEventListener('mousedown', close, true);
+      document.addEventListener('touchstart', close, true);
+    }, 0);
+  });
+
   // Date navigation arrows
   datePrevBtn.addEventListener('click', () => {
+    if (datePrevBtn.classList.contains('disabled')) return;
     if (!compareMode) {
       const idx = serverOptions.findIndex(o => o.code === currentCode);
       if (idx > 0) setSingleDate(serverOptions[idx - 1].code);
@@ -1328,6 +1400,7 @@
   });
 
   dateNextBtn.addEventListener('click', () => {
+    if (dateNextBtn.classList.contains('disabled')) return;
     if (!compareMode) {
       const idx = serverOptions.findIndex(o => o.code === currentCode);
       if (idx < serverOptions.length - 1) setSingleDate(serverOptions[idx + 1].code);
@@ -1488,7 +1561,8 @@
     }
     if (!res.ok) throw new Error(`${res.status}`);
 
-    serverOptions = await res.json();
+    const allServers = await res.json();
+    serverOptions = allServers.filter(o => o.active === 1);
     currentCode = serverOptions[serverOptions.length - 1].code;
     lastTwoDates = [currentCode, null];
 

@@ -4,6 +4,7 @@
     "label": "January 2026",
     "esri_id": "17",
     "esri_label": "25 Sep 2025",
-    "notes": "Shanghai tiles use TMS-style Y (handled in code)."
+    "notes": "Shanghai tiles use TMS-style Y (handled in code).",
+    "active": 1
   }
 ]

@@ -113,14 +113,7 @@ html, body {
   gap: 8px;
 }
 
-/* Row for the two date buttons at the top-right */
-.date-row {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-  justify-content: flex-end;
-  width: 100%;
-}
+/* (date-row removed – date navigation is now in the top-center bar) */
 
 /* =========================================================
    Date popups
@@ -175,20 +168,34 @@ html, body {
   z-index: 1500;
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
   pointer-events: none;
+  /* Fixed width so arrows stay in place regardless of date text length.
+     Desktop: 15 chars * ~13px ≈ 195px + 2 arrows (30px each) + gaps = ~300px */
+  width: 300px;
 }
 
 #current-date-display {
+  flex: 1;
+  text-align: center;
   background: none;
   color: #fff;
   font-size: 22px;
   font-weight: bold;
   text-shadow: 0 3px 16px #222, 0 1px 0 #222;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   opacity: 0.97;
   padding: 0 4px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#current-date-display:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
 }
 
 .date-nav-arrow {
@@ -204,19 +211,25 @@ html, body {
   cursor: pointer;
   pointer-events: auto;
   box-shadow: 0 1px 6px #0003;
-  transition: background 0.15s, box-shadow 0.15s;
+  transition: background 0.15s, box-shadow 0.15s, opacity 0.2s;
   padding: 0;
   flex-shrink: 0;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
-.date-nav-arrow:hover {
+.date-nav-arrow.disabled {
+  opacity: 0.25;
+  cursor: default;
+  pointer-events: none;
+}
+
+.date-nav-arrow:hover:not(.disabled) {
   background: #fff;
   box-shadow: 0 2px 10px #0004;
 }
 
-.date-nav-arrow:active {
+.date-nav-arrow:active:not(.disabled) {
   background: #e8e8e8;
 }
 
@@ -645,11 +658,15 @@ html, body {
 
   #date-nav-row {
     top: 10px;
+    /* Mobile: 8 chars * ~10px ≈ 80px + 2 arrows (26px each) + gaps = ~180px */
+    width: 180px;
   }
 
   #current-date-display {
     font-size: 16px;
     padding: 0 2px;
+    /* Truncate to ~8 chars on mobile */
+    max-width: 80px;
   }
 
   .date-nav-arrow {
