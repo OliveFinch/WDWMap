@@ -365,6 +365,8 @@
   const daynightBtn = document.getElementById('daynight-btn');
   const daynightIconImg = document.getElementById('daynight-icon-img');
   const rotateBtn = document.getElementById('rotate-btn');
+  const datePrevBtn = document.getElementById('date-prev-btn');
+  const dateNextBtn = document.getElementById('date-next-btn');
   // Extent (dynamic per park)
   let parkExtent = null;
 
@@ -891,6 +893,31 @@
     settingsBtn.classList.toggle('active-btn', compareMode && highlightMode && showSensitivity);
 
     updateSwipeUI();
+    updateDateNavArrows();
+  }
+
+  function updateDateNavArrows() {
+    if (!serverOptions.length) {
+      datePrevBtn.style.display = 'none';
+      dateNextBtn.style.display = 'none';
+      return;
+    }
+
+    if (!compareMode) {
+      // Single mode: prev = older (lower index), next = newer (higher index)
+      const idx = serverOptions.findIndex(o => o.code === currentCode);
+      datePrevBtn.style.display = (idx > 0) ? 'flex' : 'none';
+      dateNextBtn.style.display = (idx < serverOptions.length - 1) ? 'flex' : 'none';
+    } else {
+      // Compare mode: arrows navigate both left and right dates
+      // Prev = older direction (lower indices), next = newer direction (higher indices)
+      const leftIdx = serverOptions.findIndex(o => o.code === leftCode);
+      const rightIdx = serverOptions.findIndex(o => o.code === rightCode);
+      // Show prev if either side can go older
+      datePrevBtn.style.display = (leftIdx > 0 || rightIdx > 0) ? 'flex' : 'none';
+      // Show next if either side can go newer
+      dateNextBtn.style.display = (leftIdx < serverOptions.length - 1 || rightIdx < serverOptions.length - 1) ? 'flex' : 'none';
+    }
   }
 
   function setSingleDate(newCode) {
@@ -1279,6 +1306,43 @@
       map.getView().animate({ center: projected, zoom: 17, duration: 800 });
       setTimeout(() => map.removeLayer(layer), 5000);
     }, () => showFindMeMessage('Unable to get location'), { enableHighAccuracy: true });
+  });
+
+  // Date navigation arrows
+  datePrevBtn.addEventListener('click', () => {
+    if (!compareMode) {
+      const idx = serverOptions.findIndex(o => o.code === currentCode);
+      if (idx > 0) setSingleDate(serverOptions[idx - 1].code);
+    } else {
+      // Move both left and right one step older
+      const leftIdx = serverOptions.findIndex(o => o.code === leftCode);
+      const rightIdx = serverOptions.findIndex(o => o.code === rightCode);
+      let changed = false;
+      if (leftIdx > 0) { leftCode = serverOptions[leftIdx - 1].code; changed = true; }
+      if (rightIdx > 0) { rightCode = serverOptions[rightIdx - 1].code; changed = true; }
+      if (changed) {
+        (highlightMode ? launchHighlightMode : launchSwipeMode)();
+        updateDateUI();
+      }
+    }
+  });
+
+  dateNextBtn.addEventListener('click', () => {
+    if (!compareMode) {
+      const idx = serverOptions.findIndex(o => o.code === currentCode);
+      if (idx < serverOptions.length - 1) setSingleDate(serverOptions[idx + 1].code);
+    } else {
+      // Move both left and right one step newer
+      const leftIdx = serverOptions.findIndex(o => o.code === leftCode);
+      const rightIdx = serverOptions.findIndex(o => o.code === rightCode);
+      let changed = false;
+      if (leftIdx < serverOptions.length - 1) { leftCode = serverOptions[leftIdx + 1].code; changed = true; }
+      if (rightIdx < serverOptions.length - 1) { rightCode = serverOptions[rightIdx + 1].code; changed = true; }
+      if (changed) {
+        (highlightMode ? launchHighlightMode : launchSwipeMode)();
+        updateDateUI();
+      }
+    }
   });
 
   // Slider
