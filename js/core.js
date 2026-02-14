@@ -857,10 +857,30 @@
   // =====================
   // Popups
   // =====================
-  function fillDatePopup(popupEl, selectedCode, onPick) {
+  // constraint: 'olderThan' filters to show only dates older than constraintCode
+  //             'newerThan' filters to show only dates newer than constraintCode
+  //             null/undefined shows all dates
+  function fillDatePopup(popupEl, selectedCode, onPick, constraint, constraintCode) {
     popupEl.innerHTML = '';
     const reversed = serverOptions.slice().reverse();
+
+    // Get the constraint index for filtering
+    let constraintIdx = -1;
+    if (constraint && constraintCode) {
+      constraintIdx = serverOptions.findIndex(o => o.code === constraintCode);
+    }
+
     reversed.forEach((opt) => {
+      const optIdx = serverOptions.findIndex(o => o.code === opt.code);
+
+      // Apply constraint filter
+      if (constraint === 'olderThan' && constraintIdx >= 0 && optIdx >= constraintIdx) {
+        return; // Skip dates that are not older than constraint
+      }
+      if (constraint === 'newerThan' && constraintIdx >= 0 && optIdx <= constraintIdx) {
+        return; // Skip dates that are not newer than constraint
+      }
+
       const b = document.createElement('button');
       b.className = 'date-popup-item' + (opt.code === selectedCode ? ' selected' : '');
       b.textContent = showingDisney ? opt.label : (opt.esri_label || opt.label);
@@ -953,10 +973,13 @@
       canPrev = idx > 0;
       canNext = idx < serverOptions.length - 1;
     } else {
+      // In compare mode, left must be older than right
+      // Prev: can go older if left can go older
+      // Next: can go newer if right can go newer
       const leftIdx = serverOptions.findIndex(o => o.code === leftCode);
       const rightIdx = serverOptions.findIndex(o => o.code === rightCode);
-      canPrev = leftIdx > 0 || rightIdx > 0;
-      canNext = leftIdx < serverOptions.length - 1 || rightIdx < serverOptions.length - 1;
+      canPrev = leftIdx > 0;
+      canNext = rightIdx < serverOptions.length - 1;
     }
 
     datePrevBtn.classList.toggle('disabled', !canPrev);
@@ -1152,12 +1175,13 @@
     if (!compareMode) return;
     if (leftDatePopup.style.display === 'block') { hidePopup(leftDatePopup); return; }
 
+    // Only show dates older than right date
     fillDatePopup(leftDatePopup, leftCode, (code) => {
       leftCode = code;
       saveLastLeftCode(code);
       (highlightMode ? launchHighlightMode : launchSwipeMode)();
       updateDateUI();
-    });
+    }, 'olderThan', rightCode);
 
     positionPopupForButton(leftDatePopup, leftDateBtn);
     showPopup(leftDatePopup);
@@ -1209,18 +1233,23 @@
     compareMode = !compareMode;
 
     if (compareMode) {
-      // If the user has previously viewed another version for this park, flip the
-      // sides so CURRENT is on the left and LAST VIEWED is on the right.
-      // If there is no last-viewed value yet, keep the existing fallback:
-      // previous-dated on the left, current on the right.
+      // Always: right = current (newer), left = older date
+      rightCode = currentCode;
+
+      // Try to use remembered code if it's older than current
       const remembered = loadLastViewedCode();
-      if (isValidCode(remembered) && remembered !== currentCode) {
-        leftCode = currentCode;
-        rightCode = remembered;
+      const currentIdx = serverOptions.findIndex(o => o.code === currentCode);
+      const rememberedIdx = serverOptions.findIndex(o => o.code === remembered);
+
+      if (isValidCode(remembered) && rememberedIdx >= 0 && rememberedIdx < currentIdx) {
+        // Remembered date is older, use it
+        leftCode = remembered;
       } else {
-        rightCode = currentCode;
-        leftCode = chooseLeftCodeForCompare(currentCode);
+        // Fall back to previous date (next oldest)
+        leftCode = getPreviousCode(currentCode);
       }
+
+      // If left ended up same as right (only one date available), keep them same
       highlightMode = false;
       showSensitivity = false;
       launchSwipeMode();
@@ -1393,6 +1422,7 @@
   });
 
   // Compare mode: click on left-date-label opens left date picker
+  // Only shows dates OLDER than the right date
   leftDateLabel.addEventListener('click', (e) => {
     if (!compareMode) return;
     e.stopPropagation();
@@ -1402,11 +1432,12 @@
         saveLastLeftCode(code);
         (highlightMode ? launchHighlightMode : launchSwipeMode)();
         updateDateUI();
-      });
+      }, 'olderThan', rightCode);
     });
   });
 
   // Compare mode: click on right-date-label opens right date picker
+  // Only shows dates NEWER than the left date
   rightDateLabel.addEventListener('click', (e) => {
     if (!compareMode) return;
     e.stopPropagation();
@@ -1415,7 +1446,7 @@
         rightCode = code;
         (highlightMode ? launchHighlightMode : launchSwipeMode)();
         updateDateUI();
-      });
+      }, 'newerThan', leftCode);
     });
   });
 
