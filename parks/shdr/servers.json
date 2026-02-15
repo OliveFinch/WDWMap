@@ -1,10 +1,146 @@
 [
   {
+    "code": "7",
+    "label": "February 2016",
+    "esri_id": "17",
+    "esri_label": "25 Sep 2025",
+    "notes": "",
+    "active": 1
+  },
+  {
+    "code": "10",
+    "label": "August 2016",
+    "esri_id": "17",
+    "esri_label": "25 Sep 2025",
+    "notes": "",
+    "active": 1
+  },
+  {
+    "code": "18",
+    "label": "December 2018",
+    "esri_id": "17",
+    "esri_label": "25 Sep 2025",
+    "notes": "",
+    "active": 1
+  },
+  {
+    "code": "20",
+    "label": "May 2019",
+    "esri_id": "17",
+    "esri_label": "25 Sep 2025",
+    "notes": "",
+    "active": 1
+  },
+  {
+    "code": "23",
+    "label": "August 2019",
+    "esri_id": "17",
+    "esri_label": "25 Sep 2025",
+    "notes": "",
+    "active": 1
+  },
+  {
+    "code": "24",
+    "label": "October 2019",
+    "esri_id": "17",
+    "esri_label": "25 Sep 2025",
+    "notes": "",
+    "active": 1
+  },
+  {
+    "code": "25",
+    "label": "May 2020",
+    "esri_id": "17",
+    "esri_label": "25 Sep 2025",
+    "notes": "",
+    "active": 1
+  },
+  {
+    "code": "26",
+    "label": "December 2020",
+    "esri_id": "17",
+    "esri_label": "25 Sep 2025",
+    "notes": "",
+    "active": 1
+  },
+  {
+    "code": "29",
+    "label": "January 2021",
+    "esri_id": "17",
+    "esri_label": "25 Sep 2025",
+    "notes": "",
+    "active": 1
+  },
+  {
+    "code": "30",
+    "label": "May 2021",
+    "esri_id": "17",
+    "esri_label": "25 Sep 2025",
+    "notes": "",
+    "active": 1
+  },
+  {
+    "code": "924605885",
+    "label": "September 2022",
+    "esri_id": "17",
+    "esri_label": "25 Sep 2025",
+    "notes": "",
+    "active": 1
+  },
+  {
+    "code": "581067798",
+    "label": "December 2022",
+    "esri_id": "17",
+    "esri_label": "25 Sep 2025",
+    "notes": "",
+    "active": 1
+  },
+  {
+    "code": "611231269",
+    "label": "May 2023",
+    "esri_id": "17",
+    "esri_label": "25 Sep 2025",
+    "notes": "",
+    "active": 1
+  },
+  {
+    "code": "104730831",
+    "label": "December 2023",
+    "esri_id": "17",
+    "esri_label": "25 Sep 2025",
+    "notes": "",
+    "active": 1
+  },
+  {
+    "code": "373713236",
+    "label": "September 2024",
+    "esri_id": "17",
+    "esri_label": "25 Sep 2025",
+    "notes": "",
+    "active": 1
+  },
+  {
+    "code": "339740395",
+    "label": "January 2025",
+    "esri_id": "17",
+    "esri_label": "25 Sep 2025",
+    "notes": "",
+    "active": 1
+  },
+  {
+    "code": "768628737",
+    "label": "June 2025",
+    "esri_id": "17",
+    "esri_label": "25 Sep 2025",
+    "notes": "",
+    "active": 1
+  },
+  {
     "code": "740479929",
     "label": "January 2026",
     "esri_id": "17",
     "esri_label": "25 Sep 2025",
-    "notes": "Shanghai tiles use TMS-style Y (handled in code).",
+    "notes": "",
     "active": 1
   }
 ]
