@@ -6,5 +6,13 @@
     "esri_label": "Sat",
     "notes": "Tokyo Disney Resort tiles require CloudFront authentication via proxy worker.",
     "active": 1
+  },
+    {
+    "code": "202601",
+    "label": "Test",
+    "esri_id": "18",
+    "esri_label": "Sat",
+    "notes": "Tokyo Disney Resort tiles require CloudFront authentication via proxy worker.",
+    "active": 1
   }
 ]
