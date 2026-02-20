@@ -243,7 +243,11 @@
 
   function getServersUrl(parkId) {
     const pid = parkId || currentParkId || 'wdw';
-    return `parks/${pid}/servers.json`;
+    return `parks/${pid}/${pid}_dis_servers.json`;
+  }
+  function getSatServersUrl(parkId) {
+    const pid = parkId || currentParkId || 'wdw';
+    return `parks/${pid}/${pid}_sat_servers.json`;
   }
 
   // Convert XYZ tile coords to lon/lat at the tile's NW corner.
@@ -313,9 +317,13 @@
   // App State
   // =====================
   let serverOptions = [];
+  let satOptions = [];       // Separate satellite (ESRI Wayback) version list
+  let currentSatEsriId = ''; // Currently shown satellite version
   let currentCode = null;
   let leftCode = null;
   let rightCode = null;
+  let leftSatEsriId = '';    // Compare mode: left satellite version
+  let rightSatEsriId = '';   // Compare mode: right satellite version
   let lastTwoDates = [null, null];
 
   // Persist the last chosen LEFT compare date per-park
@@ -407,30 +415,23 @@
     return !!code && serverOptions.some((o) => o.code === code);
   }
 
-  // Satellite deduplication: many Disney dates share the same esri tile version.
-  // Returns one entry per unique esri_id (the first/oldest Disney date for each).
-  function getUniqueEsriOptions() {
-    const seen = new Set();
-    return serverOptions.filter(o => {
-      if (!o.esri_id || seen.has(o.esri_id)) return false;
-      seen.add(o.esri_id);
-      return true;
-    });
-  }
-
-  // Returns the navigation list: all dates in Disney mode, deduped in satellite mode.
+  // Returns the navigation list: Disney dates or satellite versions.
   function getNavOptions() {
-    return showingDisney ? serverOptions : getUniqueEsriOptions();
+    return showingDisney ? serverOptions : satOptions;
   }
 
-  // Find a code's position in the nav list.
-  // In satellite mode, matches by esri_id (since many codes share the same satellite).
-  function findNavIndex(code, navOpts) {
+  // Find a position in the nav list.
+  // In Disney mode, matches by code. In satellite mode, matches by esri_id.
+  function findNavIndex(codeOrEsriId, navOpts) {
     if (showingDisney) {
-      return navOpts.findIndex(o => o.code === code);
+      return navOpts.findIndex(o => o.code === codeOrEsriId);
     }
-    const esriId = getEsriIdForCode(code);
-    return navOpts.findIndex(o => o.esri_id === esriId);
+    return navOpts.findIndex(o => o.esri_id === codeOrEsriId);
+  }
+
+  // Get the active satellite esri_id (or for a given Disney code, its mapped esri_id)
+  function getCurrentSatId() {
+    return currentSatEsriId || getEsriIdForCode(currentCode);
   }
 
   function getParkStorageKey(suffix) {
@@ -886,20 +887,18 @@
   // constraint: 'olderThan' filters to show only dates older than constraintCode
   //             'newerThan' filters to show only dates newer than constraintCode
   //             null/undefined shows all dates
-  // In satellite mode, uses deduplicated esri options so no duplicates appear.
-  function fillDatePopup(popupEl, selectedCode, onPick, constraint, constraintCode) {
+  // selectedId: Disney code (showingDisney) or esri_id (satellite mode).
+  // onPick receives: Disney code or esri_id depending on mode.
+  function fillDatePopup(popupEl, selectedId, onPick, constraint, constraintId) {
     popupEl.innerHTML = '';
     const navOpts = getNavOptions();
     const reversed = navOpts.slice().reverse();
 
     // Get the constraint index for filtering (within navOpts)
     let constraintIdx = -1;
-    if (constraint && constraintCode) {
-      constraintIdx = findNavIndex(constraintCode, navOpts);
+    if (constraint && constraintId) {
+      constraintIdx = findNavIndex(constraintId, navOpts);
     }
-
-    // For satellite mode, determine the selected esri_id for matching
-    const selectedEsriId = !showingDisney ? getEsriIdForCode(selectedCode) : null;
 
     let selectedBtn = null;
     reversed.forEach((opt) => {
@@ -913,15 +912,14 @@
         return;
       }
 
-      // Determine if this is the selected item
-      const isSelected = showingDisney
-        ? opt.code === selectedCode
-        : opt.esri_id === selectedEsriId;
+      // Key for this item: code in Disney mode, esri_id in satellite mode
+      const optKey = showingDisney ? opt.code : opt.esri_id;
+      const isSelected = optKey === selectedId;
 
       const b = document.createElement('button');
       b.className = 'date-popup-item' + (isSelected ? ' selected' : '');
-      b.textContent = showingDisney ? opt.label : (opt.esri_label || opt.label);
-      b.onclick = function () { onPick(opt.code); hidePopup(popupEl); };
+      b.textContent = opt.label;
+      b.onclick = function () { onPick(optKey); hidePopup(popupEl); };
       popupEl.appendChild(b);
       if (isSelected) selectedBtn = b;
     });
@@ -974,15 +972,22 @@
     dateNavRow.classList.toggle('compare-mode', compareMode);
 
     if (!compareMode) {
-      const label = showingDisney
-        ? getLabelForCode(currentCode)
-        : (getEsriLabelForCode(currentCode) || (getLabelForCode(currentCode) + ' (Satellite)'));
-      singleDateLabel.textContent = label;
+      if (showingDisney) {
+        singleDateLabel.textContent = getLabelForCode(currentCode);
+      } else {
+        const sat = satOptions.find(o => o.esri_id === getCurrentSatId());
+        singleDateLabel.textContent = sat ? sat.label : 'Satellite';
+      }
     } else {
-      const leftLabel = showingDisney ? getLabelForCode(leftCode) : (getEsriLabelForCode(leftCode) || getLabelForCode(leftCode));
-      const rightLabel = showingDisney ? getLabelForCode(rightCode) : (getEsriLabelForCode(rightCode) || getLabelForCode(rightCode));
-      leftDateLabel.textContent = leftLabel;
-      rightDateLabel.textContent = rightLabel;
+      if (showingDisney) {
+        leftDateLabel.textContent = getLabelForCode(leftCode);
+        rightDateLabel.textContent = getLabelForCode(rightCode);
+      } else {
+        const satL = satOptions.find(o => o.esri_id === leftSatEsriId);
+        const satR = satOptions.find(o => o.esri_id === rightSatEsriId);
+        leftDateLabel.textContent = satL ? satL.label : 'Satellite';
+        rightDateLabel.textContent = satR ? satR.label : 'Satellite';
+      }
     }
 
     currentDateDisplay.style.display = 'block';
@@ -1007,24 +1012,36 @@
     updateDateNavArrows();
   }
 
+  // Helper: get the current nav key (code for Disney, esri_id for satellite)
+  function getNavKey(mode) {
+    // mode: 'current', 'left', 'right'
+    if (showingDisney) {
+      if (mode === 'left') return leftCode;
+      if (mode === 'right') return rightCode;
+      return currentCode;
+    }
+    if (mode === 'left') return leftSatEsriId;
+    if (mode === 'right') return rightSatEsriId;
+    return getCurrentSatId();
+  }
+
   function updateDateNavArrows() {
-    if (!serverOptions.length) {
+    const navOpts = getNavOptions();
+    if (!navOpts.length) {
       datePrevBtn.classList.add('disabled');
       dateNextBtn.classList.add('disabled');
       return;
     }
 
-    const navOpts = getNavOptions();
     let canPrev, canNext;
 
     if (!compareMode) {
-      const idx = findNavIndex(currentCode, navOpts);
+      const idx = findNavIndex(getNavKey('current'), navOpts);
       canPrev = idx > 0;
       canNext = idx < navOpts.length - 1;
     } else {
-      // In compare mode, left must be older than right
-      const leftIdx = findNavIndex(leftCode, navOpts);
-      const rightIdx = findNavIndex(rightCode, navOpts);
+      const leftIdx = findNavIndex(getNavKey('left'), navOpts);
+      const rightIdx = findNavIndex(getNavKey('right'), navOpts);
       canPrev = leftIdx > 0;
       canNext = rightIdx < navOpts.length - 1;
     }
@@ -1082,10 +1099,8 @@
       leftLayer = makeDisneyLayer(leftCode);
       rightLayer = makeDisneyLayer(rightCode);
     } else {
-      const leftEsri = getEsriIdForCode(leftCode);
-      const rightEsri = getEsriIdForCode(rightCode);
-      leftLayer = makeEsriLayer(leftEsri);
-      rightLayer = makeEsriLayer(rightEsri);
+      leftLayer = makeEsriLayer(leftSatEsriId);
+      rightLayer = makeEsriLayer(rightSatEsriId);
       if (!leftLayer || !rightLayer) {
         compareMode = false;
         updateDateUI();
@@ -1246,6 +1261,22 @@
     }, 0);
   });
 
+  // Switch satellite view to a given esri_id (single mode, non-compare)
+  function setSatelliteView(esriId) {
+    currentSatEsriId = esriId;
+    if (!esriLayer || esriLayer.get('esri_id') !== esriId) {
+      if (esriLayer) map.removeLayer(esriLayer);
+      esriLayer = makeEsriLayer(esriId);
+      if (esriLayer) {
+        esriLayer.set('esri_id', esriId);
+        esriLayer.getSource().set('extent', parkExtent);
+        map.getLayers().setAt(1, esriLayer);
+      }
+    }
+    if (esriLayer) esriLayer.setVisible(true);
+    updateDateUI();
+  }
+
   toggleBtn.addEventListener('click', () => {
     showingDisney = !showingDisney;
 
@@ -1255,20 +1286,18 @@
         if (esriLayer) esriLayer.setVisible(false);
       } else {
         disneyLayer.setVisible(false);
-        const esriId = getEsriIdForCode(currentCode);
-        if (!esriLayer || esriLayer.get('esri_id') !== esriId) {
-          if (esriLayer) map.removeLayer(esriLayer);
-          esriLayer = makeEsriLayer(esriId);
-          if (esriLayer) {
-            esriLayer.set('esri_id', esriId);
-            esriLayer.getSource().set('extent', parkExtent);
-            map.getLayers().setAt(1, esriLayer);
-          }
-        }
-        if (esriLayer) esriLayer.setVisible(true);
+        // Map current Disney date to closest satellite version
+        const mapped = getEsriIdForCode(currentCode);
+        currentSatEsriId = mapped || (satOptions.length ? satOptions[satOptions.length - 1].esri_id : '');
+        setSatelliteView(currentSatEsriId);
       }
     } else {
-      if (!showingDisney && highlightMode) { highlightMode = false; showSensitivity = false; }
+      if (!showingDisney) {
+        if (highlightMode) { highlightMode = false; showSensitivity = false; }
+        // Map compare codes to satellite versions
+        leftSatEsriId = getEsriIdForCode(leftCode) || (satOptions.length ? satOptions[0].esri_id : '');
+        rightSatEsriId = getEsriIdForCode(rightCode) || (satOptions.length ? satOptions[satOptions.length - 1].esri_id : '');
+      }
       (highlightMode ? launchHighlightMode : launchSwipeMode)();
     }
 
@@ -1281,23 +1310,27 @@
 
     if (compareMode) {
       // Always: right = current (newer), left = older date
-      // Uses navOptions so satellite mode picks previous unique esri version
       const navOpts = getNavOptions();
-      rightCode = currentCode;
 
-      // Try to use remembered code if it's older than current
-      const remembered = loadLastViewedCode();
-      const currentNavIdx = findNavIndex(currentCode, navOpts);
-      const rememberedNavIdx = findNavIndex(remembered, navOpts);
+      if (showingDisney) {
+        rightCode = currentCode;
+        const remembered = loadLastViewedCode();
+        const currentNavIdx = findNavIndex(currentCode, navOpts);
+        const rememberedNavIdx = findNavIndex(remembered, navOpts);
 
-      if (isValidCode(remembered) && rememberedNavIdx >= 0 && rememberedNavIdx < currentNavIdx) {
-        leftCode = remembered;
+        if (isValidCode(remembered) && rememberedNavIdx >= 0 && rememberedNavIdx < currentNavIdx) {
+          leftCode = remembered;
+        } else {
+          leftCode = currentNavIdx > 0 ? navOpts[currentNavIdx - 1].code : currentCode;
+        }
       } else {
-        // Fall back to previous entry in the nav list
-        leftCode = currentNavIdx > 0 ? navOpts[currentNavIdx - 1].code : currentCode;
+        // Satellite mode: use esri_id based navigation
+        const curSat = getCurrentSatId();
+        rightSatEsriId = curSat;
+        const curIdx = navOpts.findIndex(o => o.esri_id === curSat);
+        leftSatEsriId = curIdx > 0 ? navOpts[curIdx - 1].esri_id : curSat;
       }
 
-      // If left ended up same as right (only one date available), keep them same
       highlightMode = false;
       showSensitivity = false;
       launchSwipeMode();
@@ -1460,95 +1493,121 @@
     }, 0);
   }
 
-  // Single mode: click on single-date-label or currentDateDisplay opens date picker
+  // Single mode: click on single-date-label opens date picker
   singleDateLabel.addEventListener('click', (e) => {
     if (compareMode) return;
     e.stopPropagation();
     showDatePopupBelow(datePopup, currentDateDisplay, () => {
-      fillDatePopup(datePopup, currentCode, setSingleDate);
+      if (showingDisney) {
+        fillDatePopup(datePopup, currentCode, setSingleDate);
+      } else {
+        fillDatePopup(datePopup, getCurrentSatId(), (esriId) => {
+          setSatelliteView(esriId);
+        });
+      }
     });
   });
 
   // Compare mode: click on left-date-label opens left date picker
-  // Only shows dates OLDER than the right date
   leftDateLabel.addEventListener('click', (e) => {
     if (!compareMode) return;
     e.stopPropagation();
+    const curKey = getNavKey('left');
+    const constraintKey = getNavKey('right');
     showDatePopupBelow(leftDatePopup, leftDateLabel, () => {
-      fillDatePopup(leftDatePopup, leftCode, (code) => {
-        leftCode = code;
-        saveLastLeftCode(code);
+      fillDatePopup(leftDatePopup, curKey, (picked) => {
+        if (showingDisney) {
+          leftCode = picked;
+          saveLastLeftCode(picked);
+        } else {
+          leftSatEsriId = picked;
+        }
         (highlightMode ? launchHighlightMode : launchSwipeMode)();
         updateDateUI();
-      }, 'olderThan', rightCode);
+      }, 'olderThan', constraintKey);
     });
   });
 
   // Compare mode: click on right-date-label opens right date picker
-  // Only shows dates NEWER than the left date
   rightDateLabel.addEventListener('click', (e) => {
     if (!compareMode) return;
     e.stopPropagation();
+    const curKey = getNavKey('right');
+    const constraintKey = getNavKey('left');
     showDatePopupBelow(datePopup, rightDateLabel, () => {
-      fillDatePopup(datePopup, rightCode, (code) => {
-        rightCode = code;
+      fillDatePopup(datePopup, curKey, (picked) => {
+        if (showingDisney) {
+          rightCode = picked;
+        } else {
+          rightSatEsriId = picked;
+        }
         (highlightMode ? launchHighlightMode : launchSwipeMode)();
         updateDateUI();
-      }, 'newerThan', leftCode);
+      }, 'newerThan', constraintKey);
     });
   });
 
   // Fallback: clicking on currentDateDisplay itself (not a label)
   currentDateDisplay.addEventListener('click', (e) => {
-    // If click was on a label, the label handler already ran
     if (e.target !== currentDateDisplay) return;
-
     if (!compareMode) {
       showDatePopupBelow(datePopup, currentDateDisplay, () => {
-        fillDatePopup(datePopup, currentCode, setSingleDate);
+        if (showingDisney) {
+          fillDatePopup(datePopup, currentCode, setSingleDate);
+        } else {
+          fillDatePopup(datePopup, getCurrentSatId(), (esriId) => {
+            setSatelliteView(esriId);
+          });
+        }
       });
     }
-    // In compare mode, clicking on "vs" or the container does nothing
   });
 
   // Date navigation arrows
-  // In satellite mode, steps through unique esri versions instead of every Disney date.
-  datePrevBtn.addEventListener('click', () => {
-    if (datePrevBtn.classList.contains('disabled')) return;
+  function navStep(direction) {
     const navOpts = getNavOptions();
+    const delta = direction; // -1 = prev, +1 = next
+
     if (!compareMode) {
-      const idx = findNavIndex(currentCode, navOpts);
-      if (idx > 0) setSingleDate(navOpts[idx - 1].code);
+      const key = getNavKey('current');
+      const idx = findNavIndex(key, navOpts);
+      const newIdx = idx + delta;
+      if (newIdx < 0 || newIdx >= navOpts.length) return;
+
+      if (showingDisney) {
+        setSingleDate(navOpts[newIdx].code);
+      } else {
+        setSatelliteView(navOpts[newIdx].esri_id);
+      }
     } else {
-      const leftIdx = findNavIndex(leftCode, navOpts);
-      const rightIdx = findNavIndex(rightCode, navOpts);
+      const leftIdx = findNavIndex(getNavKey('left'), navOpts);
+      const rightIdx = findNavIndex(getNavKey('right'), navOpts);
       let changed = false;
-      if (leftIdx > 0) { leftCode = navOpts[leftIdx - 1].code; changed = true; }
-      if (rightIdx > 0) { rightCode = navOpts[rightIdx - 1].code; changed = true; }
+      const newLeftIdx = leftIdx + delta;
+      const newRightIdx = rightIdx + delta;
+
+      if (showingDisney) {
+        if (newLeftIdx >= 0 && newLeftIdx < navOpts.length) { leftCode = navOpts[newLeftIdx].code; changed = true; }
+        if (newRightIdx >= 0 && newRightIdx < navOpts.length) { rightCode = navOpts[newRightIdx].code; changed = true; }
+      } else {
+        if (newLeftIdx >= 0 && newLeftIdx < navOpts.length) { leftSatEsriId = navOpts[newLeftIdx].esri_id; changed = true; }
+        if (newRightIdx >= 0 && newRightIdx < navOpts.length) { rightSatEsriId = navOpts[newRightIdx].esri_id; changed = true; }
+      }
       if (changed) {
         (highlightMode ? launchHighlightMode : launchSwipeMode)();
         updateDateUI();
       }
     }
+  }
+
+  datePrevBtn.addEventListener('click', () => {
+    if (datePrevBtn.classList.contains('disabled')) return;
+    navStep(-1);
   });
 
   dateNextBtn.addEventListener('click', () => {
     if (dateNextBtn.classList.contains('disabled')) return;
-    const navOpts = getNavOptions();
-    if (!compareMode) {
-      const idx = findNavIndex(currentCode, navOpts);
-      if (idx < navOpts.length - 1) setSingleDate(navOpts[idx + 1].code);
-    } else {
-      const leftIdx = findNavIndex(leftCode, navOpts);
-      const rightIdx = findNavIndex(rightCode, navOpts);
-      let changed = false;
-      if (leftIdx < navOpts.length - 1) { leftCode = navOpts[leftIdx + 1].code; changed = true; }
-      if (rightIdx < navOpts.length - 1) { rightCode = navOpts[rightIdx + 1].code; changed = true; }
-      if (changed) {
-        (highlightMode ? launchHighlightMode : launchSwipeMode)();
-        updateDateUI();
-      }
-    }
+    navStep(+1);
   });
 
   // Slider
@@ -1682,22 +1741,35 @@
 // Boot
 // =====================
 (async function boot() {
-  // NOTE: Park switching UI will come later; for now we load the active park's servers list.
-  const primaryUrl = getServersUrl(currentParkId);
-  const fallbackUrl = getServersUrl('wdw');
+  const disUrl = getServersUrl(currentParkId);
+  const satUrl = getSatServersUrl(currentParkId);
+  const fallbackDisUrl = getServersUrl('wdw');
+  const fallbackSatUrl = getSatServersUrl('wdw');
 
   try {
-    let res = await fetch(primaryUrl, { cache: 'no-store' });
-    if (!res.ok) {
-      // If the park file isn't present yet, fall back to WDW so the app still starts.
-      res = await fetch(fallbackUrl, { cache: 'no-store' });
-    }
-    if (!res.ok) throw new Error(`${res.status}`);
+    // Load Disney and satellite server lists in parallel
+    let [disRes, satRes] = await Promise.all([
+      fetch(disUrl, { cache: 'no-store' }),
+      fetch(satUrl, { cache: 'no-store' })
+    ]);
 
-    const allServers = await res.json();
-    serverOptions = allServers.filter(o => o.active === 1);
+    // Fall back to WDW if park files missing
+    if (!disRes.ok) disRes = await fetch(fallbackDisUrl, { cache: 'no-store' });
+    if (!satRes.ok) satRes = await fetch(fallbackSatUrl, { cache: 'no-store' });
+    if (!disRes.ok) throw new Error(`Disney servers ${disRes.status}`);
+
+    const allDis = await disRes.json();
+    serverOptions = allDis.filter(o => o.active === 1);
     currentCode = serverOptions[serverOptions.length - 1].code;
     lastTwoDates = [currentCode, null];
+
+    // Satellite list (may be empty for some parks)
+    if (satRes.ok) {
+      const allSat = await satRes.json();
+      satOptions = allSat.filter(o => o.active === 1);
+    } else {
+      satOptions = [];
+    }
 
     initMap();
     enableDoubleTapHoldZoom();
@@ -1713,13 +1785,15 @@
     window.WDWMX.getLabelForCode = (code) => getLabelForCode(code);
     window.WDWMX.setSingleDate = (code) => setSingleDate(code);
     window.WDWMX.getServers = () => serverOptions;
+    window.WDWMX.getSatServers = () => satOptions;
     window.WDWMX.getServersUrl = (parkId) => getServersUrl(parkId);
+    window.WDWMX.getSatServersUrl = (parkId) => getSatServersUrl(parkId);
     window.WDWMX.getParkId = () => currentParkId;
     window.WDWMX.getPark = () => getCurrentPark();
     window.WDWMX.getParks = () => Object.values(PARKS).map(p => ({ parkId: p.parkId, name: p.name }));
 
   } catch (err) {
-    alert('Failed to load servers.json: ' + err);
+    alert('Failed to load server data: ' + err);
   }
 })();
 
