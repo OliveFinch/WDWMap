@@ -407,6 +407,32 @@
     return !!code && serverOptions.some((o) => o.code === code);
   }
 
+  // Satellite deduplication: many Disney dates share the same esri tile version.
+  // Returns one entry per unique esri_id (the first/oldest Disney date for each).
+  function getUniqueEsriOptions() {
+    const seen = new Set();
+    return serverOptions.filter(o => {
+      if (!o.esri_id || seen.has(o.esri_id)) return false;
+      seen.add(o.esri_id);
+      return true;
+    });
+  }
+
+  // Returns the navigation list: all dates in Disney mode, deduped in satellite mode.
+  function getNavOptions() {
+    return showingDisney ? serverOptions : getUniqueEsriOptions();
+  }
+
+  // Find a code's position in the nav list.
+  // In satellite mode, matches by esri_id (since many codes share the same satellite).
+  function findNavIndex(code, navOpts) {
+    if (showingDisney) {
+      return navOpts.findIndex(o => o.code === code);
+    }
+    const esriId = getEsriIdForCode(code);
+    return navOpts.findIndex(o => o.esri_id === esriId);
+  }
+
   function getParkStorageKey(suffix) {
     return `wdwmx_${suffix}_${currentParkId || 'wdw'}`;
   }
@@ -860,33 +886,55 @@
   // constraint: 'olderThan' filters to show only dates older than constraintCode
   //             'newerThan' filters to show only dates newer than constraintCode
   //             null/undefined shows all dates
+  // In satellite mode, uses deduplicated esri options so no duplicates appear.
   function fillDatePopup(popupEl, selectedCode, onPick, constraint, constraintCode) {
     popupEl.innerHTML = '';
-    const reversed = serverOptions.slice().reverse();
+    const navOpts = getNavOptions();
+    const reversed = navOpts.slice().reverse();
 
-    // Get the constraint index for filtering
+    // Get the constraint index for filtering (within navOpts)
     let constraintIdx = -1;
     if (constraint && constraintCode) {
-      constraintIdx = serverOptions.findIndex(o => o.code === constraintCode);
+      constraintIdx = findNavIndex(constraintCode, navOpts);
     }
 
+    // For satellite mode, determine the selected esri_id for matching
+    const selectedEsriId = !showingDisney ? getEsriIdForCode(selectedCode) : null;
+
+    let selectedBtn = null;
     reversed.forEach((opt) => {
-      const optIdx = serverOptions.findIndex(o => o.code === opt.code);
+      const optIdx = navOpts.indexOf(opt);
 
       // Apply constraint filter
       if (constraint === 'olderThan' && constraintIdx >= 0 && optIdx >= constraintIdx) {
-        return; // Skip dates that are not older than constraint
+        return;
       }
       if (constraint === 'newerThan' && constraintIdx >= 0 && optIdx <= constraintIdx) {
-        return; // Skip dates that are not newer than constraint
+        return;
       }
 
+      // Determine if this is the selected item
+      const isSelected = showingDisney
+        ? opt.code === selectedCode
+        : opt.esri_id === selectedEsriId;
+
       const b = document.createElement('button');
-      b.className = 'date-popup-item' + (opt.code === selectedCode ? ' selected' : '');
+      b.className = 'date-popup-item' + (isSelected ? ' selected' : '');
       b.textContent = showingDisney ? opt.label : (opt.esri_label || opt.label);
       b.onclick = function () { onPick(opt.code); hidePopup(popupEl); };
       popupEl.appendChild(b);
+      if (isSelected) selectedBtn = b;
     });
+
+    // Scroll the selected item into center of the popup after it's rendered
+    if (selectedBtn) {
+      setTimeout(() => {
+        const itemTop = selectedBtn.offsetTop;
+        const itemH = selectedBtn.offsetHeight;
+        const popupH = popupEl.clientHeight;
+        popupEl.scrollTop = itemTop - (popupH / 2) + (itemH / 2);
+      }, 20);
+    }
   }
 
   function positionPopupForButton(popupEl, btnEl) {
@@ -966,20 +1014,19 @@
       return;
     }
 
+    const navOpts = getNavOptions();
     let canPrev, canNext;
 
     if (!compareMode) {
-      const idx = serverOptions.findIndex(o => o.code === currentCode);
+      const idx = findNavIndex(currentCode, navOpts);
       canPrev = idx > 0;
-      canNext = idx < serverOptions.length - 1;
+      canNext = idx < navOpts.length - 1;
     } else {
       // In compare mode, left must be older than right
-      // Prev: can go older if left can go older
-      // Next: can go newer if right can go newer
-      const leftIdx = serverOptions.findIndex(o => o.code === leftCode);
-      const rightIdx = serverOptions.findIndex(o => o.code === rightCode);
+      const leftIdx = findNavIndex(leftCode, navOpts);
+      const rightIdx = findNavIndex(rightCode, navOpts);
       canPrev = leftIdx > 0;
-      canNext = rightIdx < serverOptions.length - 1;
+      canNext = rightIdx < navOpts.length - 1;
     }
 
     datePrevBtn.classList.toggle('disabled', !canPrev);
@@ -1234,19 +1281,20 @@
 
     if (compareMode) {
       // Always: right = current (newer), left = older date
+      // Uses navOptions so satellite mode picks previous unique esri version
+      const navOpts = getNavOptions();
       rightCode = currentCode;
 
       // Try to use remembered code if it's older than current
       const remembered = loadLastViewedCode();
-      const currentIdx = serverOptions.findIndex(o => o.code === currentCode);
-      const rememberedIdx = serverOptions.findIndex(o => o.code === remembered);
+      const currentNavIdx = findNavIndex(currentCode, navOpts);
+      const rememberedNavIdx = findNavIndex(remembered, navOpts);
 
-      if (isValidCode(remembered) && rememberedIdx >= 0 && rememberedIdx < currentIdx) {
-        // Remembered date is older, use it
+      if (isValidCode(remembered) && rememberedNavIdx >= 0 && rememberedNavIdx < currentNavIdx) {
         leftCode = remembered;
       } else {
-        // Fall back to previous date (next oldest)
-        leftCode = getPreviousCode(currentCode);
+        // Fall back to previous entry in the nav list
+        leftCode = currentNavIdx > 0 ? navOpts[currentNavIdx - 1].code : currentCode;
       }
 
       // If left ended up same as right (only one date available), keep them same
@@ -1464,18 +1512,19 @@
   });
 
   // Date navigation arrows
+  // In satellite mode, steps through unique esri versions instead of every Disney date.
   datePrevBtn.addEventListener('click', () => {
     if (datePrevBtn.classList.contains('disabled')) return;
+    const navOpts = getNavOptions();
     if (!compareMode) {
-      const idx = serverOptions.findIndex(o => o.code === currentCode);
-      if (idx > 0) setSingleDate(serverOptions[idx - 1].code);
+      const idx = findNavIndex(currentCode, navOpts);
+      if (idx > 0) setSingleDate(navOpts[idx - 1].code);
     } else {
-      // Move both left and right one step older
-      const leftIdx = serverOptions.findIndex(o => o.code === leftCode);
-      const rightIdx = serverOptions.findIndex(o => o.code === rightCode);
+      const leftIdx = findNavIndex(leftCode, navOpts);
+      const rightIdx = findNavIndex(rightCode, navOpts);
       let changed = false;
-      if (leftIdx > 0) { leftCode = serverOptions[leftIdx - 1].code; changed = true; }
-      if (rightIdx > 0) { rightCode = serverOptions[rightIdx - 1].code; changed = true; }
+      if (leftIdx > 0) { leftCode = navOpts[leftIdx - 1].code; changed = true; }
+      if (rightIdx > 0) { rightCode = navOpts[rightIdx - 1].code; changed = true; }
       if (changed) {
         (highlightMode ? launchHighlightMode : launchSwipeMode)();
         updateDateUI();
@@ -1485,16 +1534,16 @@
 
   dateNextBtn.addEventListener('click', () => {
     if (dateNextBtn.classList.contains('disabled')) return;
+    const navOpts = getNavOptions();
     if (!compareMode) {
-      const idx = serverOptions.findIndex(o => o.code === currentCode);
-      if (idx < serverOptions.length - 1) setSingleDate(serverOptions[idx + 1].code);
+      const idx = findNavIndex(currentCode, navOpts);
+      if (idx < navOpts.length - 1) setSingleDate(navOpts[idx + 1].code);
     } else {
-      // Move both left and right one step newer
-      const leftIdx = serverOptions.findIndex(o => o.code === leftCode);
-      const rightIdx = serverOptions.findIndex(o => o.code === rightCode);
+      const leftIdx = findNavIndex(leftCode, navOpts);
+      const rightIdx = findNavIndex(rightCode, navOpts);
       let changed = false;
-      if (leftIdx < serverOptions.length - 1) { leftCode = serverOptions[leftIdx + 1].code; changed = true; }
-      if (rightIdx < serverOptions.length - 1) { rightCode = serverOptions[rightIdx + 1].code; changed = true; }
+      if (leftIdx < navOpts.length - 1) { leftCode = navOpts[leftIdx + 1].code; changed = true; }
+      if (rightIdx < navOpts.length - 1) { rightCode = navOpts[rightIdx + 1].code; changed = true; }
       if (changed) {
         (highlightMode ? launchHighlightMode : launchSwipeMode)();
         updateDateUI();
