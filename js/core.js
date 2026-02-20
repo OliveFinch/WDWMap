@@ -180,7 +180,7 @@
       name: 'Shanghai Disney Resort',
       tileTemplate: 'https://secure.cdn1.wdpromedia.com/media/maps/prod/shdr-baidu-mob-en/{code}/{z}/{x}/{y}.jpg',
       minZoom: 14,
-      maxZoom: 20,
+      maxZoom: 21,
       yScheme: 'tms', // server expects flipped Y
       // Shanghai uses Baidu coordinates - these are the "fake" WGS84 coords that map to correct tiles
       defaultCenter: [-107.344044, -83.052335],

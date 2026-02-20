@@ -1,7 +1,7 @@
 [
   {
-    "code": "20260122183830",
-    "label": "January 2026",
+    "code": "1",
+    "label": "Current",
     "esri_id": "18",
     "esri_label": "Sat",
     "notes": "Tokyo Disney Resort tiles require CloudFront authentication via proxy worker.",
