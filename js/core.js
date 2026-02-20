@@ -398,14 +398,72 @@
     const rec = serverOptions.find((o) => o.code === code);
     return rec ? rec.label : '';
   }
-  function getEsriIdForCode(code) {
-    const rec = serverOptions.find((o) => o.code === code);
-    return rec && rec.esri_id ? rec.esri_id : '';
+
+  // Month name to number (0-indexed)
+  const MONTH_MAP = {
+    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
+  };
+
+  // Parse a date label into a comparable timestamp.
+  // Handles formats: "20 Feb 2014", "Aug 2018", "Early Mar 2020", "Late Dec 2019", "Dec 2019 (Mid)"
+  function parseDateLabel(label) {
+    if (!label) return 0;
+    const s = label.toLowerCase().replace(/[()]/g, '');
+
+    // Try exact date: "20 Feb 2014" or "02 Nov 2018"
+    const exactMatch = s.match(/^(\d{1,2})\s+([a-z]{3})\s+(\d{4})$/);
+    if (exactMatch) {
+      const day = parseInt(exactMatch[1], 10);
+      const mon = MONTH_MAP[exactMatch[2]];
+      const year = parseInt(exactMatch[3], 10);
+      if (mon !== undefined) return new Date(year, mon, day).getTime();
+    }
+
+    // Try "Early/Late/Mid Mon YYYY" or "Mon YYYY Early/Late/Mid"
+    const modMatch = s.match(/^(early|late|mid)?\s*([a-z]{3})\s+(\d{4})\s*(early|late|mid)?$/);
+    if (modMatch) {
+      const mod = modMatch[1] || modMatch[4] || '';
+      const mon = MONTH_MAP[modMatch[2]];
+      const year = parseInt(modMatch[3], 10);
+      if (mon !== undefined) {
+        let day = 1;
+        if (mod === 'early') day = 5;
+        else if (mod === 'mid') day = 15;
+        else if (mod === 'late') day = 25;
+        else day = 1; // plain month defaults to 1st
+        return new Date(year, mon, day).getTime();
+      }
+    }
+
+    return 0; // unparseable
   }
-  function getEsriLabelForCode(code) {
-    const rec = serverOptions.find((o) => o.code === code);
-    return rec && rec.esri_label ? rec.esri_label : '';
+
+  // Find the closest satellite version for a Disney date label.
+  // Returns the esri_id of the satellite with date <= Disney date, or the oldest if none.
+  function findClosestSatellite(disneyLabel) {
+    if (!satOptions.length) return '';
+    const disneyTime = parseDateLabel(disneyLabel);
+    if (!disneyTime) {
+      // Can't parse, return newest satellite
+      return satOptions[satOptions.length - 1].esri_id;
+    }
+
+    // Find the latest satellite that's <= Disney date
+    let best = null;
+    for (const sat of satOptions) {
+      const satTime = parseDateLabel(sat.label);
+      if (satTime && satTime <= disneyTime) {
+        if (!best || satTime > parseDateLabel(best.label)) {
+          best = sat;
+        }
+      }
+    }
+
+    // If no satellite is older than Disney date, use the oldest satellite
+    return best ? best.esri_id : satOptions[0].esri_id;
   }
+
   function getPreviousCode(code) {
     const i = serverOptions.findIndex((o) => o.code === code);
     return i > 0 ? serverOptions[i - 1].code : serverOptions[0].code;
@@ -429,9 +487,9 @@
     return navOpts.findIndex(o => o.esri_id === codeOrEsriId);
   }
 
-  // Get the active satellite esri_id (or for a given Disney code, its mapped esri_id)
+  // Get the active satellite esri_id (or find closest match for current Disney date)
   function getCurrentSatId() {
-    return currentSatEsriId || getEsriIdForCode(currentCode);
+    return currentSatEsriId || findClosestSatellite(getLabelForCode(currentCode));
   }
 
   function getParkStorageKey(suffix) {
@@ -671,7 +729,7 @@
   // =====================
   function initMap() {
     disneyLayer = makeDisneyLayer(currentCode);
-    esriLayer = makeEsriLayer(getEsriIdForCode(currentCode));
+    esriLayer = makeEsriLayer(findClosestSatellite(getLabelForCode(currentCode)));
     roadsLayer = makeRoadsLayer();
 
     const park = getCurrentPark();
@@ -1063,9 +1121,9 @@
     disneyLayer.getSource().set('extent', parkExtent);
     map.getLayers().setAt(0, disneyLayer);
 
-    const esriId = getEsriIdForCode(newCode);
+    const esriId = findClosestSatellite(getLabelForCode(newCode));
     const visE = esriLayer && esriLayer.getVisible();
-    if (!esriLayer || esriLayer.get('esri_id') !== esriId) {
+    if (esriId && (!esriLayer || esriLayer.get('esri_id') !== esriId)) {
       if (esriLayer) map.removeLayer(esriLayer);
       esriLayer = makeEsriLayer(esriId);
       if (esriLayer) {
@@ -1287,16 +1345,15 @@
       } else {
         disneyLayer.setVisible(false);
         // Map current Disney date to closest satellite version
-        const mapped = getEsriIdForCode(currentCode);
-        currentSatEsriId = mapped || (satOptions.length ? satOptions[satOptions.length - 1].esri_id : '');
+        currentSatEsriId = findClosestSatellite(getLabelForCode(currentCode));
         setSatelliteView(currentSatEsriId);
       }
     } else {
       if (!showingDisney) {
         if (highlightMode) { highlightMode = false; showSensitivity = false; }
         // Map compare codes to satellite versions
-        leftSatEsriId = getEsriIdForCode(leftCode) || (satOptions.length ? satOptions[0].esri_id : '');
-        rightSatEsriId = getEsriIdForCode(rightCode) || (satOptions.length ? satOptions[satOptions.length - 1].esri_id : '');
+        leftSatEsriId = findClosestSatellite(getLabelForCode(leftCode));
+        rightSatEsriId = findClosestSatellite(getLabelForCode(rightCode));
       }
       (highlightMode ? launchHighlightMode : launchSwipeMode)();
     }
