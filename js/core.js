@@ -1516,6 +1516,46 @@
     }, () => showFindMeMessage('Unable to get location'), { enableHighAccuracy: true });
   });
 
+  // Share button - copy URL with current view state to clipboard
+  const shareBtn = document.getElementById('share-btn');
+  const toastMessage = document.getElementById('toast-message');
+
+  function showToast(msg) {
+    toastMessage.textContent = msg;
+    toastMessage.style.display = 'block';
+    setTimeout(() => { toastMessage.style.opacity = '1'; }, 10);
+    setTimeout(() => {
+      toastMessage.style.opacity = '0';
+      setTimeout(() => { toastMessage.style.display = 'none'; }, 300);
+    }, 2000);
+  }
+
+  if (shareBtn) {
+    shareBtn.addEventListener('click', () => {
+      const view = map.getView();
+      const center = ol.proj.toLonLat(view.getCenter());
+      const zoom = view.getZoom();
+
+      // Build URL with current state
+      const params = new URLSearchParams();
+      params.set('park', currentParkId);
+      params.set('lat', center[1].toFixed(6));
+      params.set('lng', center[0].toFixed(6));
+      params.set('z', zoom.toFixed(1));
+      params.set('date', showingDisney ? currentCode : ('sat_' + getCurrentSatId()));
+      if (!showingDisney) params.set('view', 'sat');
+
+      const url = window.location.origin + window.location.pathname + '?' + params.toString();
+
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('Link copied to clipboard');
+      }).catch(() => {
+        // Fallback for older browsers
+        showToast('Could not copy link');
+      });
+    });
+  }
+
   // Tapping the date display opens date picker
   // Helper to show date popup centered below an element
   function showDatePopupBelow(popupEl, anchorEl, fillFn) {
@@ -1803,6 +1843,14 @@
   const fallbackDisUrl = getServersUrl('wdw');
   const fallbackSatUrl = getSatServersUrl('wdw');
 
+  // Read URL params for shared view state
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlLat = parseFloat(urlParams.get('lat'));
+  const urlLng = parseFloat(urlParams.get('lng'));
+  const urlZoom = parseFloat(urlParams.get('z'));
+  const urlDate = urlParams.get('date');
+  const urlView = urlParams.get('view');
+
   try {
     // Load Disney and satellite server lists in parallel
     let [disRes, satRes] = await Promise.all([
@@ -1828,8 +1876,43 @@
       satOptions = [];
     }
 
+    // Apply URL date param if present
+    if (urlDate) {
+      if (urlDate.startsWith('sat_')) {
+        // Satellite mode with specific esri_id
+        const esriId = urlDate.substring(4);
+        if (satOptions.some(o => o.esri_id === esriId)) {
+          currentSatEsriId = esriId;
+          showingDisney = false;
+        }
+      } else {
+        // Disney mode with specific code
+        if (serverOptions.some(o => o.code === urlDate)) {
+          currentCode = urlDate;
+        }
+      }
+    } else if (urlView === 'sat') {
+      showingDisney = false;
+      currentSatEsriId = satOptions.length ? satOptions[satOptions.length - 1].esri_id : '';
+    }
+
     initMap();
     enableDoubleTapHoldZoom();
+
+    // Apply URL position if present
+    if (!isNaN(urlLat) && !isNaN(urlLng)) {
+      const center = ol.proj.fromLonLat([urlLng, urlLat]);
+      const zoom = !isNaN(urlZoom) ? urlZoom : map.getView().getZoom();
+      map.getView().setCenter(center);
+      map.getView().setZoom(zoom);
+    }
+
+    // Apply satellite view if specified
+    if (!showingDisney) {
+      disneyLayer.setVisible(false);
+      setSatelliteView(currentSatEsriId);
+    }
+
     updateDateUI();
     updateTdrButtons();
 
