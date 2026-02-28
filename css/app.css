@@ -895,6 +895,49 @@ html, body {
   font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
 }
 
+/* Crosshair for precise centering */
+#service-mode-crosshair {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+#crosshair-h {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 0, 0, 0.7);
+  box-shadow: 0 0 2px #000;
+}
+
+#crosshair-v {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 0, 0, 0.7);
+  box-shadow: 0 0 2px #000;
+}
+
+#crosshair-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  margin-top: -6px;
+  border: 2px solid rgba(255, 0, 0, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 0 3px #000;
+}
+
 #service-mode-label {
   position: absolute;
   top: 60px;
