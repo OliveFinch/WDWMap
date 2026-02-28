@@ -766,7 +766,8 @@
         minZoom: park.minZoom,
         maxZoom: park.maxZoom,
         extent: parkExtent || undefined,
-        constrainOnlyCenter: true  // Allows zooming out while keeping center in bounds
+        constrainOnlyCenter: true,  // Allows zooming out while keeping center in bounds
+        rotation: (currentParkId === 'tdr') ? (200 * Math.PI / 180) : 0  // Default rotation for TDR
       }),
       controls: ol.control.defaults.defaults({ zoom: false, rotate: false }),
       interactions: ol.interaction.defaults.defaults({
@@ -774,6 +775,11 @@
         pinchRotate: false
       })
     });
+
+    // Initialize TDR rotation state
+    if (currentParkId === 'tdr') {
+      tdrRotation = 200;
+    }
 
     map.on('rendercomplete', updateSwipeUI);
     const ro = new ResizeObserver(updateSwipeUI);
@@ -820,7 +826,8 @@
 
           // Apply rotation if specified (for TDR locations)
           const rotationDeg = parseFloat(btn.dataset.rotation);
-          if (Number.isFinite(rotationDeg)) {
+          const hasRotation = Number.isFinite(rotationDeg);
+          if (hasRotation) {
             tdrRotation = rotationDeg;
           }
 
@@ -832,11 +839,18 @@
             const extentLonLat = [lon - halfW, lat - halfW, lon + halfW, lat + halfW];
             const extent3857 = ol.proj.transformExtent(extentLonLat, 'EPSG:4326', 'EPSG:3857');
 
-            const animateOpts = { duration: 600 };
-            if (Number.isFinite(rotationDeg)) {
-              animateOpts.rotation = rotationDeg * (Math.PI / 180);
+            if (hasRotation) {
+              // For rotated views: animate rotation first, then fit extent
+              const targetRotation = rotationDeg * (Math.PI / 180);
+              map.getView().animate(
+                { rotation: targetRotation, duration: 300 },
+                function() {
+                  map.getView().fit(extent3857, { duration: 300 });
+                }
+              );
+            } else {
+              map.getView().fit(extent3857, { duration: 600 });
             }
-            map.getView().fit(extent3857, animateOpts);
           } else {
             // Fallback to legacy zoom-based approach
             const target = ol.proj.fromLonLat([lon, lat]);
@@ -845,7 +859,7 @@
               : 16;
 
             const animateOpts = { center: target, zoom: targetZoom, duration: 600 };
-            if (Number.isFinite(rotationDeg)) {
+            if (hasRotation) {
               animateOpts.rotation = rotationDeg * (Math.PI / 180);
             }
             map.getView().animate(animateOpts);
