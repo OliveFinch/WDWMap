@@ -1,62 +1,57 @@
 [
   {
     "esri_id": "10",
-    "label": "20 Feb 2014",
+    "label": "Feb 2014",
     "active": 1
   },
   {
     "esri_id": "23880",
-    "label": "30 Apr 2015",
+    "label": "Apr 2015",
     "active": 1
   },
   {
     "esri_id": "11509",
-    "label": "13 Jun 2016",
+    "label": "Jun 2016",
     "active": 1
   },
   {
     "esri_id": "18966",
-    "label": "20 Dec 2016",
+    "label": "Dec 2016",
     "active": 1
   },
   {
     "esri_id": "25521",
-    "label": "16 Nov 2017",
+    "label": "Nov 2017",
     "active": 1
   },
   {
     "esri_id": "8255",
-    "label": "14 Mar 2018",
+    "label": "Mar 2018",
     "active": 1
   },
   {
     "esri_id": "18691",
-    "label": "3 Apr 2019",
+    "label": "Apr 2019",
     "active": 1
   },
   {
     "esri_id": "16062",
-    "label": "23 Mar 2020",
+    "label": "Mar 2020",
     "active": 1
   },
   {
     "esri_id": "56102",
-    "label": "21 Sep 2022",
+    "label": "Sep 2022",
     "active": 1
   },
   {
     "esri_id": "32553",
-    "label": "15 Aug 2024",
+    "label": "Aug 2024",
     "active": 1
   },
   {
     "esri_id": "58924",
-    "label": "25 Sep 2025",
-    "active": 1
-  },
-  {
-    "esri_id": "47471",
-    "label": "29 Jan 2026",
+    "label": "Sep 2025",
     "active": 1
   }
 ]
