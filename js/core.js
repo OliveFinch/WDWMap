@@ -48,49 +48,50 @@
   // =====================
   // tileTemplate supports {code} (optional) and {z}/{x}/{y}
   // yScheme: 'xyz' (standard) or 'tms' (server expects flipped Y)
-  // Park-specific quick-access locations (lon, lat, zoom, icon, alt)
-  // Generic marker icon used in dock until custom icons are added
+
+  // Park-specific quick-access locations
+  // width: geographic span in degrees (for responsive fitting to any screen size)
   const PARK_LOCATIONS = {
     wdw: [
-      { coords: [-81.581203, 28.418714], zoom: 17.5, icon: 'icons/locations/magic-kingdom.svg', alt: 'Magic Kingdom' },
-      { coords: [-81.549385, 28.371715], zoom: 17, icon: 'icons/locations/epcot.svg', alt: 'Epcot' },
-      { coords: [-81.560472, 28.356850], zoom: 17, icon: 'icons/locations/hollywood-studios.svg', alt: 'Hollywood Studios' },
-      { coords: [-81.590567, 28.358037], zoom: 17, icon: 'icons/locations/animal-kingdom.svg', alt: 'Animal Kingdom' },
-      { coords: [-81.529080, 28.366055], zoom: 18.5, icon: 'icons/locations/typhoon-lagoon.svg', alt: 'Typhoon Lagoon' },
-      { coords: [-81.574719, 28.351948], zoom: 18.5, icon: 'icons/locations/blizzard-beach.svg', alt: 'Blizzard Beach' },
-      { coords: [-81.518325, 28.370757], zoom: 17.5, icon: 'icons/locations/disney-springs.svg', alt: 'Disney Springs' }
+      { coords: [-81.581203, 28.418714], width: 0.008, icon: 'icons/locations/magic-kingdom.svg', alt: 'Magic Kingdom' },
+      { coords: [-81.549385, 28.371715], width: 0.012, icon: 'icons/locations/epcot.svg', alt: 'Epcot' },
+      { coords: [-81.560472, 28.356850], width: 0.012, icon: 'icons/locations/hollywood-studios.svg', alt: 'Hollywood Studios' },
+      { coords: [-81.590567, 28.358037], width: 0.012, icon: 'icons/locations/animal-kingdom.svg', alt: 'Animal Kingdom' },
+      { coords: [-81.529080, 28.366055], width: 0.004, icon: 'icons/locations/typhoon-lagoon.svg', alt: 'Typhoon Lagoon' },
+      { coords: [-81.574719, 28.351948], width: 0.004, icon: 'icons/locations/blizzard-beach.svg', alt: 'Blizzard Beach' },
+      { coords: [-81.518325, 28.370757], width: 0.008, icon: 'icons/locations/disney-springs.svg', alt: 'Disney Springs' }
     ],
     dlr: [
-      { coords: [-117.918958, 33.812624], zoom: 18.6, icon: 'icons/locations/dlr/dlr-castle.svg', alt: 'Disneyland' },
-      { coords: [-117.919703, 33.806176], zoom: 18.2, icon: 'icons/locations/dlr/california-adventure.svg', alt: 'California Adventure' },
-      { coords: [-117.922899, 33.809130], zoom: 18.9, icon: 'icons/locations/dlr/downtown-disney.svg', alt: 'Downtown Disney' }
+      { coords: [-117.918958, 33.812624], width: 0.003, icon: 'icons/locations/dlr/dlr-castle.svg', alt: 'Disneyland' },
+      { coords: [-117.919703, 33.806176], width: 0.004, icon: 'icons/locations/dlr/california-adventure.svg', alt: 'California Adventure' },
+      { coords: [-117.922899, 33.809130], width: 0.002, icon: 'icons/locations/dlr/downtown-disney.svg', alt: 'Downtown Disney' }
     ],
     dlp: [
-      { coords: [2.775880, 48.872100], zoom: 17.5, icon: 'icons/locations/dlp/disneyland_park_paris.svg', alt: 'Disneyland Park' },
-      { coords: [2.780500, 48.867200], zoom: 17.5, icon: 'icons/locations/dlp/disney_studios_paris.svg', alt: 'Walt Disney Studios' },
-      { coords: [2.785800, 48.869800], zoom: 18, icon: 'icons/locations/marker.svg', alt: 'Disney Village' }
+      { coords: [2.775880, 48.872100], width: 0.008, icon: 'icons/locations/dlp/disneyland_park_paris.svg', alt: 'Disneyland Park' },
+      { coords: [2.780500, 48.867200], width: 0.008, icon: 'icons/locations/dlp/disney_studios_paris.svg', alt: 'Walt Disney Studios' },
+      { coords: [2.785800, 48.869800], width: 0.005, icon: 'icons/locations/marker.svg', alt: 'Disney Village' }
     ],
     hkdl: [
-      { coords: [114.041407, 22.312656], zoom: 18.6, icon: 'icons/locations/hkdl/hkdl-castle.svg', alt: 'Hong Kong Disneyland' },
-      { coords: [114.037813, 22.321810], zoom: 17.7, icon: 'icons/locations/marker.svg', alt: 'Inspiration Lake' },
-      { coords: [114.044085, 22.307825], zoom: 18.8, icon: 'icons/locations/marker.svg', alt: 'Hong Kong Disneyland Hotel' },
-      { coords: [114.038344, 22.307541], zoom: 19.0, icon: 'icons/locations/marker.svg', alt: 'Disney Explorers Lodge' },
-      { coords: [114.036762, 22.308802], zoom: 19.0, icon: 'icons/locations/marker.svg', alt: "Disney's Hollywood Hotel" },
-      { coords: [114.028908, 22.332418], zoom: 17.9, icon: 'icons/locations/marker.svg', alt: 'Disneyland Transportation Centre' },
-      { coords: [114.045671, 22.316173], zoom: 18.0, icon: 'icons/locations/marker.svg', alt: 'Sunny Bay Station & Car Park' }
+      { coords: [114.041407, 22.312656], width: 0.003, icon: 'icons/locations/hkdl/hkdl-castle.svg', alt: 'Hong Kong Disneyland' },
+      { coords: [114.037813, 22.321810], width: 0.006, icon: 'icons/locations/marker.svg', alt: 'Inspiration Lake' },
+      { coords: [114.044085, 22.307825], width: 0.0025, icon: 'icons/locations/marker.svg', alt: 'Hong Kong Disneyland Hotel' },
+      { coords: [114.038344, 22.307541], width: 0.002, icon: 'icons/locations/marker.svg', alt: 'Disney Explorers Lodge' },
+      { coords: [114.036762, 22.308802], width: 0.002, icon: 'icons/locations/marker.svg', alt: "Disney's Hollywood Hotel" },
+      { coords: [114.028908, 22.332418], width: 0.005, icon: 'icons/locations/marker.svg', alt: 'Disneyland Transportation Centre' },
+      { coords: [114.045671, 22.316173], width: 0.005, icon: 'icons/locations/marker.svg', alt: 'Sunny Bay Station & Car Park' }
     ],
     shdr: [
-      { coords: [-107.344478, -83.052295], zoom: 19.0, icon: 'icons/locations/shdr/shdr-castle.svg', alt: 'Disneyland Park' },
-      { coords: [-107.338827, -83.052508], zoom: 18.7, icon: 'icons/locations/marker.svg', alt: 'Wishing Star Park' },
-      { coords: [-107.340660, -83.052978], zoom: 19.6, icon: 'icons/locations/marker.svg', alt: 'Shanghai Disneyland Hotel' },
-      { coords: [-107.348179, -83.052638], zoom: 19.5, icon: 'icons/locations/marker.svg', alt: 'Toy Story Hotel' },
-      { coords: [-107.343507, -83.052561], zoom: 19.7, icon: 'icons/locations/marker.svg', alt: 'Disneytown' },
-      { coords: [-107.339308, -83.053227], zoom: 19.8, icon: 'icons/locations/marker.svg', alt: 'Visitor Center & Parking' }
+      { coords: [-107.344478, -83.052295], width: 0.002, icon: 'icons/locations/shdr/shdr-castle.svg', alt: 'Disneyland Park' },
+      { coords: [-107.338827, -83.052508], width: 0.0025, icon: 'icons/locations/marker.svg', alt: 'Wishing Star Park' },
+      { coords: [-107.340660, -83.052978], width: 0.0015, icon: 'icons/locations/marker.svg', alt: 'Shanghai Disneyland Hotel' },
+      { coords: [-107.348179, -83.052638], width: 0.0015, icon: 'icons/locations/marker.svg', alt: 'Toy Story Hotel' },
+      { coords: [-107.343507, -83.052561], width: 0.0012, icon: 'icons/locations/marker.svg', alt: 'Disneytown' },
+      { coords: [-107.339308, -83.053227], width: 0.001, icon: 'icons/locations/marker.svg', alt: 'Visitor Center & Parking' }
     ],
     tdr: [
-      { coords: [139.880790, 35.632283], zoom: 18.2, rotation: 205, icon: 'icons/locations/tdr/tdr-castle.svg', alt: 'Tokyo Disneyland' },
-      { coords: [139.885709, 35.625239], zoom: 17.5, rotation: 135, icon: 'icons/locations/tdr/disneysea.svg', alt: 'Tokyo DisneySea' },
-      { coords: [139.887318, 35.633259], zoom: 18.0, rotation: 270, icon: 'icons/locations/tdr/ikspiari.svg', alt: 'Ikspiari' }
+      { coords: [139.880790, 35.632283], width: 0.004, rotation: 205, icon: 'icons/locations/tdr/tdr-castle.svg', alt: 'Tokyo Disneyland' },
+      { coords: [139.885709, 35.625239], width: 0.008, rotation: 135, icon: 'icons/locations/tdr/disneysea.svg', alt: 'Tokyo DisneySea' },
+      { coords: [139.887318, 35.633259], width: 0.005, rotation: 270, icon: 'icons/locations/tdr/ikspiari.svg', alt: 'Ikspiari' }
     ]
   };
 
@@ -792,7 +793,7 @@
         locations.forEach((loc) => {
           const btn = document.createElement('button');
           btn.dataset.coords = loc.coords.join(',');
-          btn.dataset.zoom = String(loc.zoom);
+          btn.dataset.width = String(loc.width);
           if (loc.rotation !== undefined) {
             btn.dataset.rotation = String(loc.rotation);
           }
@@ -817,23 +818,37 @@
           const lat = parseFloat(latStr);
           if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
 
-          const target = ol.proj.fromLonLat([lon, lat]);
-          const targetZoom = Number.isFinite(parseFloat(btn.dataset.zoom))
-            ? parseFloat(btn.dataset.zoom)
-            : 16;
-
           // Apply rotation if specified (for TDR locations)
           const rotationDeg = parseFloat(btn.dataset.rotation);
           if (Number.isFinite(rotationDeg)) {
             tdrRotation = rotationDeg;
-            map.getView().animate({
-              center: target,
-              zoom: targetZoom,
-              rotation: rotationDeg * (Math.PI / 180),
-              duration: 600
-            });
+          }
+
+          // Use width-based extent fitting if available (adapts to screen size)
+          const width = parseFloat(btn.dataset.width);
+          if (Number.isFinite(width) && width > 0) {
+            // Calculate extent from center + width (use same value for height = square area)
+            const halfW = width / 2;
+            const extentLonLat = [lon - halfW, lat - halfW, lon + halfW, lat + halfW];
+            const extent3857 = ol.proj.transformExtent(extentLonLat, 'EPSG:4326', 'EPSG:3857');
+
+            const animateOpts = { duration: 600 };
+            if (Number.isFinite(rotationDeg)) {
+              animateOpts.rotation = rotationDeg * (Math.PI / 180);
+            }
+            map.getView().fit(extent3857, animateOpts);
           } else {
-            map.getView().animate({ center: target, zoom: targetZoom, duration: 600 });
+            // Fallback to legacy zoom-based approach
+            const target = ol.proj.fromLonLat([lon, lat]);
+            const targetZoom = Number.isFinite(parseFloat(btn.dataset.zoom))
+              ? parseFloat(btn.dataset.zoom)
+              : 16;
+
+            const animateOpts = { center: target, zoom: targetZoom, duration: 600 };
+            if (Number.isFinite(rotationDeg)) {
+              animateOpts.rotation = rotationDeg * (Math.PI / 180);
+            }
+            map.getView().animate(animateOpts);
           }
         });
       });
@@ -1533,15 +1548,21 @@
   if (shareBtn) {
     shareBtn.addEventListener('click', () => {
       const view = map.getView();
-      const center = ol.proj.toLonLat(view.getCenter());
-      const zoom = view.getZoom();
+      const mapSize = map.getSize();
+      // Get current view extent and convert to lon/lat
+      const extent3857 = view.calculateExtent(mapSize);
+      const extentLonLat = ol.proj.transformExtent(extent3857, 'EPSG:3857', 'EPSG:4326');
 
-      // Build URL with current state
+      // Build URL with extent instead of center+zoom
       const params = new URLSearchParams();
       params.set('park', currentParkId);
-      params.set('lat', center[1].toFixed(6));
-      params.set('lng', center[0].toFixed(6));
-      params.set('z', zoom.toFixed(1));
+      // Encode extent as: minLng,minLat,maxLng,maxLat
+      params.set('bbox', [
+        extentLonLat[0].toFixed(6),
+        extentLonLat[1].toFixed(6),
+        extentLonLat[2].toFixed(6),
+        extentLonLat[3].toFixed(6)
+      ].join(','));
       params.set('date', showingDisney ? currentCode : ('sat_' + getCurrentSatId()));
       if (!showingDisney) params.set('view', 'sat');
 
@@ -1845,7 +1866,8 @@
 
   // Read URL params for shared view state
   const urlParams = new URLSearchParams(window.location.search);
-  const urlLat = parseFloat(urlParams.get('lat'));
+  const urlBbox = urlParams.get('bbox'); // New: extent-based (minLng,minLat,maxLng,maxLat)
+  const urlLat = parseFloat(urlParams.get('lat')); // Legacy: center-based
   const urlLng = parseFloat(urlParams.get('lng'));
   const urlZoom = parseFloat(urlParams.get('z'));
   const urlDate = urlParams.get('date');
@@ -1900,7 +1922,16 @@
     enableDoubleTapHoldZoom();
 
     // Apply URL position if present
-    if (!isNaN(urlLat) && !isNaN(urlLng)) {
+    if (urlBbox) {
+      // New bbox format: minLng,minLat,maxLng,maxLat
+      const parts = urlBbox.split(',').map(parseFloat);
+      if (parts.length === 4 && parts.every(n => !isNaN(n))) {
+        const extentLonLat = parts; // [minLng, minLat, maxLng, maxLat]
+        const extent3857 = ol.proj.transformExtent(extentLonLat, 'EPSG:4326', 'EPSG:3857');
+        map.getView().fit(extent3857, { duration: 0 });
+      }
+    } else if (!isNaN(urlLat) && !isNaN(urlLng)) {
+      // Legacy center+zoom format
       const center = ol.proj.fromLonLat([urlLng, urlLat]);
       const zoom = !isNaN(urlZoom) ? urlZoom : map.getView().getZoom();
       map.getView().setCenter(center);
