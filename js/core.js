@@ -186,6 +186,8 @@
       // Shanghai uses Baidu coordinates - these are the "fake" WGS84 coords that map to correct tiles
       defaultCenter: [-107.344044, -83.052335],
       defaultZoom: 17.8,
+      // Real WGS84 coordinates for satellite view transformation
+      realCenter: [121.6580, 31.1433],
       boundsByZoom: {
         "9": { "minX": 103, "maxX": 103, "minY": 27, "maxY": 27 },
         "10": { "minX": 206, "maxX": 206, "minY": 55, "maxY": 55 },
@@ -590,9 +592,64 @@
 
   function makeEsriLayer(esriId) {
     if (!esriId) return null;
+
+    // SHDR uses Baidu coordinates - need to transform to real WGS84 for satellite
+    if (currentParkId === 'shdr') {
+      return makeEsriLayerSHDR(esriId);
+    }
+
     const lyr = new ol.layer.Tile({
       source: new ol.source.XYZ({
         url: ESRI_TILE_URL(esriId),
+        minZoom: 0,
+        maxZoom: 20,
+      }),
+      visible: false,
+    });
+    lyr.set('esri_id', esriId);
+    return lyr;
+  }
+
+  // Special ESRI layer for SHDR that transforms Baidu coords to real WGS84
+  function makeEsriLayerSHDR(esriId) {
+    const park = PARKS.shdr;
+    const fakeCenter = park.defaultCenter; // Baidu-based "fake" coords
+    const realCenter = park.realCenter;    // Actual WGS84 coords
+
+    // Calculate the offset in Web Mercator (EPSG:3857)
+    const fakeProj = ol.proj.fromLonLat(fakeCenter);
+    const realProj = ol.proj.fromLonLat(realCenter);
+    const offsetX = realProj[0] - fakeProj[0];
+    const offsetY = realProj[1] - fakeProj[1];
+
+    const lyr = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        tileUrlFunction: function(tileCoord) {
+          const z = tileCoord[0];
+          const x = tileCoord[1];
+          const y = tileCoord[2];
+
+          // Calculate tile center in fake projection
+          const tileSize = 256;
+          const resolution = (2 * Math.PI * 6378137) / (tileSize * Math.pow(2, z));
+          const originX = -20037508.342789244;
+          const originY = 20037508.342789244;
+
+          // Center of this tile in fake EPSG:3857
+          const fakeTileCenterX = originX + (x + 0.5) * tileSize * resolution;
+          const fakeTileCenterY = originY - (y + 0.5) * tileSize * resolution;
+
+          // Apply offset to get real EPSG:3857 coordinates
+          const realTileCenterX = fakeTileCenterX + offsetX;
+          const realTileCenterY = fakeTileCenterY + offsetY;
+
+          // Calculate which real tile this corresponds to
+          const realX = Math.floor((realTileCenterX - originX) / (tileSize * resolution));
+          const realY = Math.floor((originY - realTileCenterY) / (tileSize * resolution));
+
+          // Build ESRI URL with real tile coordinates
+          return `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${esriId}/${z}/${realY}/${realX}`;
+        },
         minZoom: 0,
         maxZoom: 20,
       }),
