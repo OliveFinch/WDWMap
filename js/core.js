@@ -1891,16 +1891,146 @@
     });
   }
 
+  // SHDR Calibration data
+  const shdrCalibrationOffsets = {};
+
+  function updateSHDRCalibrationDisplay() {
+    if (currentParkId !== 'shdr' || !serviceMode) return;
+
+    const calPanel = document.getElementById('shdr-calibration');
+    const zoomSpan = document.getElementById('shdr-cal-zoom');
+    const offsetXSpan = document.getElementById('shdr-cal-offsetx');
+    const offsetYSpan = document.getElementById('shdr-cal-offsety');
+    const recordZSpan = document.getElementById('shdr-cal-recordz');
+
+    if (!calPanel) return;
+
+    // Show panel only for SHDR in satellite mode
+    calPanel.style.display = (!showingDisney) ? 'block' : 'none';
+
+    const view = map.getView();
+    const zoom = Math.round(view.getZoom());
+    const center = view.getCenter();
+    const centerLonLat = ol.proj.toLonLat(center);
+
+    zoomSpan.textContent = zoom;
+    recordZSpan.textContent = zoom;
+
+    // Calculate current tile offset at this zoom
+    const park = PARKS.shdr;
+    const fakeProj = ol.proj.fromLonLat(park.defaultCenter);
+    const realProj = ol.proj.fromLonLat(park.realCenter);
+    let offsetX = realProj[0] - fakeProj[0];
+    let offsetY = realProj[1] - fakeProj[1];
+
+    // Add current correction
+    const correctionPoint1 = ol.proj.fromLonLat(park.defaultCenter);
+    const correctionPoint2 = ol.proj.fromLonLat([park.defaultCenter[0] + 0.001838, park.defaultCenter[1] - 0.000257]);
+    offsetX += (correctionPoint2[0] - correctionPoint1[0]);
+    offsetY += (correctionPoint2[1] - correctionPoint1[1]);
+
+    const worldSize = 2 * Math.PI * 6378137;
+    const metersPerTile = worldSize / Math.pow(2, zoom);
+    const tileOffsetX = Math.round(offsetX / metersPerTile);
+    const tileOffsetY = Math.round(-offsetY / metersPerTile);
+
+    offsetXSpan.textContent = tileOffsetX;
+    offsetYSpan.textContent = tileOffsetY;
+  }
+
+  function recordSHDROffset() {
+    const refLng = parseFloat(document.getElementById('shdr-ref-lng').value);
+    const refLat = parseFloat(document.getElementById('shdr-ref-lat').value);
+
+    if (isNaN(refLng) || isNaN(refLat)) {
+      alert('Please enter valid Disney map coordinates');
+      return;
+    }
+
+    const view = map.getView();
+    const zoom = Math.round(view.getZoom());
+    const currentCenter = ol.proj.toLonLat(view.getCenter());
+
+    // Calculate the offset between where we are (satellite view center)
+    // and where the landmark should be (Disney map coords)
+    const offsetLng = refLng - currentCenter[0];
+    const offsetLat = refLat - currentCenter[1];
+
+    // Convert to meters
+    const currentProj = ol.proj.fromLonLat(currentCenter);
+    const refProj = ol.proj.fromLonLat([refLng, refLat]);
+    const offsetMetersX = refProj[0] - currentProj[0];
+    const offsetMetersY = refProj[1] - currentProj[1];
+
+    // Convert to tile offset
+    const worldSize = 2 * Math.PI * 6378137;
+    const metersPerTile = worldSize / Math.pow(2, zoom);
+    const tileOffsetX = Math.round(offsetMetersX / metersPerTile);
+    const tileOffsetY = Math.round(-offsetMetersY / metersPerTile);
+
+    // Store this calibration
+    shdrCalibrationOffsets[zoom] = { x: tileOffsetX, y: tileOffsetY };
+
+    // Update display
+    updateSHDRCalibrationOutput();
+    showToast(`Recorded Z${zoom}: X=${tileOffsetX}, Y=${tileOffsetY}`);
+  }
+
+  function updateSHDRCalibrationOutput() {
+    const output = document.getElementById('shdr-cal-output');
+    if (!output) return;
+
+    const zooms = Object.keys(shdrCalibrationOffsets).sort((a, b) => a - b);
+    if (zooms.length === 0) {
+      output.textContent = '(no offsets recorded yet)';
+      return;
+    }
+
+    let text = 'Recorded offsets:\n';
+    zooms.forEach(z => {
+      const o = shdrCalibrationOffsets[z];
+      text += `  ${z}: { x: ${o.x}, y: ${o.y} },\n`;
+    });
+    output.textContent = text;
+  }
+
+  function copySHDRCalibration() {
+    const zooms = Object.keys(shdrCalibrationOffsets).sort((a, b) => a - b);
+    if (zooms.length === 0) {
+      alert('No offsets recorded yet');
+      return;
+    }
+
+    let text = 'const shdrTileOffsets = {\n';
+    zooms.forEach(z => {
+      const o = shdrCalibrationOffsets[z];
+      text += `  ${z}: { x: ${o.x}, y: ${o.y} },\n`;
+    });
+    text += '};';
+
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Calibration data copied!');
+    });
+  }
+
   function enableServiceMode() {
     serviceMode = true;
     serviceModeOverlay.style.display = 'block';
 
     // Initial center update
     updateServiceModeCenter();
+    updateSHDRCalibrationDisplay();
 
     // Listen for map events - use 'postrender' for real-time updates during pan/zoom
     map.on('postrender', updateServiceModeCenter);
+    map.on('postrender', updateSHDRCalibrationDisplay);
     map.on('click', copyCenterToClipboard);
+
+    // SHDR calibration buttons
+    const recordBtn = document.getElementById('shdr-cal-record');
+    const copyBtn = document.getElementById('shdr-cal-copy');
+    if (recordBtn) recordBtn.onclick = recordSHDROffset;
+    if (copyBtn) copyBtn.onclick = copySHDRCalibration;
   }
 
   function disableServiceMode() {
@@ -1909,6 +2039,7 @@
 
     // Remove listeners
     map.un('postrender', updateServiceModeCenter);
+    map.un('postrender', updateSHDRCalibrationDisplay);
     map.un('click', copyCenterToClipboard);
   }
 
