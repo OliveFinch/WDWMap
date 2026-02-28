@@ -631,6 +631,18 @@
     offsetX += (correctionPoint2[0] - correctionPoint1[0]);
     offsetY += (correctionPoint2[1] - correctionPoint1[1]);
 
+    // Pre-calculate tile offset for each zoom level to ensure consistency
+    const tileSize = 256;
+    const worldSize = 2 * Math.PI * 6378137; // Earth circumference in meters
+    const tileOffsets = {};
+    for (let z = 0; z <= 22; z++) {
+      const metersPerTile = worldSize / Math.pow(2, z);
+      tileOffsets[z] = {
+        x: Math.round(offsetX / metersPerTile),
+        y: Math.round(-offsetY / metersPerTile) // Y is inverted in tile coords
+      };
+    }
+
     const lyr = new ol.layer.Tile({
       source: new ol.source.XYZ({
         tileUrlFunction: function(tileCoord) {
@@ -638,23 +650,10 @@
           const x = tileCoord[1];
           const y = tileCoord[2];
 
-          // Calculate tile center in fake projection
-          const tileSize = 256;
-          const resolution = (2 * Math.PI * 6378137) / (tileSize * Math.pow(2, z));
-          const originX = -20037508.342789244;
-          const originY = 20037508.342789244;
-
-          // Center of this tile in fake EPSG:3857
-          const fakeTileCenterX = originX + (x + 0.5) * tileSize * resolution;
-          const fakeTileCenterY = originY - (y + 0.5) * tileSize * resolution;
-
-          // Apply offset to get real EPSG:3857 coordinates
-          const realTileCenterX = fakeTileCenterX + offsetX;
-          const realTileCenterY = fakeTileCenterY + offsetY;
-
-          // Calculate which real tile this corresponds to
-          const realX = Math.floor((realTileCenterX - originX) / (tileSize * resolution));
-          const realY = Math.floor((originY - realTileCenterY) / (tileSize * resolution));
+          // Apply pre-calculated tile offset for this zoom level
+          const offset = tileOffsets[z] || { x: 0, y: 0 };
+          const realX = x + offset.x;
+          const realY = y + offset.y;
 
           // Build ESRI URL with real tile coordinates
           return `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${esriId}/${z}/${realY}/${realX}`;
