@@ -627,7 +627,7 @@
     // Satellite was showing it at [-107.346370, -83.052032]
     // Need to shift satellite east by 0.001838° and south by 0.000257° in fake coords
     const correctionPoint1 = ol.proj.fromLonLat(fakeCenter);
-    const correctionPoint2 = ol.proj.fromLonLat([fakeCenter[0] + 0.001838, fakeCenter[1] - 0.000200]);
+    const correctionPoint2 = ol.proj.fromLonLat([fakeCenter[0] + 0.001838, fakeCenter[1] - 0.000100]);
     offsetX += (correctionPoint2[0] - correctionPoint1[0]);
     offsetY += (correctionPoint2[1] - correctionPoint1[1]);
 
