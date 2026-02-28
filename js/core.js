@@ -186,8 +186,6 @@
       // Shanghai uses Baidu coordinates - these are the "fake" WGS84 coords that map to correct tiles
       defaultCenter: [-107.344044, -83.052335],
       defaultZoom: 17.8,
-      // Real WGS84 coordinates for satellite view transformation
-      realCenter: [121.6580, 31.1433],
       boundsByZoom: {
         "9": { "minX": 103, "maxX": 103, "minY": 27, "maxY": 27 },
         "10": { "minX": 206, "maxX": 206, "minY": 55, "maxY": 55 },
@@ -592,58 +590,9 @@
 
   function makeEsriLayer(esriId) {
     if (!esriId) return null;
-
-    // SHDR uses Baidu coordinates - need to transform to real WGS84 for satellite
-    if (currentParkId === 'shdr') {
-      return makeEsriLayerSHDR(esriId);
-    }
-
     const lyr = new ol.layer.Tile({
       source: new ol.source.XYZ({
         url: ESRI_TILE_URL(esriId),
-        minZoom: 0,
-        maxZoom: 20,
-      }),
-      visible: false,
-    });
-    lyr.set('esri_id', esriId);
-    return lyr;
-  }
-
-  // Special ESRI layer for SHDR that transforms Baidu coords to real WGS84
-  function makeEsriLayerSHDR(esriId) {
-    // Calibrated tile offsets for SHDR satellite imagery
-    // These align the satellite tiles with the Disney map's Baidu-based coordinates
-    const tileOffsets = {
-      9: { x: 0, y: 0 },
-      10: { x: 0, y: 0 },
-      11: { x: 0, y: 0 },
-      12: { x: 0, y: 0 },
-      13: { x: 0, y: 0 },
-      14: { x: 0, y: 0 },
-      15: { x: 0, y: 0 },
-      16: { x: 1, y: 1 },
-      17: { x: 1, y: 1 },
-      18: { x: 2, y: 2 },
-      19: { x: 4, y: 4 },
-      20: { x: 8, y: 8 },
-    };
-
-    const lyr = new ol.layer.Tile({
-      source: new ol.source.XYZ({
-        tileUrlFunction: function(tileCoord) {
-          const z = tileCoord[0];
-          const x = tileCoord[1];
-          const y = tileCoord[2];
-
-          // Apply pre-calculated tile offset for this zoom level
-          const offset = tileOffsets[z] || { x: 0, y: 0 };
-          const realX = x + offset.x;
-          const realY = y + offset.y;
-
-          // Build ESRI URL with real tile coordinates
-          return `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${esriId}/${z}/${realY}/${realX}`;
-        },
         minZoom: 0,
         maxZoom: 20,
       }),
@@ -1877,146 +1826,16 @@
     });
   }
 
-  // SHDR Calibration data
-  const shdrCalibrationOffsets = {};
-
-  function updateSHDRCalibrationDisplay() {
-    if (currentParkId !== 'shdr' || !serviceMode) return;
-
-    const calPanel = document.getElementById('shdr-calibration');
-    const zoomSpan = document.getElementById('shdr-cal-zoom');
-    const offsetXSpan = document.getElementById('shdr-cal-offsetx');
-    const offsetYSpan = document.getElementById('shdr-cal-offsety');
-    const recordZSpan = document.getElementById('shdr-cal-recordz');
-
-    if (!calPanel) return;
-
-    // Show panel only for SHDR in satellite mode
-    calPanel.style.display = (!showingDisney) ? 'block' : 'none';
-
-    const view = map.getView();
-    const zoom = Math.round(view.getZoom());
-    const center = view.getCenter();
-    const centerLonLat = ol.proj.toLonLat(center);
-
-    zoomSpan.textContent = zoom;
-    recordZSpan.textContent = zoom;
-
-    // Calculate current tile offset at this zoom
-    const park = PARKS.shdr;
-    const fakeProj = ol.proj.fromLonLat(park.defaultCenter);
-    const realProj = ol.proj.fromLonLat(park.realCenter);
-    let offsetX = realProj[0] - fakeProj[0];
-    let offsetY = realProj[1] - fakeProj[1];
-
-    // Add current correction
-    const correctionPoint1 = ol.proj.fromLonLat(park.defaultCenter);
-    const correctionPoint2 = ol.proj.fromLonLat([park.defaultCenter[0] + 0.001838, park.defaultCenter[1] - 0.000257]);
-    offsetX += (correctionPoint2[0] - correctionPoint1[0]);
-    offsetY += (correctionPoint2[1] - correctionPoint1[1]);
-
-    const worldSize = 2 * Math.PI * 6378137;
-    const metersPerTile = worldSize / Math.pow(2, zoom);
-    const tileOffsetX = Math.round(offsetX / metersPerTile);
-    const tileOffsetY = Math.round(-offsetY / metersPerTile);
-
-    offsetXSpan.textContent = tileOffsetX;
-    offsetYSpan.textContent = tileOffsetY;
-  }
-
-  function recordSHDROffset() {
-    const refLng = parseFloat(document.getElementById('shdr-ref-lng').value);
-    const refLat = parseFloat(document.getElementById('shdr-ref-lat').value);
-
-    if (isNaN(refLng) || isNaN(refLat)) {
-      alert('Please enter valid Disney map coordinates');
-      return;
-    }
-
-    const view = map.getView();
-    const zoom = Math.round(view.getZoom());
-    const currentCenter = ol.proj.toLonLat(view.getCenter());
-
-    // Calculate the offset between where we are (satellite view center)
-    // and where the landmark should be (Disney map coords)
-    const offsetLng = refLng - currentCenter[0];
-    const offsetLat = refLat - currentCenter[1];
-
-    // Convert to meters
-    const currentProj = ol.proj.fromLonLat(currentCenter);
-    const refProj = ol.proj.fromLonLat([refLng, refLat]);
-    const offsetMetersX = refProj[0] - currentProj[0];
-    const offsetMetersY = refProj[1] - currentProj[1];
-
-    // Convert to tile offset
-    const worldSize = 2 * Math.PI * 6378137;
-    const metersPerTile = worldSize / Math.pow(2, zoom);
-    const tileOffsetX = Math.round(offsetMetersX / metersPerTile);
-    const tileOffsetY = Math.round(-offsetMetersY / metersPerTile);
-
-    // Store this calibration
-    shdrCalibrationOffsets[zoom] = { x: tileOffsetX, y: tileOffsetY };
-
-    // Update display
-    updateSHDRCalibrationOutput();
-    showToast(`Recorded Z${zoom}: X=${tileOffsetX}, Y=${tileOffsetY}`);
-  }
-
-  function updateSHDRCalibrationOutput() {
-    const output = document.getElementById('shdr-cal-output');
-    if (!output) return;
-
-    const zooms = Object.keys(shdrCalibrationOffsets).sort((a, b) => a - b);
-    if (zooms.length === 0) {
-      output.textContent = '(no offsets recorded yet)';
-      return;
-    }
-
-    let text = 'Recorded offsets:\n';
-    zooms.forEach(z => {
-      const o = shdrCalibrationOffsets[z];
-      text += `  ${z}: { x: ${o.x}, y: ${o.y} },\n`;
-    });
-    output.textContent = text;
-  }
-
-  function copySHDRCalibration() {
-    const zooms = Object.keys(shdrCalibrationOffsets).sort((a, b) => a - b);
-    if (zooms.length === 0) {
-      alert('No offsets recorded yet');
-      return;
-    }
-
-    let text = 'const shdrTileOffsets = {\n';
-    zooms.forEach(z => {
-      const o = shdrCalibrationOffsets[z];
-      text += `  ${z}: { x: ${o.x}, y: ${o.y} },\n`;
-    });
-    text += '};';
-
-    navigator.clipboard.writeText(text).then(() => {
-      showToast('Calibration data copied!');
-    });
-  }
-
   function enableServiceMode() {
     serviceMode = true;
     serviceModeOverlay.style.display = 'block';
 
     // Initial center update
     updateServiceModeCenter();
-    updateSHDRCalibrationDisplay();
 
     // Listen for map events - use 'postrender' for real-time updates during pan/zoom
     map.on('postrender', updateServiceModeCenter);
-    map.on('postrender', updateSHDRCalibrationDisplay);
     map.on('click', copyCenterToClipboard);
-
-    // SHDR calibration buttons
-    const recordBtn = document.getElementById('shdr-cal-record');
-    const copyBtn = document.getElementById('shdr-cal-copy');
-    if (recordBtn) recordBtn.onclick = recordSHDROffset;
-    if (copyBtn) copyBtn.onclick = copySHDRCalibration;
   }
 
   function disableServiceMode() {
@@ -2025,7 +1844,6 @@
 
     // Remove listeners
     map.un('postrender', updateServiceModeCenter);
-    map.un('postrender', updateSHDRCalibrationDisplay);
     map.un('click', copyCenterToClipboard);
   }
 
