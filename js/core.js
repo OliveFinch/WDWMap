@@ -210,8 +210,11 @@
       minZoom: 16,
       maxZoom: 20,
       yScheme: 'xyz',
-      defaultCenter: [139.884055, 35.630610],
+      // Default to Tokyo Disneyland location with rotation 205°
+      defaultCenter: [139.880790, 35.632283],
       defaultZoom: 17.0,
+      defaultWidth: 0.016, // Tokyo Disneyland width (0.004) zoomed out by 2 levels
+      defaultRotation: 205,
       // Approximate bounds for Tokyo Disney Resort area
       boundsByZoom: {
         "15": { "minX": 29115, "maxX": 29125, "minY": 12905, "maxY": 12915 },
@@ -757,6 +760,10 @@
       initialZoom = park.minZoom + 2;
     }
 
+    // Set rotation for parks that have a default rotation
+    const defaultRotation = park.defaultRotation || 0;
+    const rotationRad = defaultRotation * (Math.PI / 180);
+
     map = new ol.Map({
       target: 'map',
       layers: [disneyLayer, esriLayer, roadsLayer].filter(Boolean),
@@ -767,7 +774,7 @@
         maxZoom: park.maxZoom,
         extent: parkExtent || undefined,
         constrainOnlyCenter: true,  // Allows zooming out while keeping center in bounds
-        rotation: (currentParkId === 'tdr') ? (200 * Math.PI / 180) : 0  // Default rotation for TDR
+        rotation: rotationRad
       }),
       controls: ol.control.defaults.defaults({ zoom: false, rotate: false }),
       interactions: ol.interaction.defaults.defaults({
@@ -776,9 +783,19 @@
       })
     });
 
-    // Initialize TDR rotation state
-    if (currentParkId === 'tdr') {
-      tdrRotation = 200;
+    // Initialize rotation state
+    if (defaultRotation) {
+      tdrRotation = defaultRotation;
+    }
+
+    // If park has defaultWidth, fit to extent instead of using zoom
+    if (park.defaultWidth && park.defaultCenter) {
+      const lon = park.defaultCenter[0];
+      const lat = park.defaultCenter[1];
+      const halfW = park.defaultWidth / 2;
+      const extentLonLat = [lon - halfW, lat - halfW, lon + halfW, lat + halfW];
+      const extent3857 = ol.proj.transformExtent(extentLonLat, 'EPSG:4326', 'EPSG:3857');
+      map.getView().fit(extent3857, { duration: 0 });
     }
 
     map.on('rendercomplete', updateSwipeUI);
