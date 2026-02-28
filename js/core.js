@@ -615,11 +615,18 @@
     // Calibrated tile offsets for SHDR satellite imagery
     // These align the satellite tiles with the Disney map's Baidu-based coordinates
     const tileOffsets = {
+      9: { x: 0, y: 0 },
+      10: { x: 0, y: 0 },
+      11: { x: 0, y: 0 },
+      12: { x: 0, y: 0 },
+      13: { x: 0, y: 0 },
       14: { x: 0, y: 0 },
       15: { x: 0, y: 0 },
       16: { x: 1, y: 1 },
       17: { x: 1, y: 1 },
       18: { x: 2, y: 2 },
+      19: { x: 4, y: 4 },
+      20: { x: 8, y: 8 },
     };
 
     const lyr = new ol.layer.Tile({
