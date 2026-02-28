@@ -612,36 +612,15 @@
 
   // Special ESRI layer for SHDR that transforms Baidu coords to real WGS84
   function makeEsriLayerSHDR(esriId) {
-    const park = PARKS.shdr;
-    const fakeCenter = park.defaultCenter; // Baidu-based "fake" coords
-    const realCenter = park.realCenter;    // Actual WGS84 coords
-
-    // Calculate the base offset in Web Mercator (EPSG:3857)
-    const fakeProj = ol.proj.fromLonLat(fakeCenter);
-    const realProj = ol.proj.fromLonLat(realCenter);
-    let offsetX = realProj[0] - fakeProj[0];
-    let offsetY = realProj[1] - fakeProj[1];
-
-    // Empirical fine-tuning based on Cinderella Castle alignment
-    // Disney map shows castle at [-107.344532, -83.052289]
-    // Satellite was showing it at [-107.346370, -83.052032]
-    // Need to shift satellite east by 0.001838° and south by 0.000257° in fake coords
-    const correctionPoint1 = ol.proj.fromLonLat(fakeCenter);
-    const correctionPoint2 = ol.proj.fromLonLat([fakeCenter[0] + 0.001038, fakeCenter[1] + 0.0000300]);
-    offsetX += (correctionPoint2[0] - correctionPoint1[0]);
-    offsetY += (correctionPoint2[1] - correctionPoint1[1]);
-
-    // Pre-calculate tile offset for each zoom level to ensure consistency
-    const tileSize = 256;
-    const worldSize = 2 * Math.PI * 6378137; // Earth circumference in meters
-    const tileOffsets = {};
-    for (let z = 0; z <= 22; z++) {
-      const metersPerTile = worldSize / Math.pow(2, z);
-      tileOffsets[z] = {
-        x: Math.round(offsetX / metersPerTile),
-        y: Math.round(-offsetY / metersPerTile) // Y is inverted in tile coords
-      };
-    }
+    // Calibrated tile offsets for SHDR satellite imagery
+    // These align the satellite tiles with the Disney map's Baidu-based coordinates
+    const tileOffsets = {
+      14: { x: 0, y: 0 },
+      15: { x: 0, y: 0 },
+      16: { x: 1, y: 1 },
+      17: { x: 1, y: 1 },
+      18: { x: 2, y: 2 },
+    };
 
     const lyr = new ol.layer.Tile({
       source: new ol.source.XYZ({
