@@ -26,9 +26,9 @@
     userAgent: 'Disney Resort/3.10.9 (jp.tokyodisneyresort.portalapp; build:4; iOS 26.2.1) Alamofire/5.10.2',
     // CloudFront signed cookies (time-limited, update when expired)
     cookies: {
-      'CloudFront-Signature': 'cwTUHMSzbLVk8hGDDQKJRIdzeS9J4FTjvt8~A4kBUL9cyslMKXoEA9~M8OGDvnyZu6g8vjn6ssJ8DgrD35Njt2DJLN1KpV6k4PapQEe2Rpa-oWWfl6xAsu39QEF1wGRdvAcGh1QvP2DSq8wIij7101f7lye55iE~FCJBNShCh-ukO5jZkokgCkKWw7C9SHOnU6FLoXi4CC3yFAA65p-p2cYrSFk-o3PvaVEL8L2Hpa4kiJMnwiU6FQupYMCclgC3093LB32ow8od~2jGYKCop1a0dV7P84Hd9JmbCALE0JDLNrRrJNFzDyHSlrONobdrKzMcDjv8zvcpqrp4NUVUag__',
+      'CloudFront-Signature': 'BXEVbTtoOhUFrdCQP1~x2ofYRaWDsqcROzsPUVovXrR~Lnri0mEIqdPfejjgFAOvwb5~xFWvyOLxcXmX4tRkw1NuQSIa5q7V1nLRDaMJ3ef5pVnQdZiHZ3d9hWQCrYx6Hlc9R6ofhUmhLuIH9Usoc7OtV2wgz6op0YdbtjAmvhx1a8Wd5f-iQGZflzbrBL6MBsZy-1uFY4kL2xgLiz570gIFDx-ws8lzboWzsCpK0-s6euN5itxkG2BIvIpJEPZpwZlVbsp7HnUnwthQbLo2UhRYuvOWfcuIouLv1BXlJrEwEUdVrkVQY9-osZpdaVj622RVMnq0M~SYKo95JRAQ4A__',
       'CloudFront-Key-Pair-Id': 'APKAIJUGP2GGEWDAPMTQ',
-      'CloudFront-Policy': 'eyJTdGF0ZW1lbnQiOiBbeyJSZXNvdXJjZSI6Imh0dHBzOi8vY29udGVudHMtcG9ydGFsLnRva3lvZGlzbmV5cmVzb3J0LmpwLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NzI0NDIzNzl9LCJJcEFkZHJlc3MiOnsiQVdTOlNvdXJjZUlwIjoiMC4wLjAuMC8wIn19fV19'
+      'CloudFront-Policy': 'eyJTdGF0ZW1lbnQiOiBbeyJSZXNvdXJjZSI6Imh0dHBzOi8vY29udGVudHMtcG9ydGFsLnRva3lvZGlzbmV5cmVzb3J0LmpwLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NzQwODM5ODB9LCJJcEFkZHJlc3MiOnsiQVdTOlNvdXJjZUlwIjoiMC4wLjAuMC8wIn19fV19'
     },
     // Proxy URL - tiles are fetched through this worker to add required headers
     // ?mode=daytime or ?mode=nighttime is appended
