@@ -28,7 +28,7 @@
     cookies: {
       'CloudFront-Signature': 'aJYaho35pR1cR~gXky~L6SLtZEZmXZcWRzkndtlARBXpAybnHy0WV~nhZus7t6sjyPXqHVFEPA0JPsA0Crb4vcBfEL8gh8mFyEAnkt4Ju-S8-UN1sBSd2-zYphqv6IvS24DezMtOrg9njnGhE5WhaxY-6SFvl2jLoPn~Keed9ratczbAwhBoz036ZqjSMEv9wTFaorVOsxtuzFps3XodDvl5rN0DBu4PMjpFTJbsR-ogPwsmCbchKYL9ZLiFf68G-aKqmyZAs~WMcnipOgXdDsb8d~utN2FoiareL9bn7HkbjqxlcEJLx1djc-xmg9gsAeRlmyJ5f6YzVEYCiETmnA__',
       'CloudFront-Key-Pair-Id': 'APKAIJUGP2GGEWDAPMTQ',
-      'CloudFront-Policy': 'eyJTdGF0ZW1lbnQiOiBbeyJSZXNvdXJjZSI6Imh0dHBzOi8vY29udGVudHMtcG9ydGFsLnRva3lvZGlzbmV5cmVzb3J0LmpwLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NzUxMjA3ODF9LCJJcEFkZHJlc3MiOnsiQVdTOlNvdXJjZUlwIjoiMC4wLjAuMC8wIn19fV19'
+      'CloudFront-Policy': 'eyJTdGF0ZW1lbnQiOiBbeyJSZXNvdXJjZSI6Imh0dHBzOi8vY29udGVudHMtcG9ydGFsLnRva3lvZGlzbmV5cmVzb3J0LmpwLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NzQwODM5ODB9LCJJcEFkZHJlc3MiOnsiQVdTOlNvdXJjZUlwIjoiMC4wLjAuMC8wIn19fV19'
     },
     // Proxy URL - tiles are fetched through this worker to add required headers
     // ?mode=daytime or ?mode=nighttime is appended
