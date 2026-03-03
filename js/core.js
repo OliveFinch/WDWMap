@@ -26,7 +26,7 @@
     userAgent: 'Disney Resort/3.10.9 (jp.tokyodisneyresort.portalapp; build:4; iOS 26.2.1) Alamofire/5.10.2',
     // CloudFront signed cookies (time-limited, update when expired)
     cookies: {
-      'CloudFront-Signature': 'BXEVbTtoOhUFrdCQP1~x2ofYRaWDsqcROzsPUVovXrR~Lnri0mEIqdPfejjgFAOvwb5~xFWvyOLxcXmX4tRkw1NuQSIa5q7V1nLRDaMJ3ef5pVnQdZiHZ3d9hWQCrYx6Hlc9R6ofhUmhLuIH9Usoc7OtV2wgz6op0YdbtjAmvhx1a8Wd5f-iQGZflzbrBL6MBsZy-1uFY4kL2xgLiz570gIFDx-ws8lzboWzsCpK0-s6euN5itxkG2BIvIpJEPZpwZlVbsp7HnUnwthQbLo2UhRYuvOWfcuIouLv1BXlJrEwEUdVrkVQY9-osZpdaVj622RVMnq0M~SYKo95JRAQ4A__',
+      'CloudFront-Signature': 'aJYaho35pR1cR~gXky~L6SLtZEZmXZcWRzkndtlARBXpAybnHy0WV~nhZus7t6sjyPXqHVFEPA0JPsA0Crb4vcBfEL8gh8mFyEAnkt4Ju-S8-UN1sBSd2-zYphqv6IvS24DezMtOrg9njnGhE5WhaxY-6SFvl2jLoPn~Keed9ratczbAwhBoz036ZqjSMEv9wTFaorVOsxtuzFps3XodDvl5rN0DBu4PMjpFTJbsR-ogPwsmCbchKYL9ZLiFf68G-aKqmyZAs~WMcnipOgXdDsb8d~utN2FoiareL9bn7HkbjqxlcEJLx1djc-xmg9gsAeRlmyJ5f6YzVEYCiETmnA__',
       'CloudFront-Key-Pair-Id': 'APKAIJUGP2GGEWDAPMTQ',
       'CloudFront-Policy': 'eyJTdGF0ZW1lbnQiOiBbeyJSZXNvdXJjZSI6Imh0dHBzOi8vY29udGVudHMtcG9ydGFsLnRva3lvZGlzbmV5cmVzb3J0LmpwLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NzQwODM5ODB9LCJJcEFkZHJlc3MiOnsiQVdTOlNvdXJjZUlwIjoiMC4wLjAuMC8wIn19fV19'
     },
