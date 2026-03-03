@@ -1,0 +1,11 @@
+{
+  "tileBaseUrl": "https://contents-portal.tokyodisneyresort.jp/limited/map-image/20260122183830/{mode}/",
+  "userAgent": "Disney Resort/3.10.9 (jp.tokyodisneyresort.portalapp; build:4; iOS 26.2.1) Alamofire/5.10.2",
+  "cookies": {
+    "CloudFront-Signature": "aJYaho35pR1cR~gXky~L6SLtZEZmXZcWRzkndtlARBXpAybnHy0WV~nhZus7t6sjyPXqHVFEPA0JPsA0Crb4vcBfEL8gh8mFyEAnkt4Ju-S8-UN1sBSd2-zYphqv6IvS24DezMtOrg9njnGhE5WhaxY-6SFvl2jLoPn~Keed9ratczbAwhBoz036ZqjSMEv9wTFaorVOsxtuzFps3XodDvl5rN0DBu4PMjpFTJbsR-ogPwsmCbchKYL9ZLiFf68G-aKqmyZAs~WMcnipOgXdDsb8d~utN2FoiareL9bn7HkbjqxlcEJLx1djc-xmg9gsAeRlmyJ5f6YzVEYCiETmnA__",
+    "CloudFront-Key-Pair-Id": "APKAIJUGP2GGEWDAPMTQ",
+    "CloudFront-Policy": "eyJTdGF0ZW1lbnQiOiBbeyJSZXNvdXJjZSI6Imh0dHBzOi8vY29udGVudHMtcG9ydGFsLnRva3lvZGlzbmV5cmVzb3J0LmpwLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NzUxMjA3ODF9LCJJcEFkZHJlc3MiOnsiQVdTOlNvdXJjZUlwIjoiMC4wLjAuMC8wIn19fV19"
+  },
+  "cookieExpires": "2026-04-02T09:06:21Z",
+  "proxyUrl": "https://wdw-magic-explorer-api.gullet-erase2v.workers.dev/tdr-tiles/"
+}

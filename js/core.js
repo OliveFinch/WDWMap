@@ -16,24 +16,27 @@
 
   // =====================
   // Tokyo Disney Resort Configuration
-  // Update these values when CloudFront cookies expire
+  // Loaded from parks/tdr/tdr_config.json (update that file when cookies expire)
   // =====================
-  const TDR_CONFIG = {
-    // Base URL for TDR map tiles (date code may need updating)
-    // {mode} will be replaced with 'daytime' or 'nighttime'
-    tileBaseUrl: 'https://contents-portal.tokyodisneyresort.jp/limited/map-image/20260122183830/{mode}/',
-    // Required User-Agent header
-    userAgent: 'Disney Resort/3.10.9 (jp.tokyodisneyresort.portalapp; build:4; iOS 26.2.1) Alamofire/5.10.2',
-    // CloudFront signed cookies (time-limited, update when expired)
-    cookies: {
-      'CloudFront-Signature': 'aJYaho35pR1cR~gXky~L6SLtZEZmXZcWRzkndtlARBXpAybnHy0WV~nhZus7t6sjyPXqHVFEPA0JPsA0Crb4vcBfEL8gh8mFyEAnkt4Ju-S8-UN1sBSd2-zYphqv6IvS24DezMtOrg9njnGhE5WhaxY-6SFvl2jLoPn~Keed9ratczbAwhBoz036ZqjSMEv9wTFaorVOsxtuzFps3XodDvl5rN0DBu4PMjpFTJbsR-ogPwsmCbchKYL9ZLiFf68G-aKqmyZAs~WMcnipOgXdDsb8d~utN2FoiareL9bn7HkbjqxlcEJLx1djc-xmg9gsAeRlmyJ5f6YzVEYCiETmnA__',
-      'CloudFront-Key-Pair-Id': 'APKAIJUGP2GGEWDAPMTQ',
-      'CloudFront-Policy': 'eyJTdGF0ZW1lbnQiOiBbeyJSZXNvdXJjZSI6Imh0dHBzOi8vY29udGVudHMtcG9ydGFsLnRva3lvZGlzbmV5cmVzb3J0LmpwLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NzQwODM5ODB9LCJJcEFkZHJlc3MiOnsiQVdTOlNvdXJjZUlwIjoiMC4wLjAuMC8wIn19fV19'
-    },
-    // Proxy URL - tiles are fetched through this worker to add required headers
-    // ?mode=daytime or ?mode=nighttime is appended
-    proxyUrl: 'https://wdw-magic-explorer-api.gullet-erase2v.workers.dev/tdr-tiles/'
+  let TDR_CONFIG = {
+    tileBaseUrl: '',
+    userAgent: '',
+    cookies: {},
+    proxyUrl: ''
   };
+
+  // Load TDR config from external JSON file
+  async function loadTdrConfig() {
+    try {
+      const response = await fetch('parks/tdr/tdr_config.json');
+      if (response.ok) {
+        TDR_CONFIG = await response.json();
+        window.WDWMX.TDR_CONFIG = TDR_CONFIG;
+      }
+    } catch (e) {
+      console.warn('Failed to load TDR config:', e);
+    }
+  }
 
   // TDR state: 'daytime' or 'nighttime'
   let tdrTimeMode = 'daytime';
@@ -1962,10 +1965,11 @@
   const urlView = urlParams.get('view');
 
   try {
-    // Load Disney and satellite server lists in parallel
+    // Load Disney and satellite server lists in parallel, plus TDR config
     let [disRes, satRes] = await Promise.all([
       fetch(disUrl, { cache: 'no-store' }),
-      fetch(satUrl, { cache: 'no-store' })
+      fetch(satUrl, { cache: 'no-store' }),
+      loadTdrConfig()
     ]);
 
     // Fall back to WDW if park files missing
