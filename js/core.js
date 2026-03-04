@@ -15,6 +15,42 @@
   const ROADS_TILE_URL = 'https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}';
 
   // =====================
+  // Park Configurations
+  // Loaded from parks/{parkId}/{parkId}_config.json
+  // =====================
+  let PARKS = {};
+  const PARK_IDS = ['wdw', 'dlp', 'dlr', 'hkdl', 'shdr', 'tdr'];
+
+  // Load all park configs from JSON files
+  async function loadParkConfigs() {
+    const configs = await Promise.all(
+      PARK_IDS.map(async (parkId) => {
+        try {
+          const response = await fetch(`parks/${parkId}/${parkId}_config.json`);
+          if (response.ok) {
+            return await response.json();
+          }
+        } catch (e) {
+          console.warn(`Failed to load ${parkId} config:`, e);
+        }
+        return null;
+      })
+    );
+
+    configs.forEach((config) => {
+      if (config && config.parkId) {
+        PARKS[config.parkId] = config;
+      }
+    });
+
+    // Set TDR_CONFIG from loaded TDR park config
+    if (PARKS.tdr) {
+      TDR_CONFIG = PARKS.tdr;
+      window.WDWMX.TDR_CONFIG = TDR_CONFIG;
+    }
+  }
+
+  // =====================
   // Tokyo Disney Resort Configuration
   // Loaded from parks/tdr/tdr_config.json (update that file when cookies expire)
   // =====================
@@ -24,19 +60,6 @@
     cookies: {},
     proxyUrl: ''
   };
-
-  // Load TDR config from external JSON file
-  async function loadTdrConfig() {
-    try {
-      const response = await fetch('parks/tdr/tdr_config.json');
-      if (response.ok) {
-        TDR_CONFIG = await response.json();
-        window.WDWMX.TDR_CONFIG = TDR_CONFIG;
-      }
-    } catch (e) {
-      console.warn('Failed to load TDR config:', e);
-    }
-  }
 
   // TDR state: 'daytime' or 'nighttime'
   let tdrTimeMode = 'daytime';
@@ -96,140 +119,6 @@
       { coords: [139.885709, 35.625239], width: 0.008, rotation: 135, icon: 'icons/locations/tdr/disneysea.svg', alt: 'Tokyo DisneySea' },
       { coords: [139.887318, 35.633259], width: 0.005, rotation: 270, icon: 'icons/locations/tdr/ikspiari.svg', alt: 'Ikspiari' }
     ]
-  };
-
-  const PARKS = {
-    wdw: {
-      parkId: 'wdw',
-      name: 'Walt Disney World',
-      tileTemplate: 'https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/{code}/{z}/{x}/{y}.jpg',
-      minZoom: 11,
-      maxZoom: 20,
-      yScheme: 'xyz',
-      defaultCenter: [-81.567406, 28.386276],
-      defaultZoom: 13,
-      boundsByZoom: {
-        "11": { "minX": 555, "maxX": 564, "minY": 851, "maxY": 859 },
-        "12": { "minX": 1118, "maxX": 1125, "minY": 1706, "maxY": 1715 },
-        "13": { "minX": 2228, "maxX": 2251, "minY": 3412, "maxY": 3431 },
-        "14": { "minX": 4456, "maxX": 4503, "minY": 6824, "maxY": 6863 },
-        "15": { "minX": 8928, "maxX": 8987, "minY": 13672, "maxY": 13699 },
-        "16": { "minX": 17856, "maxX": 17975, "minY": 27344, "maxY": 27399 },
-        "17": { "minX": 35712, "maxX": 35951, "minY": 54688, "maxY": 54799 },
-        "18": { "minX": 71424, "maxX": 71903, "minY": 109376, "maxY": 109599 },
-        "19": { "minX": 143264, "maxX": 143455, "minY": 218752, "maxY": 219199 },
-        "20": { "minX": 286528, "maxX": 286911, "minY": 437504, "maxY": 438399 }
-      }
-    },
-    dlp: {
-      parkId: 'dlp',
-      name: 'Disneyland Paris',
-      tileTemplate: 'https://media.disneylandparis.com/mapTiles/images/{z}/{x}/{y}.jpg',
-      minZoom: 13,
-      maxZoom: 20,
-      yScheme: 'xyz',
-      defaultCenter: [2.783115, 48.869832],
-      defaultZoom: 15.3,
-      boundsByZoom: {
-        "13": { "minX": 4156, "maxX": 4161, "minY": 2816, "maxY": 2819 },
-        "14": { "minX": 8312, "maxX": 8323, "minY": 5632, "maxY": 5639 },
-        "15": { "minX": 16624, "maxX": 16647, "minY": 11264, "maxY": 11279 },
-        "16": { "minX": 33248, "maxX": 33295, "minY": 22528, "maxY": 22559 },
-"17": { "minX": 66496,  "maxX": 66591,  "minY": 45056,  "maxY": 45119 },
-"18": { "minX": 132992, "maxX": 133183, "minY": 90112,  "maxY": 90239 },
-"19": { "minX": 265984, "maxX": 266367, "minY": 180224, "maxY": 180479 },
-"20": { "minX": 531968, "maxX": 532735, "minY": 360448, "maxY": 360959 }
-      }
-    },
-    dlr: {
-      parkId: 'dlr',
-      name: 'Disneyland Resort (California)',
-      tileTemplate: 'https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/disneyland/{code}/{z}/{x}/{y}.jpg',
-      minZoom: 14,
-      maxZoom: 20,
-      yScheme: 'xyz',
-      defaultCenter: [-117.919108, 33.809960],
-      defaultZoom: 16.0,
-      boundsByZoom: {
-        "14": { "minX": 2818, "maxX": 2831, "minY": 6549, "maxY": 6560 },
-        "15": { "minX": 5636, "maxX": 5663, "minY": 13102, "maxY": 13117 },
-        "16": { "minX": 11272, "maxX": 11327, "minY": 26208, "maxY": 26231 },
-        "17": { "minX": 22544, "maxX": 22655, "minY": 52416, "maxY": 52463 },
-        "18": { "minX": 45088, "maxX": 45311, "minY": 104832, "maxY": 104927 },
-        "19": { "minX": 90176, "maxX": 90623, "minY": 209664, "maxY": 209855 },
-        "20": { "minX": 180352, "maxX": 181247, "minY": 419328, "maxY": 419739 }
-      }
-    },
-    hkdl: {
-      parkId: 'hkdl',
-      name: 'Hong Kong Disneyland',
-      tileTemplate: 'https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/hkdl/{code}/{z}/{x}/{y}.jpg',
-      minZoom: 14,
-      maxZoom: 20,
-      yScheme: 'xyz',
-      defaultCenter: [114.041267, 22.312071],
-      defaultZoom: 17.6,
-      boundsByZoom: {
-        "14": { "minX": 13380, "maxX": 13383, "minY": 7148, "maxY": 7150 },
-        "15": { "minX": 26762, "maxX": 26765, "minY": 14297, "maxY": 14300 },
-        "16": { "minX": 53524, "maxX": 53531, "minY": 28594, "maxY": 28601 },
-        "17": { "minX": 107048, "maxX": 107063, "minY": 57188, "maxY": 57203 },
-        "18": { "minX": 214096, "maxX": 214127, "minY": 114376, "maxY": 114407 },
-"19": { "minX": 428192, "maxX": 428255, "minY": 228752, "maxY": 228815 },
-"20": { "minX": 856384, "maxX": 856511, "minY": 457504, "maxY": 457631 }
-      }
-    },
-    shdr: {
-      parkId: 'shdr',
-      name: 'Shanghai Disney Resort',
-      tileTemplate: 'https://secure.cdn1.wdpromedia.com/media/maps/prod/shdr-baidu-mob-en/{code}/{z}/{x}/{y}.jpg',
-      minZoom: 14,
-      maxZoom: 21,
-      yScheme: 'tms', // server expects flipped Y
-      // Shanghai uses Baidu coordinates - these are the "fake" WGS84 coords that map to correct tiles
-      defaultCenter: [-107.344044, -83.052335],
-      defaultZoom: 17.8,
-      // Real WGS84 coordinates for satellite view transformation
-      realCenter: [121.6580, 31.1433],
-      boundsByZoom: {
-        "9": { "minX": 103, "maxX": 103, "minY": 27, "maxY": 27 },
-        "10": { "minX": 206, "maxX": 206, "minY": 55, "maxY": 55 },
-        "11": { "minX": 412, "maxX": 413, "minY": 110, "maxY": 111 },
-        "12": { "minX": 825, "maxX": 827, "minY": 220, "maxY": 222 },
-        "13": { "minX": 1651, "maxX": 1655, "minY": 441, "maxY": 444 },
-        "14": { "minX": 3302, "maxX": 3310, "minY": 882, "maxY": 889 },
-        "15": { "minX": 6609, "maxX": 6617, "minY": 1768, "maxY": 1776 },
-        "16": { "minX": 13218, "maxX": 13235, "minY": 3536, "maxY": 3553 },
-        "17": { "minX": 26447, "maxX": 26459, "minY": 7084, "maxY": 7095 },
-        "18": { "minX": 52895, "maxX": 52919, "minY": 14168, "maxY": 14191 },
-        "19": { "minX": 105791, "maxX": 105839, "minY": 28336, "maxY": 28383 },
-        "20": { "minX": 211583, "maxX": 211679, "minY": 56672, "maxY": 56767 }
-      }
-    },
-    tdr: {
-      parkId: 'tdr',
-      name: 'Tokyo Disney Resort',
-      // TDR uses a proxy due to CloudFront authentication requirements
-      // Tile format: z{z}/{x}_{y}.jpg (handled specially in makeDisneyLayer)
-      tileTemplate: 'tdr-proxy', // Special marker - actual URL built in makeDisneyLayer
-      minZoom: 16,
-      maxZoom: 20,
-      yScheme: 'xyz',
-      // Default to Tokyo Disneyland location with rotation 205°
-      defaultCenter: [139.880790, 35.632283],
-      defaultZoom: 17.0,
-      defaultWidth: 0.016, // Tokyo Disneyland width (0.004) zoomed out by 2 levels
-      defaultRotation: 205,
-      // Approximate bounds for Tokyo Disney Resort area
-      boundsByZoom: {
-        "15": { "minX": 29115, "maxX": 29125, "minY": 12905, "maxY": 12915 },
-        "16": { "minX": 58230, "maxX": 58250, "minY": 25810, "maxY": 25830 },
-        "17": { "minX": 116460, "maxX": 116500, "minY": 51620, "maxY": 51660 },
-        "18": { "minX": 232920, "maxX": 233000, "minY": 103240, "maxY": 103320 },
-        "19": { "minX": 465840, "maxX": 466000, "minY": 206480, "maxY": 206640 },
-        "20": { "minX": 931680, "maxX": 932000, "minY": 412960, "maxY": 413280 }
-      }
-    }
   };
 
   // Current park (default to WDW for now; UI switch can be added later)
@@ -1950,6 +1839,9 @@
 // Boot
 // =====================
 (async function boot() {
+  // Load park configs first (required before accessing PARKS)
+  await loadParkConfigs();
+
   const disUrl = getServersUrl(currentParkId);
   const satUrl = getSatServersUrl(currentParkId);
   const fallbackDisUrl = getServersUrl('wdw');
@@ -1965,11 +1857,10 @@
   const urlView = urlParams.get('view');
 
   try {
-    // Load Disney and satellite server lists in parallel, plus TDR config
+    // Load Disney and satellite server lists in parallel
     let [disRes, satRes] = await Promise.all([
       fetch(disUrl, { cache: 'no-store' }),
-      fetch(satUrl, { cache: 'no-store' }),
-      loadTdrConfig()
+      fetch(satUrl, { cache: 'no-store' })
     ]);
 
     // Fall back to WDW if park files missing
