@@ -1,4 +1,22 @@
 {
+  "parkId": "tdr",
+  "name": "Tokyo Disney Resort",
+  "tileTemplate": "tdr-proxy",
+  "minZoom": 16,
+  "maxZoom": 20,
+  "yScheme": "xyz",
+  "defaultCenter": [139.880790, 35.632283],
+  "defaultZoom": 17.0,
+  "defaultWidth": 0.016,
+  "defaultRotation": 205,
+  "boundsByZoom": {
+    "15": { "minX": 29115, "maxX": 29125, "minY": 12905, "maxY": 12915 },
+    "16": { "minX": 58230, "maxX": 58250, "minY": 25810, "maxY": 25830 },
+    "17": { "minX": 116460, "maxX": 116500, "minY": 51620, "maxY": 51660 },
+    "18": { "minX": 232920, "maxX": 233000, "minY": 103240, "maxY": 103320 },
+    "19": { "minX": 465840, "maxX": 466000, "minY": 206480, "maxY": 206640 },
+    "20": { "minX": 931680, "maxX": 932000, "minY": 412960, "maxY": 413280 }
+  },
   "tileBaseUrl": "https://contents-portal.tokyodisneyresort.jp/limited/map-image/20260122183830/{mode}/",
   "userAgent": "Disney Resort/3.10.9 (jp.tokyodisneyresort.portalapp; build:4; iOS 26.2.1) Alamofire/5.10.2",
   "cookies": {
