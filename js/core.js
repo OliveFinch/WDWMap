@@ -129,7 +129,7 @@
     const urlPid = new URLSearchParams(window.location.search).get('park');
     const storedPid = localStorage.getItem('wdwmx:parkId');
     const candidate = (urlPid || storedPid || 'wdw').toLowerCase();
-    if (PARKS[candidate]) currentParkId = candidate;
+    if (PARK_IDS.includes(candidate)) currentParkId = candidate;
   } catch (e) {
     // ignore
   }
