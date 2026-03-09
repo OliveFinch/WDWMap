@@ -601,15 +601,26 @@
 
     return new ol.layer.Tile({
       source: new ol.source.XYZ({
-        url: baseUrlTpl,
         maxZoom: 20,
-        crossOrigin: 'anonymous',
+        tileUrlFunction: function(tileCoord) {
+          // Return a dummy URL - actual loading is done in tileLoadFunction
+          return 'data:,';
+        },
         tileLoadFunction: function (tile, src) {
           const zxy = tile.tileCoord;
+          const z = zxy[0];
+          const x = zxy[1];
+          const y = (park.yScheme === 'tms') ? ((Math.pow(2, z) - 1) - zxy[2]) : zxy[2];
+
+          // Build both URLs with proper TMS handling
+          const baseUrl = baseUrlTpl
+            .replace('{z}', z)
+            .replace('{x}', x)
+            .replace('{y}', String(y));
           const compareUrl = compareUrlTpl
-            .replace('{z}', zxy[0])
-            .replace('{x}', zxy[1])
-            .replace('{y}', String((park.yScheme === 'tms') ? ((Math.pow(2, zxy[0]) - 1) - zxy[2]) : zxy[2]));
+            .replace('{z}', z)
+            .replace('{x}', x)
+            .replace('{y}', String(y));
 
           const baseImg = new Image();
           baseImg.crossOrigin = 'anonymous';
@@ -671,7 +682,7 @@
             tile.getImage().src = blank.toDataURL();
           };
 
-          baseImg.src = src;
+          baseImg.src = baseUrl;
         }
       })
     });
