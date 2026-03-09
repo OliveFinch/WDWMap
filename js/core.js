@@ -1792,41 +1792,43 @@
 
     const customId = input.value.trim();
     if (!customId) {
-      showToast('Enter a server ID');
+      showToast('Enter a Disney map server ID');
       return;
     }
 
-    // Check if it's a satellite ID (starts with 'sat_' or is numeric for esri)
-    if (customId.startsWith('sat_')) {
-      const esriId = customId.substring(4);
-      setSatelliteView(esriId);
-      showToast(`Loading satellite: ${esriId}`);
-    } else if (/^\d+$/.test(customId)) {
-      // Pure numeric - assume it's an ESRI satellite ID
-      setSatelliteView(customId);
-      showToast(`Loading satellite: ${customId}`);
-    } else {
-      // Assume it's a Disney map code
-      loadCustomDisneyServer(customId);
-    }
-
+    // Load custom Disney map code
+    loadCustomDisneyServer(customId);
     input.value = '';
-    updateServiceModeServerInfo();
   }
 
   function loadCustomDisneyServer(code) {
     // Load a custom Disney map server code (for testing)
     currentCode = code;
-    disneyLayer = makeDisneyLayer(code);
-    disneyLayer.setVisible(showingDisney);
-    disneyLayer.getSource().set('extent', parkExtent);
-    map.getLayers().setAt(0, disneyLayer);
+
+    // Create new Disney layer with custom code
+    const newLayer = makeDisneyLayer(code);
+    newLayer.setVisible(true);
+    if (parkExtent) {
+      newLayer.getSource().set('extent', parkExtent);
+    }
+
+    // Replace the Disney layer
+    map.getLayers().setAt(0, newLayer);
+    disneyLayer = newLayer;
+
+    // Switch to Disney view if in satellite mode
+    if (!showingDisney) {
+      showingDisney = true;
+      if (esriLayer) esriLayer.setVisible(false);
+      disneyLayer.setVisible(true);
+    }
 
     // Update UI
     const label = document.getElementById('single-date-label');
     if (label) label.textContent = code;
 
-    showToast(`Loading Disney map: ${code}`);
+    updateServiceModeServerInfo();
+    showToast(`Loaded: ${code}`);
   }
 
   function enableServiceMode() {
