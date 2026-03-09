@@ -1775,16 +1775,83 @@
     });
   }
 
+  function updateServiceModeServerInfo() {
+    const serverSpan = document.getElementById('service-mode-current-server');
+    if (!serverSpan) return;
+
+    if (showingDisney) {
+      serverSpan.textContent = currentCode || '--';
+    } else {
+      serverSpan.textContent = 'sat_' + (currentSatEsriId || '--');
+    }
+  }
+
+  function loadCustomServer() {
+    const input = document.getElementById('service-mode-custom-input');
+    if (!input) return;
+
+    const customId = input.value.trim();
+    if (!customId) {
+      showToast('Enter a server ID');
+      return;
+    }
+
+    // Check if it's a satellite ID (starts with 'sat_' or is numeric for esri)
+    if (customId.startsWith('sat_')) {
+      const esriId = customId.substring(4);
+      setSatelliteView(esriId);
+      showToast(`Loading satellite: ${esriId}`);
+    } else if (/^\d+$/.test(customId)) {
+      // Pure numeric - assume it's an ESRI satellite ID
+      setSatelliteView(customId);
+      showToast(`Loading satellite: ${customId}`);
+    } else {
+      // Assume it's a Disney map code
+      loadCustomDisneyServer(customId);
+    }
+
+    input.value = '';
+    updateServiceModeServerInfo();
+  }
+
+  function loadCustomDisneyServer(code) {
+    // Load a custom Disney map server code (for testing)
+    currentCode = code;
+    disneyLayer = makeDisneyLayer(code);
+    disneyLayer.setVisible(showingDisney);
+    disneyLayer.getSource().set('extent', parkExtent);
+    map.getLayers().setAt(0, disneyLayer);
+
+    // Update UI
+    const label = document.getElementById('single-date-label');
+    if (label) label.textContent = code;
+
+    showToast(`Loading Disney map: ${code}`);
+  }
+
   function enableServiceMode() {
     serviceMode = true;
     serviceModeOverlay.style.display = 'block';
 
     // Initial center update
     updateServiceModeCenter();
+    updateServiceModeServerInfo();
 
     // Listen for map events - use 'postrender' for real-time updates during pan/zoom
     map.on('postrender', updateServiceModeCenter);
     map.on('click', copyCenterToClipboard);
+
+    // Setup custom server loading
+    const loadBtn = document.getElementById('service-mode-load-custom');
+    const customInput = document.getElementById('service-mode-custom-input');
+    if (loadBtn) {
+      loadBtn.onclick = loadCustomServer;
+    }
+    if (customInput) {
+      customInput.onkeydown = (e) => {
+        if (e.key === 'Enter') loadCustomServer();
+      };
+    }
   }
 
   function disableServiceMode() {
