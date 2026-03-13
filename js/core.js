@@ -449,7 +449,9 @@
   // =====================
   function makeDisneyLayer(code) {
     const park = getCurrentPark();
-    const tpl = String(park.tileTemplate || '');
+    // Check if server has custom URL, otherwise use park's tileTemplate
+    const server = serverOptions.find(o => o.code === code);
+    const tpl = (server && server.url) ? server.url : String(park.tileTemplate || '');
 
     // TDR uses a special proxy for CloudFront authentication
     const isTdr = (park.parkId === 'tdr');
@@ -592,12 +594,18 @@
 
   function makeHighlightLayer(baseCode, compareCode) {
     const park = getCurrentPark();
-    const baseUrlTpl = (park.tileTemplate.indexOf('{code}') >= 0)
-      ? park.tileTemplate.replace('{code}', String(baseCode))
-      : park.tileTemplate;
-    const compareUrlTpl = (park.tileTemplate.indexOf('{code}') >= 0)
-      ? park.tileTemplate.replace('{code}', String(compareCode))
-      : park.tileTemplate;
+    // Check if servers have custom URLs
+    const baseServer = serverOptions.find(o => o.code === baseCode);
+    const compareServer = serverOptions.find(o => o.code === compareCode);
+    const baseTpl = (baseServer && baseServer.url) ? baseServer.url : String(park.tileTemplate || '');
+    const compareTpl = (compareServer && compareServer.url) ? compareServer.url : String(park.tileTemplate || '');
+
+    const baseUrlTpl = (baseTpl.indexOf('{code}') >= 0)
+      ? baseTpl.replace('{code}', String(baseCode))
+      : baseTpl;
+    const compareUrlTpl = (compareTpl.indexOf('{code}') >= 0)
+      ? compareTpl.replace('{code}', String(compareCode))
+      : compareTpl;
 
     return new ol.layer.Tile({
       source: new ol.source.XYZ({
