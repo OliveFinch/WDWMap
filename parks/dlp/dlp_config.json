@@ -3,7 +3,7 @@
   "name": "Disneyland Paris",
   "tileTemplate": "https://media.disneylandparis.com/mapTiles/images/{z}/{x}/{y}.jpg",
   "minZoom": 13,
-  "maxZoom": 20,
+  "maxZoom": 19,
   "yScheme": "xyz",
   "defaultCenter": [2.783115, 48.869832],
   "defaultZoom": 15.3,
