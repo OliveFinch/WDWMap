@@ -7,6 +7,18 @@
   // =========================
   const API_BASE = 'https://wdw-magic-explorer-api.gullet-erase2v.workers.dev';
 
+  // Parks that don't support historical imagery / changes tracking
+  const PARKS_WITHOUT_HISTORY = ['tdr', 'dlp'];
+
+  function parkSupportsHistory() {
+    try {
+      const parkId = WDWMX.getParkId ? WDWMX.getParkId() : null;
+      return parkId && !PARKS_WITHOUT_HISTORY.includes(parkId);
+    } catch {
+      return true;
+    }
+  }
+
   if (!window.WDWMX) {
     console.error('WDWMX bridge not found. Ensure core.js loads before app.js and sets window.WDWMX.');
     return;
@@ -153,6 +165,25 @@
     changesOverlay.style.display = 'block';
     changesBoard.style.display = 'flex';
     changesOverlay.setAttribute('aria-hidden', 'false');
+
+    // Check if park supports history
+    if (!parkSupportsHistory()) {
+      const parkId = WDWMX.getParkId ? WDWMX.getParkId() : 'this park';
+      const parkName = WDWMX.getPark ? (WDWMX.getPark().name || parkId.toUpperCase()) : parkId.toUpperCase();
+      if (changesMeta) changesMeta.textContent = '';
+      if (changesList) {
+        changesList.innerHTML = '';
+        const d = document.createElement('div');
+        d.style.padding = '16px';
+        d.style.color = '#666';
+        d.style.fontSize = '14px';
+        d.style.textAlign = 'center';
+        d.innerHTML = '<strong>Recent Changes is not available for ' + parkName + '</strong><br><br>' +
+          'This feature requires historical map imagery, which is not currently available for this park.';
+        changesList.appendChild(d);
+      }
+      return;
+    }
 
     if (changesMeta) changesMeta.textContent = 'Loading…';
     if (changesList) changesList.innerHTML = '';
