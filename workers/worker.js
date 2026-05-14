@@ -7,11 +7,11 @@ const TDR_CONFIG = {
   tileBaseUrl: 'https://contents-portal.tokyodisneyresort.jp/limited/map-image/20260122183830/{mode}/',
   // Required User-Agent header
   userAgent: 'Disney Resort/3.10.9 (jp.tokyodisneyresort.portalapp; build:4; iOS 26.2.1) Alamofire/5.10.2',
-  // CloudFront signed cookies (time-limited) - expires May 6, 2026
+  // CloudFront signed cookies (time-limited) - expires Jun 13, 2026
   cookies: {
     'CloudFront-Signature': 'oL8TUu8mlOPfQUPRjPzc7lG3sX0qnZaTYFFpWS1yVSmRL-YeQUCRo5ji95ZLISZyDIPRo6AscYjCN98nf-SI5tThB-iGnyQjJaYtjHn~3NwlRQzfDVEZqMM9Nq0zvG~PZHtVqCR4mXh~DmtHYPBefMzQisH5mA9AU19KSzASWH8lQjLXda0Pwhngqwba~G-hDeDcc2ts1r8AwZpDB8RcIvydw1JpsVw3h~EcdnD3uhWTWnWcxxk0DKF8gIC3m4ujEzaFws8mwhxWKmzmjk032FupaASeeEE2kGqLCvsRnJW~s3Xu~Ric99k2KznmPPlfOULJ4ca5sY1eJBvQSW4cHg__',
     'CloudFront-Key-Pair-Id': 'APKAIJUGP2GGEWDAPMTQ',
-    'CloudFront-Policy': 'eyJTdGF0ZW1lbnQiOiBbeyJSZXNvdXJjZSI6Imh0dHBzOi8vY29udGVudHMtcG9ydGFsLnRva3lvZGlzbmV5cmVzb3J0LmpwLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NzgwMzU1MDR9LCJJcEFkZHJlc3MiOnsiQVdTOlNvdXJjZUlwIjoiMC4wLjAuMC8wIn19fV19'
+    'CloudFront-Policy': 'eyJTdGF0ZW1lbnQiOiBbeyJSZXNvdXJjZSI6Imh0dHBzOi8vY29udGVudHMtcG9ydGFsLnRva3lvZGlzbmV5cmVzb3J0LmpwLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODEzMTY2MDh9LCJJcEFkZHJlc3MiOnsiQVdTOlNvdXJjZUlwIjoiMC4wLjAuMC8wIn19fV19'
   }
 };
 
