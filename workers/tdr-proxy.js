@@ -18,7 +18,7 @@ const TDR_CONFIG = {
   tileBaseUrl: 'https://contents-portal.tokyodisneyresort.jp/limited/map-image/20260122183830/daytime/',
 
   // Required User-Agent header (mimics the official TDR app)
-  userAgent: 'Disney Resort/3.10.9 (jp.tokyodisneyresort.portalapp; build:4; iOS 26.2.1) Alamofire/5.10.2',
+  userAgent: 'Disney Resort/3.11.5 (jp.tokyodisneyresort.portalapp; build:2; iOS 26.5.0) Alamofire/5.10.2',
 
   // CloudFront signed cookies (time-limited authentication)
   // These expire and need to be refreshed periodically
