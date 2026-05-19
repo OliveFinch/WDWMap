@@ -1806,23 +1806,16 @@
   }
 
   // Parks that support live version checking
-  const VERSION_CHECK_ENDPOINTS = {
-    wdw: {
-      url: (date) => `https://www.disneyworld.co.uk/finder/api/v1/explorer-service/list-ancestor-entities/wdw/80007798;entityType=destination/${date}/resorts`
-    },
-    dlr: {
-      url: (date) => `https://disneyland.disney.go.com/finder/api/v1/explorer-service/list-ancestor-entities/dlr/80008297;entityType=destination/${date}/destinations`
-    }
-  };
+  const VERSION_CHECK_PARKS = ['wdw', 'dlr', 'hkdl'];
+  const VERSION_CHECK_WORKER = 'https://disney-map-versions.gullet-erase2v.workers.dev/';
 
   async function checkLiveVersion() {
     const versionCheck = document.getElementById('service-mode-version-check');
     const versionStatus = document.getElementById('service-mode-version-status');
     if (!versionCheck || !versionStatus) return;
 
-    // Only check for parks with version endpoints
-    const endpoint = VERSION_CHECK_ENDPOINTS[currentParkId];
-    if (!endpoint) {
+    // Only check for supported parks
+    if (!VERSION_CHECK_PARKS.includes(currentParkId)) {
       versionCheck.style.display = 'none';
       return;
     }
@@ -1832,14 +1825,12 @@
     versionStatus.textContent = 'Checking live version...';
 
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const url = endpoint.url(today);
-
-      const res = await fetch(url);
+      const res = await fetch(`${VERSION_CHECK_WORKER}?park=${currentParkId}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const data = await res.json();
-      const liveVersion = data?.map?.location?.defaults?.tileLayerOptions?.version;
+      const parkData = data[currentParkId];
+      const liveVersion = parkData?.version;
 
       if (!liveVersion) {
         versionCheck.className = '';
