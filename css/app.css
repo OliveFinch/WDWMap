@@ -1056,3 +1056,35 @@ html, body {
 #service-mode-load-custom:hover {
   background: #cdf;
 }
+
+/* Service Mode Version Check */
+#service-mode-version-check {
+  position: absolute;
+  top: 170px;
+  left: 12px;
+  pointer-events: auto;
+  background: rgba(180, 100, 0, 0.95);
+  color: #fff;
+  font-size: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  max-width: 220px;
+}
+
+#service-mode-version-check.checking {
+  background: rgba(60, 60, 80, 0.92);
+}
+
+#service-mode-version-check.up-to-date {
+  background: rgba(0, 100, 60, 0.92);
+}
+
+#service-mode-version-check.new-version {
+  background: rgba(180, 100, 0, 0.95);
+}
+
+#service-mode-version-status {
+  font-family: monospace;
+  line-height: 1.4;
+}

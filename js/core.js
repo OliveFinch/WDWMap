@@ -1805,6 +1805,59 @@
     }
   }
 
+  async function checkWdwLiveVersion() {
+    const versionCheck = document.getElementById('service-mode-version-check');
+    const versionStatus = document.getElementById('service-mode-version-status');
+    if (!versionCheck || !versionStatus) return;
+
+    // Only check for WDW
+    if (currentParkId !== 'wdw') {
+      versionCheck.style.display = 'none';
+      return;
+    }
+
+    versionCheck.style.display = 'block';
+    versionCheck.className = 'checking';
+    versionStatus.textContent = 'Checking live version...';
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const url = `https://www.disneyworld.co.uk/finder/api/v1/explorer-service/list-ancestor-entities/wdw/80007798;entityType=destination/${today}/resorts`;
+
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
+      const liveVersion = data?.map?.location?.defaults?.tileLayerOptions?.version;
+
+      if (!liveVersion) {
+        versionCheck.className = '';
+        versionStatus.textContent = 'Could not get live version';
+        return;
+      }
+
+      // Get latest known server code
+      const latestKnown = serverOptions.length > 0
+        ? serverOptions[serverOptions.length - 1].code
+        : null;
+
+      const liveStr = String(liveVersion);
+      const knownStr = String(latestKnown);
+
+      if (liveStr === knownStr) {
+        versionCheck.className = 'up-to-date';
+        versionStatus.innerHTML = `<strong>Up to date</strong><br>Live: ${liveStr}`;
+      } else {
+        versionCheck.className = 'new-version';
+        versionStatus.innerHTML = `<strong>New version available!</strong><br>Live: ${liveStr}<br>Latest known: ${knownStr}`;
+      }
+    } catch (err) {
+      console.warn('Version check failed:', err);
+      versionCheck.className = '';
+      versionStatus.textContent = 'Version check failed';
+    }
+  }
+
   function loadCustomServer() {
     const input = document.getElementById('service-mode-custom-input');
     if (!input) return;
@@ -1857,6 +1910,9 @@
     // Initial center update
     updateServiceModeCenter();
     updateServiceModeServerInfo();
+
+    // Check for new WDW version
+    checkWdwLiveVersion();
 
     // Listen for map events - use 'postrender' for real-time updates during pan/zoom
     map.on('postrender', updateServiceModeCenter);
