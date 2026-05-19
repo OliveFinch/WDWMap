@@ -1862,6 +1862,13 @@
         versionCheck.className = 'new-version';
         versionStatus.innerHTML = `<strong>New version available!</strong><br>Live: ${liveStr}<br>Latest known: ${knownStr}`;
       }
+    } catch (err) {
+      console.warn('Version check failed:', err);
+      versionCheck.className = '';
+      versionStatus.textContent = 'Version check failed';
+    }
+  }
+
   function loadCustomServer() {
     const input = document.getElementById('service-mode-custom-input');
     if (!input) return;
