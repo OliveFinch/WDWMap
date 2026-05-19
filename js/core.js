@@ -1805,13 +1805,24 @@
     }
   }
 
-  async function checkWdwLiveVersion() {
+  // Parks that support live version checking
+  const VERSION_CHECK_ENDPOINTS = {
+    wdw: {
+      url: (date) => `https://www.disneyworld.co.uk/finder/api/v1/explorer-service/list-ancestor-entities/wdw/80007798;entityType=destination/${date}/resorts`
+    },
+    dlr: {
+      url: (date) => `https://disneyland.disney.go.com/finder/api/v1/explorer-service/list-ancestor-entities/dlr/80008297;entityType=destination/${date}/destinations`
+    }
+  };
+
+  async function checkLiveVersion() {
     const versionCheck = document.getElementById('service-mode-version-check');
     const versionStatus = document.getElementById('service-mode-version-status');
     if (!versionCheck || !versionStatus) return;
 
-    // Only check for WDW
-    if (currentParkId !== 'wdw') {
+    // Only check for parks with version endpoints
+    const endpoint = VERSION_CHECK_ENDPOINTS[currentParkId];
+    if (!endpoint) {
       versionCheck.style.display = 'none';
       return;
     }
@@ -1822,7 +1833,7 @@
 
     try {
       const today = new Date().toISOString().split('T')[0];
-      const url = `https://www.disneyworld.co.uk/finder/api/v1/explorer-service/list-ancestor-entities/wdw/80007798;entityType=destination/${today}/resorts`;
+      const url = endpoint.url(today);
 
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1851,13 +1862,6 @@
         versionCheck.className = 'new-version';
         versionStatus.innerHTML = `<strong>New version available!</strong><br>Live: ${liveStr}<br>Latest known: ${knownStr}`;
       }
-    } catch (err) {
-      console.warn('Version check failed:', err);
-      versionCheck.className = '';
-      versionStatus.textContent = 'Version check failed';
-    }
-  }
-
   function loadCustomServer() {
     const input = document.getElementById('service-mode-custom-input');
     if (!input) return;
@@ -1911,8 +1915,8 @@
     updateServiceModeCenter();
     updateServiceModeServerInfo();
 
-    // Check for new WDW version
-    checkWdwLiveVersion();
+    // Check for new map version (WDW, DLR)
+    checkLiveVersion();
 
     // Listen for map events - use 'postrender' for real-time updates during pan/zoom
     map.on('postrender', updateServiceModeCenter);
