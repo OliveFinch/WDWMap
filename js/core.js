@@ -1806,7 +1806,7 @@
   }
 
   // Parks that support live version checking
-  const VERSION_CHECK_PARKS = ['wdw', 'dlr', 'hkdl'];
+  const VERSION_CHECK_PARKS = ['wdw', 'dlr', 'hkdl', 'shdr'];
   const VERSION_CHECK_WORKER = 'https://disney-map-versions.gullet-erase2v.workers.dev/';
 
   async function checkLiveVersion() {
