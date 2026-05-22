@@ -1809,54 +1809,64 @@
   const VERSION_CHECK_PARKS = ['wdw', 'dlr', 'hkdl', 'shdr'];
   const VERSION_CHECK_WORKER = 'https://disney-map-versions.gullet-erase2v.workers.dev/';
 
-  async function checkLiveVersion() {
+  async function checkAllLiveVersions() {
     const versionCheck = document.getElementById('service-mode-version-check');
     const versionStatus = document.getElementById('service-mode-version-status');
+    const checkBtn = document.getElementById('service-mode-check-versions');
     if (!versionCheck || !versionStatus) return;
 
-    // Only check for supported parks
-    if (!VERSION_CHECK_PARKS.includes(currentParkId)) {
-      versionCheck.style.display = 'none';
-      return;
-    }
-
-    versionCheck.style.display = 'block';
     versionCheck.className = 'checking';
-    versionStatus.textContent = 'Checking live version...';
+    versionStatus.textContent = 'Checking versions...';
+    if (checkBtn) checkBtn.disabled = true;
 
     try {
-      const res = await fetch(`${VERSION_CHECK_WORKER}?park=${currentParkId}`);
+      const res = await fetch(VERSION_CHECK_WORKER);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const data = await res.json();
-      const parkData = data[currentParkId];
-      const liveVersion = parkData?.version;
+      let html = '';
 
-      if (!liveVersion) {
-        versionCheck.className = '';
-        versionStatus.textContent = 'Could not get live version';
-        return;
+      for (const parkId of VERSION_CHECK_PARKS) {
+        const parkData = data[parkId];
+        const liveVersion = parkData?.version;
+
+        if (!liveVersion) {
+          html += `<div class="park-version">${parkId.toUpperCase()}: <span style="color:#888">unavailable</span></div>`;
+          continue;
+        }
+
+        // Get latest known server code for this park
+        const parkServersUrl = `parks/${parkId}/${parkId}_dis_servers.json`;
+        let latestKnown = null;
+        try {
+          const serversRes = await fetch(parkServersUrl);
+          if (serversRes.ok) {
+            const servers = await serversRes.json();
+            const activeServers = servers.filter(s => s.active === 1);
+            if (activeServers.length > 0) {
+              latestKnown = activeServers[activeServers.length - 1].code;
+            }
+          }
+        } catch {}
+
+        const liveStr = String(liveVersion);
+        const knownStr = latestKnown ? String(latestKnown) : '?';
+
+        if (liveStr === knownStr) {
+          html += `<div class="park-version">${parkId.toUpperCase()}: <span class="up-to-date">✓ ${liveStr}</span></div>`;
+        } else {
+          html += `<div class="park-version">${parkId.toUpperCase()}: <span class="new-version">NEW ${liveStr}</span> (known: ${knownStr})</div>`;
+        }
       }
 
-      // Get latest known server code
-      const latestKnown = serverOptions.length > 0
-        ? serverOptions[serverOptions.length - 1].code
-        : null;
-
-      const liveStr = String(liveVersion);
-      const knownStr = String(latestKnown);
-
-      if (liveStr === knownStr) {
-        versionCheck.className = 'up-to-date';
-        versionStatus.innerHTML = `<strong>Up to date</strong><br>Live: ${liveStr}`;
-      } else {
-        versionCheck.className = 'new-version';
-        versionStatus.innerHTML = `<strong>New version available!</strong><br>Live: ${liveStr}<br>Latest known: ${knownStr}`;
-      }
+      versionCheck.className = '';
+      versionStatus.innerHTML = html;
     } catch (err) {
       console.warn('Version check failed:', err);
       versionCheck.className = '';
       versionStatus.textContent = 'Version check failed';
+    } finally {
+      if (checkBtn) checkBtn.disabled = false;
     }
   }
 
@@ -1913,9 +1923,6 @@
     updateServiceModeCenter();
     updateServiceModeServerInfo();
 
-    // Check for new map version (WDW, DLR)
-    checkLiveVersion();
-
     // Listen for map events - use 'postrender' for real-time updates during pan/zoom
     map.on('postrender', updateServiceModeCenter);
     map.on('click', copyCenterToClipboard);
@@ -1931,6 +1938,12 @@
         if (e.key === 'Enter') loadCustomServer();
       };
     }
+
+    // Setup version check button
+    const versionBtn = document.getElementById('service-mode-check-versions');
+    if (versionBtn) {
+      versionBtn.onclick = checkAllLiveVersions;
+    }
   }
 
   function disableServiceMode() {
@@ -1944,11 +1957,11 @@
 
   function checkForServiceModeActivation() {
     const now = Date.now();
-    // Remove clicks older than 1.5 seconds
-    infoClickTimes = infoClickTimes.filter(t => now - t < 1500);
+    // Remove clicks older than 3 seconds
+    infoClickTimes = infoClickTimes.filter(t => now - t < 3000);
     infoClickTimes.push(now);
 
-    // If 4 clicks within 1.5 seconds, toggle service mode
+    // If 4 clicks within 3 seconds, toggle service mode
     if (infoClickTimes.length >= 4) {
       infoClickTimes = [];
       if (serviceMode) {
