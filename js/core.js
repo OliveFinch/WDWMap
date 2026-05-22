@@ -1971,6 +1971,12 @@
       }
       return true; // Prevent normal info overlay
     }
+
+    // If we have recent clicks, suppress the overlay to allow rapid clicking
+    if (infoClickTimes.length > 1) {
+      return true;
+    }
+
     return false;
   }
 
