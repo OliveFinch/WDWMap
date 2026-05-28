@@ -75,51 +75,8 @@
   // tileTemplate supports {code} (optional) and {z}/{x}/{y}
   // yScheme: 'xyz' (standard) or 'tms' (server expects flipped Y)
 
-  // Park-specific quick-access locations
-  // width: geographic span in degrees (for responsive fitting to any screen size)
-  const PARK_LOCATIONS = {
-    wdw: [
-      { coords: [-81.581203, 28.418714], width: 0.008, icon: 'icons/locations/magic-kingdom.svg', alt: 'Magic Kingdom' },
-      { coords: [-81.549385, 28.371715], width: 0.012, icon: 'icons/locations/epcot.svg', alt: 'Epcot' },
-      { coords: [-81.560472, 28.356850], width: 0.012, icon: 'icons/locations/hollywood-studios.svg', alt: 'Hollywood Studios' },
-      { coords: [-81.590567, 28.358037], width: 0.012, icon: 'icons/locations/animal-kingdom.svg', alt: 'Animal Kingdom' },
-      { coords: [-81.529080, 28.366055], width: 0.004, icon: 'icons/locations/typhoon-lagoon.svg', alt: 'Typhoon Lagoon' },
-      { coords: [-81.574719, 28.351948], width: 0.004, icon: 'icons/locations/blizzard-beach.svg', alt: 'Blizzard Beach' },
-      { coords: [-81.518325, 28.370757], width: 0.008, icon: 'icons/locations/disney-springs.svg', alt: 'Disney Springs' }
-    ],
-    dlr: [
-      { coords: [-117.918958, 33.812624], width: 0.003, icon: 'icons/locations/dlr/dlr-castle.svg', alt: 'Disneyland' },
-      { coords: [-117.919703, 33.806176], width: 0.004, icon: 'icons/locations/dlr/california-adventure.svg', alt: 'California Adventure' },
-      { coords: [-117.922899, 33.809130], width: 0.002, icon: 'icons/locations/dlr/downtown-disney.svg', alt: 'Downtown Disney' }
-    ],
-    dlp: [
-      { coords: [2.775880, 48.872100], width: 0.008, icon: 'icons/locations/dlp/disneyland_park_paris.svg', alt: 'Disneyland Park' },
-      { coords: [2.780500, 48.867200], width: 0.008, icon: 'icons/locations/dlp/disney_studios_paris.svg', alt: 'Walt Disney Studios' },
-      { coords: [2.785800, 48.869800], width: 0.005, icon: 'icons/locations/marker.svg', alt: 'Disney Village' }
-    ],
-    hkdl: [
-      { coords: [114.041407, 22.312656], width: 0.003, icon: 'icons/locations/hkdl/hkdl-castle.svg', alt: 'Hong Kong Disneyland' },
-      { coords: [114.037813, 22.321810], width: 0.006, icon: 'icons/locations/marker.svg', alt: 'Inspiration Lake' },
-      { coords: [114.044085, 22.307825], width: 0.0025, icon: 'icons/locations/marker.svg', alt: 'Hong Kong Disneyland Hotel' },
-      { coords: [114.038344, 22.307541], width: 0.002, icon: 'icons/locations/marker.svg', alt: 'Disney Explorers Lodge' },
-      { coords: [114.036762, 22.308802], width: 0.002, icon: 'icons/locations/marker.svg', alt: "Disney's Hollywood Hotel" },
-      { coords: [114.028908, 22.332418], width: 0.005, icon: 'icons/locations/marker.svg', alt: 'Disneyland Transportation Centre' },
-      { coords: [114.045671, 22.316173], width: 0.005, icon: 'icons/locations/marker.svg', alt: 'Sunny Bay Station & Car Park' }
-    ],
-    shdr: [
-      { coords: [-107.344478, -83.052295], width: 0.002, icon: 'icons/locations/shdr/shdr-castle.svg', alt: 'Disneyland Park' },
-      { coords: [-107.338827, -83.052508], width: 0.0025, icon: 'icons/locations/marker.svg', alt: 'Wishing Star Park' },
-      { coords: [-107.340660, -83.052978], width: 0.0015, icon: 'icons/locations/marker.svg', alt: 'Shanghai Disneyland Hotel' },
-      { coords: [-107.348179, -83.052638], width: 0.0015, icon: 'icons/locations/marker.svg', alt: 'Toy Story Hotel' },
-      { coords: [-107.343507, -83.052561], width: 0.0012, icon: 'icons/locations/marker.svg', alt: 'Disneytown' },
-      { coords: [-107.339308, -83.053227], width: 0.001, icon: 'icons/locations/marker.svg', alt: 'Visitor Center & Parking' }
-    ],
-    tdr: [
-      { coords: [139.880790, 35.632283], width: 0.004, rotation: 205, icon: 'icons/locations/tdr/tdr-castle.svg', alt: 'Tokyo Disneyland' },
-      { coords: [139.885709, 35.625239], width: 0.008, rotation: 135, icon: 'icons/locations/tdr/disneysea.svg', alt: 'Tokyo DisneySea' },
-      { coords: [139.887318, 35.633259], width: 0.005, rotation: 270, icon: 'icons/locations/tdr/ikspiari.svg', alt: 'Ikspiari' }
-    ]
-  };
+  // Park-specific quick-access locations are now loaded from park config files
+  // (parks/{parkId}/{parkId}_config.json) in the "locations" array
 
   // Current park (default to WDW for now; UI switch can be added later)
   let currentParkId = 'wdw';
@@ -775,33 +732,31 @@
     // Dock quick pan - populate based on current park
     const dock = document.getElementById('location-dock');
     if (dock) {
-      const locations = PARK_LOCATIONS[currentParkId] || [];
+      const park = getCurrentPark();
+      const locations = park.locations || [];
 
-      if (currentParkId !== 'wdw') {
-        // Clear the hardcoded WDW buttons and populate with park-specific locations
-        dock.innerHTML = '';
+      // Clear and populate dock with park-specific locations from config
+      dock.innerHTML = '';
 
-        locations.forEach((loc) => {
-          const btn = document.createElement('button');
-          btn.dataset.coords = loc.coords.join(',');
-          btn.dataset.width = String(loc.width);
-          if (loc.rotation !== undefined) {
-            btn.dataset.rotation = String(loc.rotation);
-          }
-          btn.title = loc.alt; // Tooltip on hover
+      locations.forEach((loc) => {
+        const btn = document.createElement('button');
+        btn.dataset.coords = loc.coords.join(',');
+        btn.dataset.width = String(loc.width);
+        if (loc.rotation !== undefined) {
+          btn.dataset.rotation = String(loc.rotation);
+        }
+        btn.title = loc.alt;
 
-          const img = document.createElement('img');
-          img.src = loc.icon;
-          img.alt = loc.alt;
-          // Fallback to a generic marker if park-specific icon doesn't exist
-          img.onerror = function() { this.src = 'icons/locations/marker.svg'; };
+        const img = document.createElement('img');
+        img.src = loc.icon;
+        img.alt = loc.alt;
+        img.onerror = function() { this.src = 'icons/locations/marker.svg'; };
 
-          btn.appendChild(img);
-          dock.appendChild(btn);
-        });
-      }
+        btn.appendChild(img);
+        dock.appendChild(btn);
+      });
 
-      // Attach click handlers to all dock buttons (WDW has them in HTML, others are dynamic)
+      // Attach click handlers to all dock buttons
       dock.querySelectorAll('button').forEach((btn) => {
         btn.addEventListener('click', () => {
           const [lonStr, latStr] = (btn.dataset.coords || '').split(',');
@@ -824,18 +779,19 @@
             const extentLonLat = [lon - halfW, lat - halfW, lon + halfW, lat + halfW];
             const extent3857 = ol.proj.transformExtent(extentLonLat, 'EPSG:4326', 'EPSG:3857');
 
+            // Calculate zoom level to fit extent
+            const view = map.getView();
+            const size = map.getSize();
+            const resolution = view.getResolutionForExtent(extent3857, size);
+            const targetZoom = view.getZoomForResolution(resolution);
+            const target = ol.proj.fromLonLat([lon, lat]);
+
+            // Animate all properties at once (center, zoom, rotation)
+            const animateOpts = { center: target, zoom: targetZoom, duration: 600 };
             if (hasRotation) {
-              // For rotated views: animate rotation first, then fit extent
-              const targetRotation = rotationDeg * (Math.PI / 180);
-              map.getView().animate(
-                { rotation: targetRotation, duration: 300 },
-                function() {
-                  map.getView().fit(extent3857, { duration: 300 });
-                }
-              );
-            } else {
-              map.getView().fit(extent3857, { duration: 600 });
+              animateOpts.rotation = rotationDeg * (Math.PI / 180);
             }
+            view.animate(animateOpts);
           } else {
             // Fallback to legacy zoom-based approach
             const target = ol.proj.fromLonLat([lon, lat]);
@@ -1820,34 +1776,31 @@
     if (checkBtn) checkBtn.disabled = true;
 
     try {
-      const res = await fetch(VERSION_CHECK_WORKER);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // Fetch live versions and all park server lists in parallel
+      const [liveRes, ...serverResults] = await Promise.all([
+        fetch(VERSION_CHECK_WORKER),
+        ...VERSION_CHECK_PARKS.map(parkId =>
+          fetch(`parks/${parkId}/${parkId}_dis_servers.json`)
+            .then(r => r.ok ? r.json() : [])
+            .catch(() => [])
+        )
+      ]);
 
-      const data = await res.json();
+      if (!liveRes.ok) throw new Error(`HTTP ${liveRes.status}`);
+      const liveData = await liveRes.json();
+
       let html = '';
-
-      for (const parkId of VERSION_CHECK_PARKS) {
-        const parkData = data[parkId];
-        const liveVersion = parkData?.version;
+      VERSION_CHECK_PARKS.forEach((parkId, i) => {
+        const liveVersion = liveData[parkId]?.version;
 
         if (!liveVersion) {
           html += `<div class="park-version">${parkId.toUpperCase()}: <span style="color:#888">unavailable</span></div>`;
-          continue;
+          return;
         }
 
-        // Get latest known server code for this park
-        const parkServersUrl = `parks/${parkId}/${parkId}_dis_servers.json`;
-        let latestKnown = null;
-        try {
-          const serversRes = await fetch(parkServersUrl);
-          if (serversRes.ok) {
-            const servers = await serversRes.json();
-            const activeServers = servers.filter(s => s.active === 1);
-            if (activeServers.length > 0) {
-              latestKnown = activeServers[activeServers.length - 1].code;
-            }
-          }
-        } catch {}
+        const servers = serverResults[i];
+        const activeServers = Array.isArray(servers) ? servers.filter(s => s.active === 1) : [];
+        const latestKnown = activeServers.length > 0 ? activeServers[activeServers.length - 1].code : null;
 
         const liveStr = String(liveVersion);
         const knownStr = latestKnown ? String(latestKnown) : '?';
@@ -1857,7 +1810,7 @@
         } else {
           html += `<div class="park-version">${parkId.toUpperCase()}: <span class="new-version">NEW ${liveStr}</span> (known: ${knownStr})</div>`;
         }
-      }
+      });
 
       versionCheck.className = '';
       versionStatus.innerHTML = html;
