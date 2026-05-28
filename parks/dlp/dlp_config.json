@@ -2,6 +2,11 @@
   "parkId": "dlp",
   "name": "Disneyland Paris",
   "tileTemplate": "https://media.disneylandparis.com/mapTiles/images/{z}/{x}/{y}.jpg",
+  "locations": [
+    { "coords": [2.775880, 48.872100], "width": 0.008, "icon": "icons/locations/dlp/disneyland_park_paris.svg", "alt": "Disneyland Park" },
+    { "coords": [2.780500, 48.867200], "width": 0.008, "icon": "icons/locations/dlp/disney_studios_paris.svg", "alt": "Walt Disney Studios" },
+    { "coords": [2.785800, 48.869800], "width": 0.005, "icon": "icons/locations/marker.svg", "alt": "Disney Village" }
+  ],
   "minZoom": 13,
   "maxZoom": 19,
   "yScheme": "xyz",

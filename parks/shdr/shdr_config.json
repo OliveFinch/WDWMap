@@ -2,6 +2,14 @@
   "parkId": "shdr",
   "name": "Shanghai Disney Resort",
   "tileTemplate": "https://secure.cdn1.wdpromedia.com/media/maps/prod/shdr-baidu-mob-en/{code}/{z}/{x}/{y}.jpg",
+  "locations": [
+    { "coords": [-107.344478, -83.052295], "width": 0.002, "icon": "icons/locations/shdr/shdr-castle.svg", "alt": "Disneyland Park" },
+    { "coords": [-107.338827, -83.052508], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Wishing Star Park" },
+    { "coords": [-107.340660, -83.052978], "width": 0.0015, "icon": "icons/locations/marker.svg", "alt": "Shanghai Disneyland Hotel" },
+    { "coords": [-107.348179, -83.052638], "width": 0.0015, "icon": "icons/locations/marker.svg", "alt": "Toy Story Hotel" },
+    { "coords": [-107.343507, -83.052561], "width": 0.0012, "icon": "icons/locations/marker.svg", "alt": "Disneytown" },
+    { "coords": [-107.339308, -83.053227], "width": 0.001, "icon": "icons/locations/marker.svg", "alt": "Visitor Center & Parking" }
+  ],
   "minZoom": 14,
   "maxZoom": 21,
   "yScheme": "tms",
