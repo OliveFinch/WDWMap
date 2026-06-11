@@ -395,18 +395,6 @@ body.locbrowser-open #loc-pill {
   white-space: nowrap;
 }
 
-#date-pill .date-pill-chevron {
-  width: 12px;
-  height: 12px;
-  flex: 0 0 auto;
-  color: #8e8e93;
-  transition: transform 0.2s ease;
-}
-
-body.datebrowser-open #date-pill .date-pill-chevron {
-  transform: rotate(180deg);
-}
-
 /* Hide pill while panel is open */
 body.datebrowser-open #date-pill {
   opacity: 0;
