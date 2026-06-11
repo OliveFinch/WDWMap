@@ -406,40 +406,43 @@
     setKbdFocus(items[next]);
   }
 
+  // Mode-agnostic helpers: items are { key, label } where key is a Disney
+  // map code or a satellite esri_id, depending on the active view.
+  function getNavList() {
+    return WDWMX.getNavList ? WDWMX.getNavList() : [];
+  }
+
+  function labelForKey(key) {
+    const item = getNavList().find((o) => o.key === key);
+    return item ? item.label : '';
+  }
+
   function buildDateList() {
     dateListEl.innerHTML = '';
+    currentDateBtn = null;
 
-    const servers = WDWMX.getServers ? WDWMX.getServers() : [];
-    const currentCode = WDWMX.getCurrentCode ? WDWMX.getCurrentCode() : null;
+    const navList = getNavList();
+    const currentKey = WDWMX.getNavKey ? WDWMX.getNavKey('current') : null;
 
     // Reverse so newest is at the top
-    const reversed = servers.slice().reverse();
+    const reversed = navList.slice().reverse();
 
-    reversed.forEach((server) => {
+    reversed.forEach((item) => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'dateitem';
-      btn.dataset.code = server.code;
-      btn.textContent = server.label || server.code;
+      btn.dataset.code = item.key;
+      btn.textContent = item.label || item.key;
 
-      if (server.code === currentCode) {
+      if (item.key === currentKey) {
         btn.classList.add('current');
         currentDateBtn = btn;
-        datePillLabel.textContent = server.label || server.code;
       }
 
       btn.addEventListener('click', () => {
-        if (WDWMX.setSingleDate) {
-          WDWMX.setSingleDate(server.code);
-        }
-        datePillLabel.textContent = server.label || server.code;
-
-        // Update current styling
-        if (currentDateBtn) currentDateBtn.classList.remove('current');
-        btn.classList.add('current');
-        currentDateBtn = btn;
-
+        if (WDWMX.setSingleNav) WDWMX.setSingleNav(item.key);
         closeDateBrowser();
+        setTimeout(syncFromCore, 80);
       });
 
       dateListEl.appendChild(btn);
@@ -448,49 +451,40 @@
 
   function buildDateListForCompare(side) {
     dateListEl.innerHTML = '';
+    currentDateBtn = null;
 
-    const servers = WDWMX.getServers ? WDWMX.getServers() : [];
-    const leftCode = WDWMX.getLeftCode ? WDWMX.getLeftCode() : null;
-    const rightCode = WDWMX.getRightCode ? WDWMX.getRightCode() : null;
+    const navList = getNavList();
+    const leftKey = WDWMX.getNavKey ? WDWMX.getNavKey('left') : null;
+    const rightKey = WDWMX.getNavKey ? WDWMX.getNavKey('right') : null;
+
+    const leftIdx = navList.findIndex((o) => o.key === leftKey);
+    const rightIdx = navList.findIndex((o) => o.key === rightKey);
 
     // Reverse so newest is at the top
-    const reversed = servers.slice().reverse();
+    const reversed = navList.slice().reverse();
 
-    // For left (older) side, only show dates older than right date
-    // For right (newer) side, only show dates newer than left date
-    const rightIdx = servers.findIndex(s => s.code === rightCode);
-    const leftIdx = servers.findIndex(s => s.code === leftCode);
+    reversed.forEach((item, revIdx) => {
+      const itemIdx = navList.length - 1 - revIdx;
 
-    reversed.forEach((server) => {
-      const serverIdx = servers.findIndex(s => s.code === server.code);
-
-      // Filter: left must be older (lower index) than right
-      // right must be newer (higher index) than left
-      if (side === 'left' && serverIdx >= rightIdx && rightIdx >= 0) return;
-      if (side === 'right' && serverIdx <= leftIdx && leftIdx >= 0) return;
+      // Filter: left must stay older (lower index) than right, and vice versa
+      if (side === 'left' && rightIdx >= 0 && itemIdx >= rightIdx) return;
+      if (side === 'right' && leftIdx >= 0 && itemIdx <= leftIdx) return;
 
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'dateitem';
-      btn.dataset.code = server.code;
-      btn.textContent = server.label || server.code;
+      btn.dataset.code = item.key;
+      btn.textContent = item.label || item.key;
 
-      // Highlight current selection for this side
-      const isCurrentSelection = (side === 'left' && server.code === leftCode) ||
-                                  (side === 'right' && server.code === rightCode);
+      const isCurrentSelection = (side === 'left' && item.key === leftKey) ||
+                                 (side === 'right' && item.key === rightKey);
       if (isCurrentSelection) {
         btn.classList.add('current');
         currentDateBtn = btn;
       }
 
       btn.addEventListener('click', () => {
-        // Use the exposed API to set compare dates
-        if (side === 'left' && WDWMX.setCompareLeftDate) {
-          WDWMX.setCompareLeftDate(server.code);
-        } else if (side === 'right' && WDWMX.setCompareRightDate) {
-          WDWMX.setCompareRightDate(server.code);
-        }
-
+        if (WDWMX.setCompareNav) WDWMX.setCompareNav(side, item.key);
         closeDateBrowser();
         setTimeout(syncFromCore, 80);
       });
@@ -501,28 +495,24 @@
 
   // Keep the pill in sync with the app's date state
   function syncFromCore() {
-    const currentCode = WDWMX.getCurrentCode ? WDWMX.getCurrentCode() : null;
-    const leftCode = WDWMX.getLeftCode ? WDWMX.getLeftCode() : null;
-    const rightCode = WDWMX.getRightCode ? WDWMX.getRightCode() : null;
-    const getLabelForCode = WDWMX.getLabelForCode || ((c) => c);
     const compareMode = WDWMX.getCompareMode ? WDWMX.getCompareMode() : false;
 
     // Toggle compare mode class on the pill
     datePillEl.classList.toggle('compare-mode', compareMode);
 
     if (compareMode) {
-      // Sync left/right labels from the API
-      datePillLeftLabel.textContent = leftCode ? (getLabelForCode(leftCode) || leftCode) : 'Older';
-      datePillRightLabel.textContent = rightCode ? (getLabelForCode(rightCode) || rightCode) : 'Newer';
+      const leftKey = WDWMX.getNavKey ? WDWMX.getNavKey('left') : null;
+      const rightKey = WDWMX.getNavKey ? WDWMX.getNavKey('right') : null;
+      datePillLeftLabel.textContent = (leftKey && labelForKey(leftKey)) || 'Older';
+      datePillRightLabel.textContent = (rightKey && labelForKey(rightKey)) || 'Newer';
     } else {
-      // Single date mode
-      if (currentCode) {
-        datePillLabel.textContent = getLabelForCode(currentCode) || currentCode;
-      }
+      const currentKey = WDWMX.getNavKey ? WDWMX.getNavKey('current') : null;
+      const label = currentKey && labelForKey(currentKey);
+      if (label) datePillLabel.textContent = label;
 
       // Update highlighted item in the list
       if (currentDateBtn) currentDateBtn.classList.remove('current');
-      currentDateBtn = dateListEl.querySelector(`.dateitem[data-code="${currentCode}"]`);
+      currentDateBtn = dateListEl.querySelector(`.dateitem[data-code="${currentKey}"]`);
       if (currentDateBtn) currentDateBtn.classList.add('current');
 
       // Mirror the disabled state of core's hidden nav arrows
