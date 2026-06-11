@@ -329,6 +329,8 @@
   const datePillLeftLabel = document.getElementById('date-pill-left-label');
   const datePillRight = document.getElementById('date-pill-right');
   const datePillRightLabel = document.getElementById('date-pill-right-label');
+  const datePillCmpPrev = document.getElementById('date-pill-cmp-prev');
+  const datePillCmpNext = document.getElementById('date-pill-cmp-next');
   const dateBrowserEl = document.getElementById('datebrowser');
   const dateBackdropEl = document.getElementById('datebrowser-backdrop');
   const dateCloseBtn = document.getElementById('datebrowser-close');
@@ -505,6 +507,12 @@
       const rightKey = WDWMX.getNavKey ? WDWMX.getNavKey('right') : null;
       datePillLeftLabel.textContent = (leftKey && labelForKey(leftKey)) || 'Older';
       datePillRightLabel.textContent = (rightKey && labelForKey(rightKey)) || 'Newer';
+
+      // Mirror disabled state for compare mode arrows
+      const corePrev = document.getElementById('date-prev-btn');
+      const coreNext = document.getElementById('date-next-btn');
+      if (corePrev && datePillCmpPrev) datePillCmpPrev.classList.toggle('disabled', corePrev.classList.contains('disabled'));
+      if (coreNext && datePillCmpNext) datePillCmpNext.classList.toggle('disabled', coreNext.classList.contains('disabled'));
     } else {
       const currentKey = WDWMX.getNavKey ? WDWMX.getNavKey('current') : null;
       const label = currentKey && labelForKey(currentKey);
@@ -550,6 +558,22 @@
     if (isOpen && pickingSide === 'right') closeDateBrowser();
     else openDateBrowser('right');
   });
+
+  // Compare mode arrows — proxy to core.js nav buttons (shifts both dates together)
+  if (datePillCmpPrev) {
+    datePillCmpPrev.addEventListener('click', () => {
+      const coreBtn = document.getElementById('date-prev-btn');
+      if (coreBtn) coreBtn.click();
+      setTimeout(syncFromCore, 50);
+    });
+  }
+  if (datePillCmpNext) {
+    datePillCmpNext.addEventListener('click', () => {
+      const coreBtn = document.getElementById('date-next-btn');
+      if (coreBtn) coreBtn.click();
+      setTimeout(syncFromCore, 50);
+    });
+  }
 
   dateCloseBtn.addEventListener('click', closeDateBrowser);
   dateBackdropEl.addEventListener('click', closeDateBrowser);
