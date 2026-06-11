@@ -1,0 +1,1121 @@
+/* =========================================================
+   Base layout
+   ========================================================= */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overscroll-behavior: none;
+  overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+#map {
+  width: 100vw;
+  height: 100vh;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+/* =========================================================
+   Buttons / controls
+   ========================================================= */
+.ol-control-inner, .btn-square {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255,255,255,0.85);
+  border: 1.5px solid #ccc;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #222;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s;
+  user-select: none;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ol-control-inner img, .btn-square img {
+  width: 24px;
+  height: 24px;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+.ol-control-inner:active, .ol-control-inner:focus, .ol-control-inner:hover,
+.btn-square:active, .btn-square:focus, .btn-square:hover {
+  background: #f8f8f8;
+  border-color: #999;
+}
+
+.btn-square[disabled] {
+  opacity: .45;
+  cursor: default;
+}
+
+/* Active-state styling for toggle buttons (compare / highlight / settings) */
+.btn-square.active-btn {
+  background: rgba(55, 97, 196, 0.15);
+  border-color: #3761c4;
+}
+.btn-square.active-btn img {
+  filter: brightness(0) saturate(100%) invert(27%) sepia(72%) saturate(3440%)
+          hue-rotate(210deg) brightness(92%) contrast(91%);
+}
+
+/* =========================================================
+   Control groups positioning
+   ========================================================= */
+.group-top-right {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1100;
+  align-items: flex-end;
+}
+
+.group-top-left {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1100;
+}
+
+.group-bottom-right {
+  position: absolute;
+  right: 8px;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1100;
+}
+
+.zoom-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* (date-row removed – date navigation is now in the top-center bar) */
+
+/* =========================================================
+   Date popups
+   ========================================================= */
+#date-popup, #left-date-popup {
+  display: none;
+  opacity: 0;
+  position: fixed;
+  min-width: 180px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: rgba(255,255,255,0.96);
+  border: 1.5px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 3px 15px #0002;
+  z-index: 1400;
+  font-family: Arial, Helvetica, sans-serif;
+  transition: opacity .18s ease;
+}
+
+.date-popup-item {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  font-size: 15px;
+  text-align: left;
+  padding: 9px 16px;
+  cursor: pointer;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.date-popup-item.selected {
+  background: #f2f5fa;
+  color: #3761c4;
+  font-weight: bold;
+}
+
+.date-popup-item:active, .date-popup-item:hover {
+  background: #f8f8f8;
+}
+
+/* =========================================================
+   Date display + messages
+   ========================================================= */
+/* Date navigation row (arrows + label) */
+#date-nav-row {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  /* Fixed width so arrows stay in place regardless of date text length.
+     Desktop: 15 chars * ~13px ≈ 195px + 2 arrows (30px each) + gaps = ~300px */
+  width: 300px;
+}
+
+#current-date-display {
+  flex: 1;
+  text-align: center;
+  background: none;
+  color: #fff;
+  font-size: 22px;
+  font-weight: bold;
+  text-shadow: 0 3px 16px #222, 0 1px 0 #222;
+  pointer-events: auto;
+  cursor: pointer;
+  opacity: 0.97;
+  padding: 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#current-date-display:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+/* Single mode: show single-date-label, hide compare elements */
+#single-date-label { display: inline; }
+#left-date-label, #vs-label, #right-date-label { display: none; }
+
+/* Compare mode: hide single, show compare elements */
+#current-date-display.compare-mode #single-date-label { display: none; }
+#current-date-display.compare-mode #left-date-label,
+#current-date-display.compare-mode #vs-label,
+#current-date-display.compare-mode #right-date-label { display: inline; }
+
+#left-date-label, #right-date-label {
+  cursor: pointer;
+}
+
+#left-date-label:hover, #right-date-label:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+#vs-label {
+  opacity: 0.7;
+  font-size: 0.85em;
+  margin: 0 8px;
+}
+
+/* Compare mode needs wider container */
+#date-nav-row.compare-mode {
+  width: 380px;
+}
+
+.date-nav-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.85);
+  color: #222;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 1px 6px #0003;
+  transition: background 0.15s, box-shadow 0.15s, opacity 0.2s;
+  padding: 0;
+  flex-shrink: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.date-nav-arrow.disabled {
+  opacity: 0.25;
+  cursor: default;
+  pointer-events: none;
+}
+
+.date-nav-arrow:hover:not(.disabled) {
+  background: #fff;
+  box-shadow: 0 2px 10px #0004;
+}
+
+.date-nav-arrow:active:not(.disabled) {
+  background: #e8e8e8;
+}
+
+#findme-message,
+#toast-message {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2000;
+  background: rgba(40,40,40,0.92);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: center;
+  opacity: 0;
+  padding: 12px 24px;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+/* These start hidden; core.js will show when applicable */
+#compare-btn, #highlight-btn, #settings-btn {
+  display: none;
+}
+
+/* =========================================================
+   Swipe compare UI
+   ========================================================= */
+#swipe-thumb {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: #e24141cc;
+  z-index: 1300;
+  cursor: ew-resize;
+  border-radius: 3px;
+  box-shadow: 0 2px 12px #3336;
+  pointer-events: auto;
+  display: none;
+}
+
+#swipe-handle {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  background: #fff;
+  border: 4px solid #e24141cc;
+  border-radius: 50%;
+  box-shadow: 0 2px 12px #2225;
+  z-index: 1400;
+  cursor: grab;
+  touch-action: none;
+  display: none;
+  transition: background 0.1s, border 0.1s;
+}
+
+#swipe-handle:active {
+  background: #ffeaea;
+  border-color: #e24141;
+}
+
+/* =========================================================
+   Sensitivity panel
+   ========================================================= */
+#sensitivity-row {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(18px + env(safe-area-inset-bottom, 0));
+  display: none;
+  background: rgba(255,255,255,0.96);
+  padding: 10px 14px;
+  border: 1.5px solid #ccc;
+  border-radius: 10px;
+  z-index: 1600;
+  box-shadow: 0 4px 16px #0002;
+  touch-action: manipulation;
+}
+
+#sensitivity-row label {
+  font-size: 13px;
+  color: #555;
+  display: block;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+#sensitivity-slider {
+  width: 200px;
+}
+
+/* =========================================================
+   Location Dock
+   ========================================================= */
+#location-dock {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(16px + env(safe-area-inset-bottom, 0));
+  display: flex;
+  gap: 14px;
+  background: rgba(255,255,255,0.9);
+  padding: 8px 14px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #0003;
+  z-index: 1200;
+  touch-action: manipulation;
+}
+
+#location-dock button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+#location-dock img {
+  width: 36px;
+  height: 36px;
+  display: block;
+}
+
+/* =========================================================
+   Info icon + overlay
+   ========================================================= */
+#info-icon {
+  position: fixed;
+  left: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0));
+  width: 32px;
+  height: 32px;
+  z-index: 1500;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+#info-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  display: none;
+  z-index: 2000;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+#info-overlay .panel {
+  max-width: 720px;
+  margin: 40px auto;
+  background: #23287b;
+  padding: 18px 18px 12px;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px #0009;
+}
+
+#info-overlay .panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+#info-overlay h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+#info-close {
+  appearance: none;
+  border: none;
+  background: #fff;
+  color: #23287b;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+#info-overlay .panel section { line-height: 1.45; }
+#info-overlay .panel ul { margin: 8px 0 0 18px; }
+#info-overlay a { color: #fff; text-decoration: underline; }
+#info-overlay a:hover { color: #ffd700; }
+
+/* =========================================================
+   Recent changes + Report a change (board + modal)
+   Hidden by default (CRITICAL)
+   ========================================================= */
+#changes-overlay, #report-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: none; /* IMPORTANT */
+  z-index: 2200;
+}
+
+#changes-board {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: min(360px, 92vw);
+  max-width:  92vw;
+  background: rgba(255,255,255,0.98);
+  border-left: 1.5px solid #ccc;
+  box-shadow: -6px 0 24px #0002;
+  z-index: 2300;
+  display: none; /* IMPORTANT */
+  overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+#changes-board header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 12px;
+  border-bottom: 1px solid #e5e5e5;
+  background: #fff;
+}
+
+#changes-board header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #222;
+}
+
+#changes-close {
+  appearance: none;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #222;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+#changes-board .meta {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #555;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+}
+
+#changes-list {
+  height: calc(100vh - 112px);
+  overflow-y: auto;
+  padding: 8px 8px 12px;
+}
+
+.change-item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #e6e6e6;
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px 10px;
+  cursor: pointer;
+  margin: 8px 0;
+  box-shadow: 0 1px 8px #0001;
+}
+
+.change-item:hover { background: #fafafa; }
+
+/* Highlight changes for the currently selected map version */
+.change-item.change-item-active {
+  border-color: #3761c4;
+  box-shadow: 0 2px 12px rgba(55, 97, 196, 0.18);
+}
+.change-item.change-item-active .change-title {
+  color: #3761c4;
+}
+
+.change-title {
+  font-size: 14px;
+  color: #111;
+  margin: 0 0 4px 0;
+}
+
+.change-sub {
+  font-size: 12px;
+  color: #666;
+  margin: 0;
+  line-height: 1.35;
+}
+
+#report-modal {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: fit-content;
+  max-width: 92vw;
+  max-height: 86vh;
+  overflow: auto;
+  background: #fff;
+  border: 1.5px solid #ccc;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px #0003;
+  z-index: 2301;
+  display: none; /* IMPORTANT */
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+#report-modal header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+#report-modal header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #222;
+}
+
+#report-close {
+  appearance: none;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #222;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+#report-modal .body { padding: 12px; }
+
+.form-row { margin-bottom: 10px; }
+.form-row label {
+  display: block;
+  font-size: 13px;
+  color: #444;
+  margin-bottom: 6px;
+}
+
+.form-row input, .form-row select, .form-row textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 10px 10px;
+  font-size: 14px;
+  font-family: Arial, Helvetica, sans-serif;
+  outline: none;
+}
+
+.form-row textarea { min-height: 110px; resize: vertical; }
+
+.hint {
+  font-size: 12px;
+  color: #666;
+  margin-top: 6px;
+  line-height: 1.35;
+}
+
+#report-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 12px;
+  border-top: 1px solid #eee;
+  background: #fff;
+}
+
+.btn-primary {
+  appearance: none;
+  border: 1px solid #3761c4;
+  background: #3761c4;
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-secondary {
+  appearance: none;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #222;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#report-status {
+  padding: 0 12px 12px;
+  font-size: 13px;
+  color: #444;
+  display: none;
+}
+
+/* =========================================================
+   Mobile tweaks
+   ========================================================= */
+@media (max-width: 600px) {
+  .group-top-right { right: 8px; top: 8px; gap: 6px; }
+  .group-bottom-right { right: 8px; bottom: calc(8px + env(safe-area-inset-bottom, 0)); gap: 6px; }
+  .group-top-left { left: 8px; top: 8px; gap: 6px; }
+
+  .ol-control-inner, .btn-square {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+
+  .ol-control-inner img, .btn-square img {
+    width: 18px;
+    height: 18px;
+  }
+
+  #date-nav-row {
+    top: 10px;
+    /* Mobile: 8 chars * ~10px ≈ 80px + 2 arrows (26px each) + gaps = ~180px */
+    width: 180px;
+    gap: 6px;
+  }
+
+  /* Compare mode on mobile: wider with doubled arrow spacing */
+  #date-nav-row.compare-mode {
+    width: 280px;
+    gap: 12px;
+  }
+
+  #current-date-display {
+    font-size: 16px;
+    padding: 0 2px;
+    /* Truncate to ~8 chars on mobile */
+    max-width: 80px;
+  }
+
+  #current-date-display.compare-mode {
+    max-width: none;
+  }
+
+  #current-date-display.compare-mode #vs-label {
+    margin: 0 4px;
+    font-size: 0.8em;
+  }
+
+  .date-nav-arrow {
+    width: 26px;
+    height: 26px;
+  }
+
+  .date-nav-arrow svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  #sensitivity-slider { width: 160px; }
+  #location-dock img { width: 28px; height: 28px; }
+  #info-icon { width: 28px; height: 28px; }
+}
+
+
+/* =========================================================
+   Recent changes: report callout
+   ========================================================= */
+.changes-cta {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.changes-cta-text {
+  font-size: 13px;
+  color: #444;
+  line-height: 1.25;
+}
+
+.changes-cta-btn {
+  appearance: none;
+  border: 1px solid #cfcfcf;
+  background: #fff;
+  color: #222;
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.changes-cta-btn:hover {
+  background: #f6f6f6;
+}
+
+/* =========================================================
+   Park picker (globe)
+   ========================================================= */
+#parks-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 2350;
+  display: none;
+}
+
+#parks-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: fit-content;
+  max-width: 92vw;
+  max-height: min(520px, 80vh);
+  background: rgba(255,255,255,0.98);
+  border: 1px solid #d6d6d6;
+  border-radius: 14px;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.25);
+  z-index: 2400;
+  display: none;
+  overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+#parks-modal header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 12px;
+  border-bottom: 1px solid #e5e5e5;
+  background: #fff;
+}
+
+#parks-modal header h3 {
+  margin: 0; text-align: center; width: 100%;
+  font-size: 16px;
+  color: #222;
+}
+
+#parks-close {
+  appearance: none;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #222;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+#parks-modal .body {
+  padding: 12px;
+  overflow-y: auto;
+  max-height: calc(80vh - 52px);
+}
+
+.parks-list {
+  display: grid;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.park-pick-btn {
+  width: fit-content; justify-self: center;
+  text-align: center;
+  appearance: none;
+  border: 1px solid #d6d6d6;
+  background: #fff;
+  color: #222;
+  border-radius: 12px;
+  padding: 12px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.park-pick-btn.is-current {
+  border-color: #23287b;
+  background: rgba(35, 40, 123, 0.08);
+}
+
+.park-pick-btn.is-current:hover {
+  background: rgba(35, 40, 123, 0.12);
+}
+
+
+.park-pick-btn:hover {
+  background: #f7f7f7;
+}
+
+
+/* Make Recent changes layout resilient when adding callouts */
+#changes-board { flex-direction: column; }
+#changes-list { flex: 1; height: auto; }
+
+
+/* Disabled park option (e.g., Tokyo Disneyland) */
+.park-pick-btn.is-disabled {
+  opacity: 0.45;
+  filter: grayscale(1);
+  cursor: not-allowed;
+  pointer-events: none; /* blocks taps/clicks */
+}
+
+
+/* =========================================================
+   Service Mode (developer/debug overlay)
+   ========================================================= */
+#service-mode-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 3000;
+  font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+}
+
+/* Crosshair for precise centering */
+#service-mode-crosshair {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+#crosshair-h {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 0, 0, 0.7);
+  box-shadow: 0 0 2px #000;
+}
+
+#crosshair-v {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 0, 0, 0.7);
+  box-shadow: 0 0 2px #000;
+}
+
+#crosshair-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  margin-top: -6px;
+  border: 2px solid rgba(255, 0, 0, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 0 3px #000;
+}
+
+#service-mode-label {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(180, 0, 0, 0.9);
+  color: #fff;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 6px 16px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+#service-mode-info {
+  position: absolute;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(180, 0, 0, 0.9);
+  color: #fff;
+  font-size: 14px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  line-height: 1.4;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  text-align: center;
+  white-space: pre-line;
+}
+
+#service-mode-center {
+  font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+#service-mode-hint {
+  margin-top: 8px;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+#service-mode-close {
+  position: absolute;
+  top: 60px;
+  right: 12px;
+  pointer-events: auto;
+  appearance: none;
+  background: rgba(180, 0, 0, 0.9);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+#service-mode-close:hover {
+  background: rgba(200, 0, 0, 1);
+}
+
+/* Service Mode Server Info */
+#service-mode-server {
+  position: absolute;
+  top: 80px;
+  left: 12px;
+  pointer-events: auto;
+  background: rgba(0, 60, 120, 0.92);
+  color: #fff;
+  font-size: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+}
+
+#service-mode-server-info {
+  margin-bottom: 8px;
+  font-family: monospace;
+}
+
+#service-mode-current-server {
+  font-weight: bold;
+  color: #8cf;
+}
+
+#service-mode-custom {
+  display: flex;
+  gap: 6px;
+}
+
+#service-mode-custom-input {
+  width: 120px;
+  padding: 4px 8px;
+  border: 1px solid #68a;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 12px;
+  background: rgba(255,255,255,0.9);
+}
+
+#service-mode-load-custom {
+  padding: 4px 10px;
+  background: #fff;
+  color: #036;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#service-mode-load-custom:hover {
+  background: #cdf;
+}
+
+/* Service Mode Version Check */
+#service-mode-version-check {
+  position: absolute;
+  top: 170px;
+  left: 12px;
+  pointer-events: auto;
+  background: rgba(0, 60, 120, 0.92);
+  color: #fff;
+  font-size: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  max-width: 280px;
+}
+
+#service-mode-check-versions {
+  padding: 6px 12px;
+  background: #fff;
+  color: #036;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+}
+
+#service-mode-check-versions:hover {
+  background: #cdf;
+}
+
+#service-mode-version-check.checking #service-mode-check-versions {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+#service-mode-version-status {
+  font-family: monospace;
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+#service-mode-version-status:empty {
+  display: none;
+}
+
+#service-mode-version-status .park-version {
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+#service-mode-version-status .park-version:last-child {
+  border-bottom: none;
+}
+
+#service-mode-version-status .up-to-date {
+  color: #8f8;
+}
+
+#service-mode-version-status .new-version {
+  color: #fc6;
+}

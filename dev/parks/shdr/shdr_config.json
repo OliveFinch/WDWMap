@@ -1,0 +1,35 @@
+{
+  "parkId": "shdr",
+  "name": "Shanghai Disney Resort",
+  "tileTemplate": "https://secure.cdn1.wdpromedia.com/media/maps/prod/shdr-baidu-mob-en/{code}/{z}/{x}/{y}.jpg",
+  "supportsHistory": true,
+  "versionCheck": true,
+  "locations": [
+    { "coords": [-107.344478, -83.052295], "width": 0.002, "icon": "icons/locations/shdr/shdr-castle.svg", "alt": "Disneyland Park" },
+    { "coords": [-107.338827, -83.052508], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Wishing Star Park" },
+    { "coords": [-107.340660, -83.052978], "width": 0.0015, "icon": "icons/locations/marker.svg", "alt": "Shanghai Disneyland Hotel" },
+    { "coords": [-107.348179, -83.052638], "width": 0.0015, "icon": "icons/locations/marker.svg", "alt": "Toy Story Hotel" },
+    { "coords": [-107.343507, -83.052561], "width": 0.0012, "icon": "icons/locations/marker.svg", "alt": "Disneytown" },
+    { "coords": [-107.339308, -83.053227], "width": 0.001, "icon": "icons/locations/marker.svg", "alt": "Visitor Center & Parking" }
+  ],
+  "minZoom": 14,
+  "maxZoom": 21,
+  "yScheme": "tms",
+  "defaultCenter": [-107.344044, -83.052335],
+  "defaultZoom": 17.8,
+  "realCenter": [121.6580, 31.1433],
+  "boundsByZoom": {
+    "9": { "minX": 103, "maxX": 103, "minY": 27, "maxY": 27 },
+    "10": { "minX": 206, "maxX": 206, "minY": 55, "maxY": 55 },
+    "11": { "minX": 412, "maxX": 413, "minY": 110, "maxY": 111 },
+    "12": { "minX": 825, "maxX": 827, "minY": 220, "maxY": 222 },
+    "13": { "minX": 1651, "maxX": 1655, "minY": 441, "maxY": 444 },
+    "14": { "minX": 3302, "maxX": 3310, "minY": 882, "maxY": 889 },
+    "15": { "minX": 6609, "maxX": 6617, "minY": 1768, "maxY": 1776 },
+    "16": { "minX": 13218, "maxX": 13235, "minY": 3536, "maxY": 3553 },
+    "17": { "minX": 26447, "maxX": 26459, "minY": 7084, "maxY": 7095 },
+    "18": { "minX": 52895, "maxX": 52919, "minY": 14168, "maxY": 14191 },
+    "19": { "minX": 105791, "maxX": 105839, "minY": 28336, "maxY": 28383 },
+    "20": { "minX": 211583, "maxX": 211679, "minY": 56672, "maxY": 56767 }
+  }
+}
