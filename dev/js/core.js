@@ -2143,22 +2143,31 @@
     window.WDWMX.ol = ol;
     window.WDWMX.getMap = () => map;
     window.WDWMX.getCurrentCode = () => currentCode;
-    window.WDWMX.getLeftCode = () => leftCode;
     window.WDWMX.getRightCode = () => rightCode;
     window.WDWMX.getCompareMode = () => compareMode;
+    window.WDWMX.getShowingDisney = () => showingDisney;
     window.WDWMX.getLabelForCode = (code) => getLabelForCode(code);
     window.WDWMX.setSingleDate = (code) => setSingleDate(code);
-    window.WDWMX.setCompareLeftDate = (code) => {
-      if (!compareMode || !showingDisney) return;
-      leftCode = code;
-      saveLastLeftCode(code);
-      (highlightMode ? launchHighlightMode : launchSwipeMode)();
-      updateDateUI();
+    // Mode-agnostic nav bridge: works for Disney dates and satellite versions.
+    // Items are { key, label } where key is a Disney code or an esri_id.
+    window.WDWMX.getNavList = () =>
+      getNavOptions().map((o) => ({ key: showingDisney ? o.code : o.esri_id, label: o.label }));
+    window.WDWMX.getNavKey = (which) => getNavKey(which);
+    window.WDWMX.setSingleNav = (key) => {
+      if (showingDisney) setSingleDate(key);
+      else setSatelliteView(key);
     };
-    window.WDWMX.setCompareRightDate = (code) => {
-      if (!compareMode || !showingDisney) return;
-      rightCode = code;
-      (highlightMode ? launchHighlightMode : launchSwipeMode)();
+    window.WDWMX.setCompareNav = (side, key) => {
+      if (!compareMode) return;
+      if (showingDisney) {
+        if (side === 'left') { leftCode = key; saveLastLeftCode(key); }
+        else { rightCode = key; }
+        (highlightMode ? launchHighlightMode : launchSwipeMode)();
+      } else {
+        if (side === 'left') leftSatEsriId = key;
+        else rightSatEsriId = key;
+        launchSwipeMode();
+      }
       updateDateUI();
     };
     window.WDWMX.getServers = () => serverOptions;

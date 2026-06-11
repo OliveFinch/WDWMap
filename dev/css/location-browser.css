@@ -389,14 +389,6 @@ body.locbrowser-open #loc-pill {
   background: rgba(0, 0, 0, 0.05);
 }
 
-#date-pill-main > svg:first-child {
-  width: 15px;
-  height: 15px;
-  flex: 0 0 auto;
-  color: #6e6e73;
-  margin-left: -3px;
-}
-
 #date-pill-label {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -450,10 +442,9 @@ body.datebrowser-open #date-pill {
 #date-pill-left {
   appearance: none;
   align-items: center;
-  gap: 5px;
   border: none;
   background: transparent;
-  padding: 5px 10px 5px 6px;
+  padding: 5px 10px;
   border-radius: 999px;
   font-family: inherit;
   font-size: 13px;
@@ -468,18 +459,11 @@ body.datebrowser-open #date-pill {
   background: rgba(0, 0, 0, 0.06);
 }
 
-#date-pill-left svg {
-  width: 13px;
-  height: 13px;
-  flex: 0 0 auto;
-  color: #6e6e73;
-}
-
 #date-pill-left-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 85px;
+  max-width: 95px;
 }
 
 /* "vs" separator */
@@ -497,10 +481,9 @@ body.datebrowser-open #date-pill {
 #date-pill-right {
   appearance: none;
   align-items: center;
-  gap: 5px;
   border: none;
   background: transparent;
-  padding: 5px 6px 5px 10px;
+  padding: 5px 10px;
   border-radius: 999px;
   font-family: inherit;
   font-size: 13px;
@@ -515,18 +498,11 @@ body.datebrowser-open #date-pill {
   background: rgba(0, 0, 0, 0.06);
 }
 
-#date-pill-right svg {
-  width: 13px;
-  height: 13px;
-  flex: 0 0 auto;
-  color: #6e6e73;
-}
-
 #date-pill-right-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 85px;
+  max-width: 95px;
 }
 
 /* Also hide compare mode pill when browser is open */
