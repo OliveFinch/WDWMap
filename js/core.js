@@ -260,10 +260,20 @@
     jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
   };
 
-  // Parse a date label into a comparable timestamp.
+  // Parse a date label into a comparable timestamp (memoized - labels are
+  // parsed repeatedly during date navigation and satellite matching).
   // Handles formats: "20 Feb 2014", "Aug 2018", "Early Mar 2020", "Late Dec 2019", "Dec 2019 (Mid)"
+  const dateLabelCache = new Map();
   function parseDateLabel(label) {
     if (!label) return 0;
+    const cached = dateLabelCache.get(label);
+    if (cached !== undefined) return cached;
+    const t = parseDateLabelUncached(label);
+    dateLabelCache.set(label, t);
+    return t;
+  }
+
+  function parseDateLabelUncached(label) {
     const s = label.toLowerCase().replace(/[()]/g, '');
 
     // Try exact date: "20 Feb 2014" or "02 Nov 2018"
@@ -306,12 +316,12 @@
 
     // Find the latest satellite that's <= Disney date
     let best = null;
+    let bestTime = 0;
     for (const sat of satOptions) {
       const satTime = parseDateLabel(sat.label);
-      if (satTime && satTime <= disneyTime) {
-        if (!best || satTime > parseDateLabel(best.label)) {
-          best = sat;
-        }
+      if (satTime && satTime <= disneyTime && satTime > bestTime) {
+        best = sat;
+        bestTime = satTime;
       }
     }
 
@@ -525,27 +535,34 @@
   // =====================
   // Highlight layer
   // =====================
-  function rgb2lab(r, g, b) {
-    r /= 255; g /= 255; b /= 255;
-    r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
-    g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
-    b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
-
-    let x = r * 0.4124 + g * 0.3576 + b * 0.1805;
-    let y = r * 0.2126 + g * 0.7152 + b * 0.0722;
-    let z = r * 0.0193 + g * 0.1192 + b * 0.9505;
-
-    [x, y, z] = [x / 0.95047, y / 1.0, z / 1.08883];
-    x = x > 0.008856 ? Math.pow(x, 1 / 3) : (7.787 * x) + 16 / 116;
-    y = y > 0.008856 ? Math.pow(y, 1 / 3) : (7.787 * y) + 16 / 116;
-    z = z > 0.008856 ? Math.pow(z, 1 / 3) : (7.787 * z) + 16 / 116;
-    return [(116 * y) - 16, 500 * (x - y), 200 * (y - z)];
+  // Precomputed sRGB (0-255) -> linear lookup table, avoids Math.pow per channel
+  const SRGB_LINEAR = new Float32Array(256);
+  for (let i = 0; i < 256; i++) {
+    const c = i / 255;
+    SRGB_LINEAR[i] = c > 0.04045 ? Math.pow((c + 0.055) / 1.055, 2.4) : c / 12.92;
   }
 
-  function deltaE(a, b) {
-    const dL = a[0] - b[0];
-    const da = a[1] - b[1];
-    const db = a[2] - b[2];
+  function labF(t) {
+    return t > 0.008856 ? Math.cbrt(t) : (7.787 * t) + 16 / 116;
+  }
+
+  // Allocation-free CIE76 deltaE between two RGB pixels.
+  // Equivalent to converting both to Lab and taking the euclidean distance,
+  // but with no per-pixel array allocations (hot path: 65k pixels per tile).
+  function deltaERgb(r1, g1, b1, r2, g2, b2) {
+    let r = SRGB_LINEAR[r1], g = SRGB_LINEAR[g1], b = SRGB_LINEAR[b1];
+    const fx1 = labF((r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047);
+    const fy1 = labF(r * 0.2126 + g * 0.7152 + b * 0.0722);
+    const fz1 = labF((r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883);
+
+    r = SRGB_LINEAR[r2]; g = SRGB_LINEAR[g2]; b = SRGB_LINEAR[b2];
+    const fx2 = labF((r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047);
+    const fy2 = labF(r * 0.2126 + g * 0.7152 + b * 0.0722);
+    const fz2 = labF((r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883);
+
+    const dL = 116 * (fy1 - fy2);
+    const da = 500 * ((fx1 - fy1) - (fx2 - fy2));
+    const db = 200 * ((fy1 - fz1) - (fy2 - fz2));
     return Math.sqrt(dL * dL + da * da + db * db);
   }
 
@@ -621,10 +638,7 @@
                 const r1 = d1.data[i], g1 = d1.data[i + 1], b1 = d1.data[i + 2], a1 = d1.data[i + 3];
                 const r2 = d2.data[i], g2 = d2.data[i + 1], b2 = d2.data[i + 2];
 
-                const lab1 = rgb2lab(r1, g1, b1);
-                const lab2 = rgb2lab(r2, g2, b2);
-
-                if (deltaE(lab1, lab2) > threshold) {
+                if (deltaERgb(r1, g1, b1, r2, g2, b2) > threshold) {
                   out.data[i] = 255; out.data[i + 1] = 0; out.data[i + 2] = 0; out.data[i + 3] = 200;
                 } else {
                   const gray = 0.3 * r1 + 0.59 * g1 + 0.11 * b1;
@@ -732,7 +746,6 @@
     // Dock quick pan - populate based on current park
     const dock = document.getElementById('location-dock');
     if (dock) {
-      const park = getCurrentPark();
       const locations = park.locations || [];
 
       // Clear and populate dock with park-specific locations from config
@@ -929,8 +942,9 @@
     }
 
     let selectedBtn = null;
-    reversed.forEach((opt) => {
-      const optIdx = navOpts.indexOf(opt);
+    reversed.forEach((opt, i) => {
+      // reversed[i] is navOpts[length - 1 - i] - avoids O(n^2) indexOf
+      const optIdx = navOpts.length - 1 - i;
 
       // Apply constraint filter
       if (constraint === 'olderThan' && constraintIdx >= 0 && optIdx >= constraintIdx) {
@@ -983,12 +997,18 @@
   }
 
   function showPopup(popupEl) {
+    // Cancel a pending hide so it can't close the popup we're opening
+    if (popupEl._hideTimer) { clearTimeout(popupEl._hideTimer); popupEl._hideTimer = null; }
     popupEl.style.display = 'block';
     requestAnimationFrame(() => { popupEl.style.opacity = '1'; });
   }
   function hidePopup(popupEl) {
     popupEl.style.opacity = '0';
-    setTimeout(() => { popupEl.style.display = 'none'; }, 180);
+    if (popupEl._hideTimer) clearTimeout(popupEl._hideTimer);
+    popupEl._hideTimer = setTimeout(() => {
+      popupEl.style.display = 'none';
+      popupEl._hideTimer = null;
+    }, 180);
   }
 
   // =====================
