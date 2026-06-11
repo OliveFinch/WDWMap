@@ -1738,8 +1738,8 @@
   });
 
   // Info overlay
-  infoClose.addEventListener('click', () => { infoOverlay.style.display = 'none'; });
-  infoOverlay.addEventListener('click', (e) => { if (e.target === infoOverlay) infoOverlay.style.display = 'none'; });
+  infoClose.addEventListener('click', () => { infoOverlay.classList.remove('open'); });
+  infoOverlay.addEventListener('click', (e) => { if (e.target === infoOverlay) infoOverlay.classList.remove('open'); });
 
   // =====================
   // Service Mode (activated by clicking info icon 4 times in 1.5s)
@@ -2034,7 +2034,7 @@
 
   infoIcon.addEventListener('click', () => {
     if (!checkForServiceModeActivation()) {
-      infoOverlay.style.display = 'block';
+      infoOverlay.classList.add('open');
     }
   });
 
@@ -2046,8 +2046,8 @@
     if (e.key === 'Escape') {
       if (serviceMode) {
         disableServiceMode();
-      } else if (infoOverlay.style.display === 'block') {
-        infoOverlay.style.display = 'none';
+      } else if (infoOverlay.classList.contains('open')) {
+        infoOverlay.classList.remove('open');
       }
     }
   });
