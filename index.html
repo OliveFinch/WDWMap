@@ -13,6 +13,7 @@
 
   <!-- Your app CSS -->
   <link rel="stylesheet" href="./css/app.css">
+  <link rel="stylesheet" href="./css/location-browser.css">
 
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="icon-192.png">
@@ -125,6 +126,80 @@
   <!-- Populated from the park config's "locations" array (js/core.js) -->
   <div id="location-dock" aria-label="Quick location shortcuts"></div>
 
+  <!-- Date pill (replaces the date nav row) + Spotlight-style panel -->
+  <div id="date-pill">
+    <!-- Single-date mode elements -->
+    <button id="date-pill-prev" type="button" aria-label="Previous date">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="15,6 9,12 15,18"/>
+      </svg>
+    </button>
+    <button id="date-pill-main" type="button" aria-haspopup="dialog" title="Change date">
+      <span id="date-pill-label">Loading…</span>
+    </button>
+    <button id="date-pill-next" type="button" aria-label="Next date">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="9,6 15,12 9,18"/>
+      </svg>
+    </button>
+
+    <!-- Compare mode elements (hidden by default) -->
+    <button id="date-pill-cmp-prev" type="button" aria-label="Previous dates">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="15,6 9,12 15,18"/>
+      </svg>
+    </button>
+    <button id="date-pill-left" type="button" aria-haspopup="dialog" title="Change left date">
+      <span id="date-pill-left-label">Older</span>
+    </button>
+    <span id="date-pill-vs">vs</span>
+    <button id="date-pill-right" type="button" aria-haspopup="dialog" title="Change right date">
+      <span id="date-pill-right-label">Newer</span>
+    </button>
+    <button id="date-pill-cmp-next" type="button" aria-label="Next dates">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="9,6 15,12 9,18"/>
+      </svg>
+    </button>
+  </div>
+
+  <div id="datebrowser-backdrop"></div>
+  <div id="datebrowser" role="dialog" aria-label="Select date">
+    <div id="datebrowser-header">
+      <h3 id="datebrowser-title">Select Date</h3>
+      <button id="datebrowser-close" type="button" aria-label="Close">✕</button>
+    </div>
+    <div id="datebrowser-list"></div>
+  </div>
+
+  <!-- Location pill (replaces the dock) + Spotlight-style panel -->
+  <button id="loc-pill" type="button" aria-haspopup="dialog" title="Explore places">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/>
+    </svg>
+    <span id="loc-pill-label">Explore places</span>
+  </button>
+
+  <div id="locbrowser-backdrop"></div>
+  <div id="locbrowser" role="dialog" aria-label="Explore locations">
+    <div id="locbrowser-search-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/>
+      </svg>
+      <input id="locbrowser-search" type="search" placeholder="Search places…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <button id="locbrowser-close" type="button" aria-label="Close">✕</button>
+    </div>
+    <div id="locbrowser-list"></div>
+    <div id="locbrowser-empty">No places match your search</div>
+  </div>
+
   <!-- Info icon -->
   <img id="info-icon" src="icons/info.svg" alt="About & Disclaimers" title="About & Disclaimers">
 
@@ -133,7 +208,7 @@
     <div class="panel">
       <header>
         <h2 id="info-title">About Magic Parks Explorer</h2>
-        <button id="info-close" type="button" aria-label="Close">Close</button>
+        <button id="info-close" type="button" aria-label="Close">✕</button>
       </header>
       <section>
         <p>
@@ -214,7 +289,8 @@
   <div id="parks-modal" role="dialog" aria-modal="true" aria-label="Choose a park">
     <header>
       <h3>Choose a park</h3>
-</header>
+      <button id="parks-close" type="button" aria-label="Close">✕</button>
+    </header>
     <div class="body">
       <div id="parks-list" class="parks-list"></div>
     </div>
@@ -283,5 +359,6 @@
   <!-- Your JS: core first, then app -->
   <script src="./js/core.js" defer></script>
   <script src="./js/app.js" defer></script>
+  <script src="./js/location-browser.js" defer></script>
 </body>
 </html>

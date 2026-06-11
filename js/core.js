@@ -1377,25 +1377,40 @@
     compareMode = !compareMode;
 
     if (compareMode) {
-      // Always: right = current (newer), left = older date
       const navOpts = getNavOptions();
 
       if (showingDisney) {
-        rightCode = currentCode;
-        const remembered = loadLastViewedCode();
-        const currentNavIdx = findNavIndex(currentCode, navOpts);
-        const rememberedNavIdx = findNavIndex(remembered, navOpts);
-
-        if (isValidCode(remembered) && rememberedNavIdx >= 0 && rememberedNavIdx < currentNavIdx) {
-          leftCode = remembered;
+        // If user has viewed two different dates, use those (older on left, newer on right)
+        if (lastTwoDates[0] && lastTwoDates[1] && lastTwoDates[0] !== lastTwoDates[1]) {
+          const idx0 = findNavIndex(lastTwoDates[0], navOpts);
+          const idx1 = findNavIndex(lastTwoDates[1], navOpts);
+          if (idx0 >= 0 && idx1 >= 0) {
+            // Lower index = older, higher index = newer
+            if (idx0 < idx1) {
+              leftCode = lastTwoDates[0];
+              rightCode = lastTwoDates[1];
+            } else {
+              leftCode = lastTwoDates[1];
+              rightCode = lastTwoDates[0];
+            }
+          } else {
+            // Fallback if indices invalid
+            rightCode = currentCode;
+            const currentNavIdx = findNavIndex(currentCode, navOpts);
+            leftCode = currentNavIdx > 0 ? navOpts[currentNavIdx - 1].code : currentCode;
+          }
         } else {
+          // No history: use current as right, nearest older as left
+          rightCode = currentCode;
+          const currentNavIdx = findNavIndex(currentCode, navOpts);
           leftCode = currentNavIdx > 0 ? navOpts[currentNavIdx - 1].code : currentCode;
         }
       } else {
-        // Satellite mode: use esri_id based navigation
+        // Satellite mode: same logic with esri_id
         const curSat = getCurrentSatId();
-        rightSatEsriId = curSat;
         const curIdx = navOpts.findIndex(o => o.esri_id === curSat);
+        // For satellite, just use nearest older (no lastTwoDates tracking for sat)
+        rightSatEsriId = curSat;
         leftSatEsriId = curIdx > 0 ? navOpts[curIdx - 1].esri_id : curSat;
       }
 
@@ -1723,8 +1738,8 @@
   });
 
   // Info overlay
-  infoClose.addEventListener('click', () => { infoOverlay.style.display = 'none'; });
-  infoOverlay.addEventListener('click', (e) => { if (e.target === infoOverlay) infoOverlay.style.display = 'none'; });
+  infoClose.addEventListener('click', () => { infoOverlay.classList.remove('open'); });
+  infoOverlay.addEventListener('click', (e) => { if (e.target === infoOverlay) infoOverlay.classList.remove('open'); });
 
   // =====================
   // Service Mode (activated by clicking info icon 4 times in 1.5s)
@@ -2019,7 +2034,7 @@
 
   infoIcon.addEventListener('click', () => {
     if (!checkForServiceModeActivation()) {
-      infoOverlay.style.display = 'block';
+      infoOverlay.classList.add('open');
     }
   });
 
@@ -2031,8 +2046,8 @@
     if (e.key === 'Escape') {
       if (serviceMode) {
         disableServiceMode();
-      } else if (infoOverlay.style.display === 'block') {
-        infoOverlay.style.display = 'none';
+      } else if (infoOverlay.classList.contains('open')) {
+        infoOverlay.classList.remove('open');
       }
     }
   });
@@ -2145,8 +2160,31 @@
     window.WDWMX.getCurrentCode = () => currentCode;
     window.WDWMX.getRightCode = () => rightCode;
     window.WDWMX.getCompareMode = () => compareMode;
+    window.WDWMX.getShowingDisney = () => showingDisney;
     window.WDWMX.getLabelForCode = (code) => getLabelForCode(code);
     window.WDWMX.setSingleDate = (code) => setSingleDate(code);
+    // Mode-agnostic nav bridge: works for Disney dates and satellite versions.
+    // Items are { key, label } where key is a Disney code or an esri_id.
+    window.WDWMX.getNavList = () =>
+      getNavOptions().map((o) => ({ key: showingDisney ? o.code : o.esri_id, label: o.label }));
+    window.WDWMX.getNavKey = (which) => getNavKey(which);
+    window.WDWMX.setSingleNav = (key) => {
+      if (showingDisney) setSingleDate(key);
+      else setSatelliteView(key);
+    };
+    window.WDWMX.setCompareNav = (side, key) => {
+      if (!compareMode) return;
+      if (showingDisney) {
+        if (side === 'left') { leftCode = key; saveLastLeftCode(key); }
+        else { rightCode = key; }
+        (highlightMode ? launchHighlightMode : launchSwipeMode)();
+      } else {
+        if (side === 'left') leftSatEsriId = key;
+        else rightSatEsriId = key;
+        launchSwipeMode();
+      }
+      updateDateUI();
+    };
     window.WDWMX.getServers = () => serverOptions;
     window.WDWMX.getSatServers = () => satOptions;
     window.WDWMX.getServersUrl = (parkId) => getServersUrl(parkId);
