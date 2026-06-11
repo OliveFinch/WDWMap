@@ -419,9 +419,11 @@ body.datebrowser-open #date-pill {
    ========================================================= */
 
 /* Hide compare elements by default */
+#date-pill-cmp-prev,
 #date-pill-left,
 #date-pill-vs,
-#date-pill-right {
+#date-pill-right,
+#date-pill-cmp-next {
   display: none;
 }
 
@@ -432,10 +434,47 @@ body.datebrowser-open #date-pill {
   display: none;
 }
 
+#date-pill.compare-mode #date-pill-cmp-prev,
 #date-pill.compare-mode #date-pill-left,
 #date-pill.compare-mode #date-pill-vs,
-#date-pill.compare-mode #date-pill-right {
+#date-pill.compare-mode #date-pill-right,
+#date-pill.compare-mode #date-pill-cmp-next {
   display: flex;
+}
+
+/* Compare mode arrow buttons — same style as single-mode arrows */
+#date-pill-cmp-prev,
+#date-pill-cmp-next {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #6e6e73;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+  flex: 0 0 auto;
+}
+
+#date-pill-cmp-prev:hover,
+#date-pill-cmp-next:hover {
+  background: rgba(0, 0, 0, 0.07);
+}
+
+#date-pill-cmp-prev svg,
+#date-pill-cmp-next svg {
+  width: 14px;
+  height: 14px;
+}
+
+#date-pill-cmp-prev.disabled,
+#date-pill-cmp-next.disabled {
+  opacity: 0.3;
+  pointer-events: none;
 }
 
 /* Left date button (older) */
