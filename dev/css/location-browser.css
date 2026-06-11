@@ -671,11 +671,23 @@ body.datebrowser-open #date-pill.compare-mode {
 #info-overlay {
   background: rgba(0, 0, 0, 0.18);
   color: #1d1d1f;
+  /* Override display:none with opacity for smooth animation */
+  display: flex !important;
+  align-items: flex-start;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+#info-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 #info-overlay .panel {
   max-width: 560px;
-  margin: 60px auto;
+  margin: 60px 20px;
   padding: 22px 24px 18px;
   border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 18px;
@@ -687,9 +699,20 @@ body.datebrowser-open #date-pill.compare-mode {
     0 2px 10px rgba(0, 0, 0, 0.10),
     inset 0 1px 0 rgba(255, 255, 255, 0.7);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  transform: translateY(-10px) scale(0.97);
+  transition: transform 0.22s ease, opacity 0.22s ease;
+  opacity: 0;
+}
+
+#info-overlay.open .panel {
+  transform: translateY(0) scale(1);
+  opacity: 1;
 }
 
 #info-overlay .panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding-bottom: 12px;
   margin-bottom: 12px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
@@ -699,6 +722,7 @@ body.datebrowser-open #date-pill.compare-mode {
   font-size: 17px;
   font-weight: 600;
   color: #1d1d1f;
+  margin: 0;
 }
 
 #info-overlay h3 {
@@ -731,6 +755,9 @@ body.datebrowser-open #date-pill.compare-mode {
 
 #info-close {
   appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: 0 0 auto;
   width: 26px;
   height: 26px;
@@ -750,13 +777,27 @@ body.datebrowser-open #date-pill.compare-mode {
 }
 
 /* =========================================================
-   Park selector — match the frosted-glass flyout style
+   Park selector — flyout style matching date browser
    ========================================================= */
 #parks-overlay {
   background: rgba(0, 0, 0, 0.18) !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+#parks-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 #parks-modal {
+  position: fixed !important;
+  top: calc(50% - 20px) !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) scale(0.97) !important;
+  width: min(280px, 80vw) !important;
+  max-height: min(60vh, 480px) !important;
   border: 1px solid rgba(255, 255, 255, 0.65) !important;
   border-radius: 18px !important;
   background: rgba(250, 250, 252, 0.82) !important;
@@ -767,9 +808,22 @@ body.datebrowser-open #date-pill.compare-mode {
     0 2px 10px rgba(0, 0, 0, 0.10),
     inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  overflow: hidden;
+}
+
+#parks-modal.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1) !important;
 }
 
 #parks-modal header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between !important;
   padding: 14px 16px 10px !important;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
   background: transparent !important;
@@ -779,10 +833,39 @@ body.datebrowser-open #date-pill.compare-mode {
   font-size: 14px !important;
   font-weight: 600 !important;
   color: #1d1d1f !important;
+  margin: 0;
+  width: auto !important;
+  text-align: left !important;
+}
+
+#parks-close {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border: none !important;
+  border-radius: 50% !important;
+  background: rgba(0, 0, 0, 0.07) !important;
+  color: #6e6e73 !important;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0 !important;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+#parks-close:hover {
+  background: rgba(0, 0, 0, 0.13) !important;
 }
 
 #parks-modal .body {
   padding: 8px !important;
+  overflow-y: auto;
+  max-height: calc(60vh - 60px);
 }
 
 #parks-modal .park-btn {

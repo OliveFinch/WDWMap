@@ -82,8 +82,8 @@
   // =========================================
   function openParks() {
     if (!parksOverlay || !parksModal) return;
-    parksOverlay.style.display = 'block';
-    parksModal.style.display = 'block';
+    parksOverlay.classList.add('open');
+    parksModal.classList.add('open');
     parksOverlay.setAttribute('aria-hidden', 'false');
 
     if (!parksList) return;
@@ -138,8 +138,8 @@
 
   function closeParks() {
     if (!parksOverlay || !parksModal) return;
-    parksOverlay.style.display = 'none';
-    parksModal.style.display = 'none';
+    parksOverlay.classList.remove('open');
+    parksModal.classList.remove('open');
     parksOverlay.setAttribute('aria-hidden', 'true');
   }
 
