@@ -779,7 +779,10 @@ body.datebrowser-open #date-pill.compare-mode {
 /* =========================================================
    Park selector — flyout style matching date browser
    ========================================================= */
+/* app.css hides these with display:none and the JS now toggles the
+   "open" class instead, so keep them rendered and animate opacity */
 #parks-overlay {
+  display: block !important;
   background: rgba(0, 0, 0, 0.18) !important;
   opacity: 0;
   pointer-events: none;
@@ -792,6 +795,8 @@ body.datebrowser-open #date-pill.compare-mode {
 }
 
 #parks-modal {
+  display: flex !important;
+  flex-direction: column;
   position: fixed !important;
   top: calc(50% - 20px) !important;
   left: 50% !important;
@@ -868,31 +873,39 @@ body.datebrowser-open #date-pill.compare-mode {
   max-height: calc(60vh - 60px);
 }
 
-#parks-modal .park-btn {
+#parks-modal .parks-list {
+  display: block;
+  width: 100%;
+}
+
+/* Buttons are created as .park-pick-btn / .is-current (see app.js) */
+#parks-modal .park-pick-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  background: none !important;
-  border: none !important;
-  padding: 11px 14px !important;
-  border-radius: 11px !important;
+  background: none;
+  border: none;
+  padding: 11px 14px;
+  border-radius: 11px;
   cursor: pointer;
   text-align: center;
   font-family: inherit;
-  font-size: 15px !important;
-  color: #1d1d1f !important;
+  font-size: 15px;
+  color: #1d1d1f;
   transition: background 0.12s ease;
 }
 
-#parks-modal .park-btn:hover {
-  background: rgba(0, 113, 227, 0.10) !important;
+#parks-modal .park-pick-btn:hover {
+  background: rgba(0, 113, 227, 0.10);
 }
 
-#parks-modal .park-btn.current {
-  background: rgba(0, 113, 227, 0.14) !important;
-  font-weight: 600 !important;
-  color: #0a3d91 !important;
+#parks-modal .park-pick-btn.is-current,
+#parks-modal .park-pick-btn.is-current:hover {
+  background: rgba(0, 113, 227, 0.14);
+  border: none;
+  font-weight: 600;
+  color: #0a3d91;
 }
 
 /* =========================================================
