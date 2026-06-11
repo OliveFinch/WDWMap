@@ -430,11 +430,11 @@ body.datebrowser-open #date-pill {
   display: flex;
 }
 
-/* Compare mode arrow buttons — same style as single-mode arrows */
+/* Compare mode arrow buttons — same style as single-mode arrows.
+   No display here: hidden by default, .compare-mode turns them on. */
 #date-pill-cmp-prev,
 #date-pill-cmp-next {
   appearance: none;
-  display: flex;
   align-items: center;
   justify-content: center;
   width: 28px;
