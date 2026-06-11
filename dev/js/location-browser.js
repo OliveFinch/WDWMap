@@ -320,14 +320,16 @@
 (function () {
   'use strict';
 
-  const datePillEl = document.getElementById('date-pill');
+  const datePillMain = document.getElementById('date-pill-main');
+  const datePillPrev = document.getElementById('date-pill-prev');
+  const datePillNext = document.getElementById('date-pill-next');
   const datePillLabel = document.getElementById('date-pill-label');
   const dateBrowserEl = document.getElementById('datebrowser');
   const dateBackdropEl = document.getElementById('datebrowser-backdrop');
   const dateCloseBtn = document.getElementById('datebrowser-close');
   const dateListEl = document.getElementById('datebrowser-list');
 
-  if (!datePillEl || !dateBrowserEl || !dateListEl) return;
+  if (!datePillMain || !dateBrowserEl || !dateListEl) return;
 
   let isOpen = false;
   let currentDateBtn = null;
@@ -423,10 +425,44 @@
     });
   }
 
+  // Keep the pill in sync with the app's date state (covers arrow nav,
+  // changes-board jumps, custom server loads - anything that moves the date)
+  function syncFromCore() {
+    const currentCode = WDWMX.getCurrentCode ? WDWMX.getCurrentCode() : null;
+    const getLabelForCode = WDWMX.getLabelForCode || ((c) => c);
+    if (currentCode) {
+      datePillLabel.textContent = getLabelForCode(currentCode) || currentCode;
+    }
+
+    // Update highlighted item in the list
+    if (currentDateBtn) currentDateBtn.classList.remove('current');
+    currentDateBtn = dateListEl.querySelector(`.dateitem[data-code="${currentCode}"]`);
+    if (currentDateBtn) currentDateBtn.classList.add('current');
+
+    // Mirror the disabled state of core's hidden nav arrows
+    const corePrev = document.getElementById('date-prev-btn');
+    const coreNext = document.getElementById('date-next-btn');
+    if (corePrev) datePillPrev.classList.toggle('disabled', corePrev.classList.contains('disabled'));
+    if (coreNext) datePillNext.classList.toggle('disabled', coreNext.classList.contains('disabled'));
+  }
+
   // Wiring
-  datePillEl.addEventListener('click', () => {
+  datePillMain.addEventListener('click', () => {
     if (isOpen) closeDateBrowser();
     else openDateBrowser();
+  });
+
+  // Arrows proxy to core.js's existing (hidden) nav buttons so all the
+  // step logic and bounds checking stay in one place
+  datePillPrev.addEventListener('click', () => {
+    const coreBtn = document.getElementById('date-prev-btn');
+    if (coreBtn) coreBtn.click();
+    setTimeout(syncFromCore, 50);
+  });
+  datePillNext.addEventListener('click', () => {
+    const coreBtn = document.getElementById('date-next-btn');
+    if (coreBtn) coreBtn.click();
+    setTimeout(syncFromCore, 50);
   });
 
   dateCloseBtn.addEventListener('click', closeDateBrowser);
@@ -446,6 +482,18 @@
     if (servers && servers.length) {
       clearInterval(bootPoll);
       buildDateList();
+      syncFromCore();
+
+      // Watch core's date label so the pill follows any date change made
+      // outside the pill (changes board, share links, service mode, etc.)
+      const coreLabel = document.getElementById('single-date-label');
+      if (coreLabel && window.MutationObserver) {
+        new MutationObserver(syncFromCore).observe(coreLabel, {
+          childList: true,
+          characterData: true,
+          subtree: true
+        });
+      }
     }
   }, 100);
 
