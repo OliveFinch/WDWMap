@@ -2,6 +2,8 @@
   "parkId": "tdr",
   "name": "Tokyo Disney Resort",
   "tileTemplate": "tdr-proxy",
+  "supportsHistory": false,
+  "versionCheck": false,
   "locations": [
     { "coords": [139.880790, 35.632283], "width": 0.004, "rotation": 205, "icon": "icons/locations/tdr/tdr-castle.svg", "alt": "Tokyo Disneyland" },
     { "coords": [139.885709, 35.625239], "width": 0.008, "rotation": 135, "icon": "icons/locations/tdr/disneysea.svg", "alt": "Tokyo DisneySea" },

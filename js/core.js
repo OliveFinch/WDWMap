@@ -58,7 +58,8 @@
     tileBaseUrl: '',
     userAgent: '',
     cookies: {},
-    proxyUrl: ''
+    proxyUrl: '',
+    cookieExpires: ''
   };
 
   // TDR state: 'daytime' or 'nighttime'
@@ -414,39 +415,39 @@
   // =====================
   // Layers
   // =====================
-  function makeDisneyLayer(code) {
+  function makeDisneySource(code) {
     const park = getCurrentPark();
-    // Check if server has custom URL, otherwise use park's tileTemplate
     const server = serverOptions.find(o => o.code === code);
     const tpl = (server && server.url) ? server.url : String(park.tileTemplate || '');
-
-    // TDR uses a special proxy for CloudFront authentication
     const isTdr = (park.parkId === 'tdr');
 
-    return new ol.layer.Tile({
-      source: new ol.source.XYZ({
-        minZoom: park.minZoom,
-        maxZoom: park.maxZoom,
-        tileUrlFunction: function (tileCoord) {
-          if (!tileCoord) return '';
-          const z = tileCoord[0];
-          const x = tileCoord[1];
-          const y = tileCoord[2];
+    return new ol.source.XYZ({
+      minZoom: park.minZoom,
+      maxZoom: park.maxZoom,
+      tileUrlFunction: function (tileCoord) {
+        if (!tileCoord) return '';
+        const z = tileCoord[0];
+        const x = tileCoord[1];
+        const y = tileCoord[2];
 
-          const n = Math.pow(2, z);
-          const yy = (park.yScheme === 'tms') ? ((n - 1) - y) : y;
+        const n = Math.pow(2, z);
+        const yy = (park.yScheme === 'tms') ? ((n - 1) - y) : y;
 
-          // TDR: use proxy URL with special tile format z{z}/{x}_{y}.jpg?mode=daytime/nighttime
-          if (isTdr) {
-            return TDR_CONFIG.proxyUrl + `z${z}/${x}_${yy}.jpg?mode=${tdrTimeMode}`;
-          }
-
-          let url = tpl;
-          if (url.indexOf('{code}') >= 0) url = url.replace('{code}', String(code));
-          url = url.replace('{z}', String(z)).replace('{x}', String(x)).replace('{y}', String(yy));
-          return url;
+        if (isTdr) {
+          return TDR_CONFIG.proxyUrl + `z${z}/${x}_${yy}.jpg?mode=${tdrTimeMode}`;
         }
-      }),
+
+        let url = tpl;
+        if (url.indexOf('{code}') >= 0) url = url.replace('{code}', String(code));
+        url = url.replace('{z}', String(z)).replace('{x}', String(x)).replace('{y}', String(yy));
+        return url;
+      }
+    });
+  }
+
+  function makeDisneyLayer(code) {
+    return new ol.layer.Tile({
+      source: makeDisneySource(code),
       visible: true
     });
   }
@@ -648,7 +649,16 @@
               }
 
               ctx.putImageData(out, 0, 0);
-              tile.getImage().src = canvas.toDataURL();
+              canvas.toBlob(function(blob) {
+                if (blob) {
+                  const url = URL.createObjectURL(blob);
+                  const tileImg = tile.getImage();
+                  tileImg.onload = function() { URL.revokeObjectURL(url); };
+                  tileImg.src = url;
+                } else {
+                  tile.getImage().src = canvas.toDataURL();
+                }
+              }, 'image/png');
             };
 
             cmpImg.onerror = function () { tile.getImage().src = baseImg.src; };
@@ -658,7 +668,14 @@
           baseImg.onerror = function () {
             const blank = document.createElement('canvas');
             blank.width = blank.height = 256;
-            tile.getImage().src = blank.toDataURL();
+            blank.toBlob(function(blob) {
+              if (blob) {
+                const url = URL.createObjectURL(blob);
+                const tileImg = tile.getImage();
+                tileImg.onload = function() { URL.revokeObjectURL(url); };
+                tileImg.src = url;
+              }
+            }, 'image/png');
           };
 
           baseImg.src = baseUrl;
@@ -977,23 +994,29 @@
     }
   }
 
-  function positionPopupForButton(popupEl, btnEl) {
-    const r = btnEl.getBoundingClientRect();
+  function positionPopup(popupEl, anchorEl, options) {
+    const opts = options || {};
+    const align = opts.align || 'right';
+    const r = anchorEl.getBoundingClientRect();
     const gap = 8;
 
     const prevDisplay = popupEl.style.display;
     const prevVisibility = popupEl.style.visibility;
     popupEl.style.display = 'block';
     popupEl.style.visibility = 'hidden';
-    const width = popupEl.offsetWidth;
+    const pw = popupEl.offsetWidth;
     popupEl.style.display = prevDisplay;
     popupEl.style.visibility = prevVisibility;
 
-    const left = Math.max(8, Math.min(window.innerWidth - width - 8, r.right - width));
-    const top = Math.max(8, r.bottom + gap);
+    let left;
+    if (align === 'center') {
+      left = Math.max(8, Math.min(window.innerWidth - pw - 8, r.left + (r.width / 2) - (pw / 2)));
+    } else {
+      left = Math.max(8, Math.min(window.innerWidth - pw - 8, r.right - pw));
+    }
 
     popupEl.style.left = left + 'px';
-    popupEl.style.top = top + 'px';
+    popupEl.style.top = Math.max(8, r.bottom + gap) + 'px';
   }
 
   function showPopup(popupEl) {
@@ -1104,12 +1127,10 @@
     if (lastTwoDates[0] !== newCode) lastTwoDates = [newCode, lastTwoDates[0]];
     currentCode = newCode;
 
-    const visD = disneyLayer.getVisible();
-    map.removeLayer(disneyLayer);
-    disneyLayer = makeDisneyLayer(newCode);
-    disneyLayer.setVisible(visD);
-    disneyLayer.getSource().set('extent', parkExtent);
-    map.getLayers().setAt(0, disneyLayer);
+    // Swap source instead of recreating the entire layer
+    const newSource = makeDisneySource(newCode);
+    if (parkExtent) newSource.set('extent', parkExtent);
+    disneyLayer.setSource(newSource);
 
     const esriId = findClosestSatellite(getLabelForCode(newCode));
     const visE = esriLayer && esriLayer.getVisible();
@@ -1265,7 +1286,7 @@
       });
     }
 
-    positionPopupForButton(datePopup, dateBtn);
+    positionPopup(datePopup, dateBtn);
     showPopup(datePopup);
 
     const close = (e) => {
@@ -1293,7 +1314,7 @@
       updateDateUI();
     }, 'olderThan', rightCode);
 
-    positionPopupForButton(leftDatePopup, leftDateBtn);
+    positionPopup(leftDatePopup, leftDateBtn);
     showPopup(leftDatePopup);
 
     const close = (e) => {
@@ -1423,12 +1444,9 @@
   function refreshTdrLayer() {
     if (currentParkId !== 'tdr') return;
 
-    const visD = disneyLayer.getVisible();
-    map.removeLayer(disneyLayer);
-    disneyLayer = makeDisneyLayer(currentCode);
-    disneyLayer.setVisible(visD);
-    disneyLayer.getSource().set('extent', parkExtent);
-    map.getLayers().setAt(0, disneyLayer);
+    const newSource = makeDisneySource(currentCode);
+    if (parkExtent) newSource.set('extent', parkExtent);
+    disneyLayer.setSource(newSource);
     setRoadsLayerState();
   }
 
@@ -1552,25 +1570,10 @@
     });
   }
 
-  // Tapping the date display opens date picker
-  // Helper to show date popup centered below an element
   function showDatePopupBelow(popupEl, anchorEl, fillFn) {
     if (popupEl.style.display === 'block') { hidePopup(popupEl); return; }
     fillFn();
-
-    const r = anchorEl.getBoundingClientRect();
-    const gap = 8;
-    const prevDisplay = popupEl.style.display;
-    const prevVis = popupEl.style.visibility;
-    popupEl.style.display = 'block';
-    popupEl.style.visibility = 'hidden';
-    const pw = popupEl.offsetWidth;
-    popupEl.style.display = prevDisplay;
-    popupEl.style.visibility = prevVis;
-
-    const left = Math.max(8, Math.min(window.innerWidth - pw - 8, r.left + (r.width / 2) - (pw / 2)));
-    popupEl.style.left = left + 'px';
-    popupEl.style.top = Math.max(8, r.bottom + gap) + 'px';
+    positionPopup(popupEl, anchorEl, { align: 'center' });
     showPopup(popupEl);
 
     const close = (e) => {
@@ -1779,11 +1782,56 @@
     } else {
       serverSpan.textContent = 'sat_' + (currentSatEsriId || '--');
     }
+
+    // Show TDR cookie expiry if viewing TDR
+    updateTdrCookieExpiry();
   }
 
-  // Parks that support live version checking
-  const VERSION_CHECK_PARKS = ['wdw', 'dlr', 'hkdl', 'shdr'];
+  function updateTdrCookieExpiry() {
+    let expiryEl = document.getElementById('service-mode-tdr-expiry');
+    const serverDiv = document.getElementById('service-mode-server');
+    if (!serverDiv) return;
+
+    // Create the expiry element if it doesn't exist
+    if (!expiryEl) {
+      expiryEl = document.createElement('div');
+      expiryEl.id = 'service-mode-tdr-expiry';
+      expiryEl.style.cssText = 'margin-top:8px;font-size:12px;color:#888;';
+      serverDiv.appendChild(expiryEl);
+    }
+
+    // Only show for TDR
+    if (currentParkId !== 'tdr' || !TDR_CONFIG.cookieExpires) {
+      expiryEl.style.display = 'none';
+      return;
+    }
+
+    expiryEl.style.display = 'block';
+    const expiry = new Date(TDR_CONFIG.cookieExpires);
+    const now = new Date();
+    const daysLeft = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
+
+    if (daysLeft <= 0) {
+      expiryEl.innerHTML = '<span style="color:#d32f2f;">TDR cookies EXPIRED</span>';
+    } else if (daysLeft <= 3) {
+      expiryEl.innerHTML = `<span style="color:#f57c00;">TDR cookies expire in ${daysLeft} day${daysLeft === 1 ? '' : 's'}</span>`;
+    } else {
+      expiryEl.textContent = `TDR cookies expire: ${expiry.toLocaleDateString()}`;
+    }
+  }
+
   const VERSION_CHECK_WORKER = 'https://disney-map-versions.gullet-erase2v.workers.dev/';
+
+  // Cache for version check results (5 minute TTL)
+  let versionCheckCache = null;
+  let versionCheckCacheTime = 0;
+  const VERSION_CHECK_CACHE_TTL = 5 * 60 * 1000;
+
+  function getVersionCheckParks() {
+    return Object.values(PARKS)
+      .filter(p => p.versionCheck === true)
+      .map(p => p.parkId);
+  }
 
   async function checkAllLiveVersions() {
     const versionCheck = document.getElementById('service-mode-version-check');
@@ -1791,15 +1839,27 @@
     const checkBtn = document.getElementById('service-mode-check-versions');
     if (!versionCheck || !versionStatus) return;
 
+    const versionCheckParks = getVersionCheckParks();
+    if (!versionCheckParks.length) {
+      versionStatus.textContent = 'No parks configured for version checking';
+      return;
+    }
+
+    // Check cache first
+    const now = Date.now();
+    if (versionCheckCache && (now - versionCheckCacheTime) < VERSION_CHECK_CACHE_TTL) {
+      versionStatus.innerHTML = versionCheckCache;
+      return;
+    }
+
     versionCheck.className = 'checking';
     versionStatus.textContent = 'Checking versions...';
     if (checkBtn) checkBtn.disabled = true;
 
     try {
-      // Fetch live versions and all park server lists in parallel
       const [liveRes, ...serverResults] = await Promise.all([
         fetch(VERSION_CHECK_WORKER),
-        ...VERSION_CHECK_PARKS.map(parkId =>
+        ...versionCheckParks.map(parkId =>
           fetch(`parks/${parkId}/${parkId}_dis_servers.json`)
             .then(r => r.ok ? r.json() : [])
             .catch(() => [])
@@ -1810,7 +1870,7 @@
       const liveData = await liveRes.json();
 
       let html = '';
-      VERSION_CHECK_PARKS.forEach((parkId, i) => {
+      versionCheckParks.forEach((parkId, i) => {
         const liveVersion = liveData[parkId]?.version;
 
         if (!liveVersion) {
@@ -1831,6 +1891,10 @@
           html += `<div class="park-version">${parkId.toUpperCase()}: <span class="new-version">NEW ${liveStr}</span> (known: ${knownStr})</div>`;
         }
       });
+
+      // Cache the results
+      versionCheckCache = html;
+      versionCheckCacheTime = now;
 
       versionCheck.className = '';
       versionStatus.innerHTML = html;
@@ -1995,15 +2059,22 @@
   const urlView = urlParams.get('view');
 
   try {
-    // Load Disney and satellite server lists in parallel
     let [disRes, satRes] = await Promise.all([
       fetch(disUrl, { cache: 'no-store' }),
       fetch(satUrl, { cache: 'no-store' })
     ]);
 
-    // Fall back to WDW if park files missing
-    if (!disRes.ok) disRes = await fetch(fallbackDisUrl, { cache: 'no-store' });
-    if (!satRes.ok) satRes = await fetch(fallbackSatUrl, { cache: 'no-store' });
+    // Fall back to WDW if park files missing (and switch park context)
+    let fellBackToWdw = false;
+    if (!disRes.ok && currentParkId !== 'wdw') {
+      console.warn(`Failed to load ${currentParkId} servers, falling back to WDW`);
+      disRes = await fetch(fallbackDisUrl, { cache: 'no-store' });
+      satRes = await fetch(fallbackSatUrl, { cache: 'no-store' });
+      if (disRes.ok) {
+        currentParkId = 'wdw';
+        fellBackToWdw = true;
+      }
+    }
     if (!disRes.ok) throw new Error(`Disney servers ${disRes.status}`);
 
     const allDis = await disRes.json();

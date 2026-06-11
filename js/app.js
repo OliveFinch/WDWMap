@@ -7,13 +7,13 @@
   // =========================
   const API_BASE = 'https://wdw-magic-explorer-api.gullet-erase2v.workers.dev';
 
-  // Parks that don't support historical imagery / changes tracking
-  const PARKS_WITHOUT_HISTORY = ['tdr', 'dlp'];
-
   function parkSupportsHistory() {
     try {
-      const parkId = WDWMX.getParkId ? WDWMX.getParkId() : null;
-      return parkId && !PARKS_WITHOUT_HISTORY.includes(parkId);
+      const park = WDWMX.getPark ? WDWMX.getPark() : null;
+      if (park && typeof park.supportsHistory === 'boolean') {
+        return park.supportsHistory;
+      }
+      return true;
     } catch {
       return true;
     }
