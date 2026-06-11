@@ -602,7 +602,9 @@
   reportSubmit && reportSubmit.addEventListener('click', submitReport);
 
   changesBtn && changesBtn.addEventListener('click', () => {
-    if (changesBoard && changesBoard.style.display === 'block') closeChangesBoard();
+    // Board uses display:flex when open, so check against 'none'/empty
+    const isOpen = changesBoard && changesBoard.style.display !== 'none' && changesBoard.style.display !== '';
+    if (isOpen) closeChangesBoard();
     else openChangesBoard();
   });
 
