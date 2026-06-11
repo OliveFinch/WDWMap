@@ -2,6 +2,8 @@
   "parkId": "dlr",
   "name": "Disneyland Resort (California)",
   "tileTemplate": "https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/disneyland/{code}/{z}/{x}/{y}.jpg",
+  "supportsHistory": true,
+  "versionCheck": true,
   "locations": [
     { "coords": [-117.918958, 33.812624], "width": 0.003, "icon": "icons/locations/dlr/dlr-castle.svg", "alt": "Disneyland" },
     { "coords": [-117.919703, 33.806176], "width": 0.004, "icon": "icons/locations/dlr/california-adventure.svg", "alt": "California Adventure" },

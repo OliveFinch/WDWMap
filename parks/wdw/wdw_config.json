@@ -2,6 +2,8 @@
   "parkId": "wdw",
   "name": "Walt Disney World",
   "tileTemplate": "https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/{code}/{z}/{x}/{y}.jpg",
+  "supportsHistory": true,
+  "versionCheck": true,
   "locations": [
     { "coords": [-81.581203, 28.418714], "width": 0.008, "icon": "icons/locations/magic-kingdom.svg", "alt": "Magic Kingdom" },
     { "coords": [-81.549385, 28.371715], "width": 0.012, "icon": "icons/locations/epcot.svg", "alt": "Epcot" },

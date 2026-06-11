@@ -2,6 +2,8 @@
   "parkId": "hkdl",
   "name": "Hong Kong Disneyland",
   "tileTemplate": "https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/hkdl/{code}/{z}/{x}/{y}.jpg",
+  "supportsHistory": true,
+  "versionCheck": true,
   "locations": [
     { "coords": [114.041407, 22.312656], "width": 0.003, "icon": "icons/locations/hkdl/hkdl-castle.svg", "alt": "Hong Kong Disneyland" },
     { "coords": [114.037813, 22.321810], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "Inspiration Lake" },
