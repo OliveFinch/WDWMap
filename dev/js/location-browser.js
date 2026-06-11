@@ -1,9 +1,11 @@
 /* global WDWMX */
 /*
- * Location Browser (dev mockup)
- * Categorized, searchable list of park locations.
- * Desktop: left side panel (map stays interactive).
- * Mobile: bottom sheet with half/full detents; picking a location dismisses.
+ * Location Pill + Spotlight-style Browser (dev mockup)
+ *
+ * The pill (bottom center, replaces the dock) shows the current location -
+ * the nearest known place to the map center - and opens a frosted-glass,
+ * search-first panel when tapped. Picking a place flies the map there and
+ * closes the panel. Enter selects the first result; arrow keys navigate.
  *
  * Reads park config "locationGroups" (array of { name, expanded?, locations[] });
  * falls back to a single group built from the flat "locations" array.
@@ -11,25 +13,22 @@
 (function () {
   'use strict';
 
-  const MOBILE_QUERY = window.matchMedia('(max-width: 600px)');
-
+  const pillEl = document.getElementById('loc-pill');
+  const pillLabel = document.getElementById('loc-pill-label');
   const browserEl = document.getElementById('locbrowser');
   const backdropEl = document.getElementById('locbrowser-backdrop');
-  const handleEl = document.getElementById('locbrowser-handle');
-  const titleEl = document.getElementById('locbrowser-title');
   const closeBtn = document.getElementById('locbrowser-close');
   const searchEl = document.getElementById('locbrowser-search');
   const listEl = document.getElementById('locbrowser-list');
   const emptyEl = document.getElementById('locbrowser-empty');
 
-  if (!browserEl || !listEl) return;
+  if (!pillEl || !browserEl || !listEl) return;
 
   let isOpen = false;
+  let allLocations = [];   // flat list for nearest-place lookup
+  let parkName = '';
   let currentItemBtn = null;
-
-  function isMobile() {
-    return MOBILE_QUERY.matches;
-  }
+  let kbdFocusBtn = null;
 
   // =====================
   // Open / close
@@ -37,31 +36,25 @@
   function openBrowser() {
     isOpen = true;
     browserEl.classList.add('open');
-    browserEl.classList.remove('tall');
-    if (backdropEl) backdropEl.classList.add('open');
+    backdropEl.classList.add('open');
     document.body.classList.add('locbrowser-open');
+    // Slight delay so the open transition isn't janked by the keyboard
+    setTimeout(() => searchEl.focus(), 80);
   }
 
   function closeBrowser() {
     isOpen = false;
-    browserEl.classList.remove('open', 'tall', 'dragging');
-    browserEl.style.height = '';
-    if (backdropEl) backdropEl.classList.remove('open');
+    browserEl.classList.remove('open');
+    backdropEl.classList.remove('open');
     document.body.classList.remove('locbrowser-open');
-    if (searchEl) {
-      searchEl.value = '';
-      applyFilter('');
-      searchEl.blur();
-    }
-  }
-
-  function toggleBrowser() {
-    if (isOpen) closeBrowser();
-    else openBrowser();
+    searchEl.value = '';
+    applyFilter('');
+    setKbdFocus(null);
+    searchEl.blur();
   }
 
   // =====================
-  // Fly to a location (same width-based extent fit as the dock)
+  // Fly to a location (same width-based extent fit as the old dock)
   // =====================
   function flyTo(loc) {
     const ol = WDWMX.ol;
@@ -94,6 +87,16 @@
     view.animate(animateOpts);
   }
 
+  function pickLocation(loc, btn) {
+    if (currentItemBtn) currentItemBtn.classList.remove('current');
+    btn.classList.add('current');
+    currentItemBtn = btn;
+
+    pillLabel.textContent = loc.alt || 'Location';
+    flyTo(loc);
+    closeBrowser();
+  }
+
   // =====================
   // Build the list from park config
   // =====================
@@ -101,7 +104,6 @@
     if (Array.isArray(park.locationGroups) && park.locationGroups.length) {
       return park.locationGroups;
     }
-    // Fallback: single group from the flat locations array
     if (Array.isArray(park.locations) && park.locations.length) {
       return [{ name: 'Locations', expanded: true, locations: park.locations }];
     }
@@ -110,13 +112,17 @@
 
   function buildList(park) {
     listEl.innerHTML = '';
-    if (titleEl) titleEl.textContent = 'Explore ' + (park.name || 'the resort');
+    parkName = park.name || 'Explore places';
+    pillLabel.textContent = parkName;
+    searchEl.placeholder = 'Search ' + parkName + '…';
 
     const groups = getGroups(park);
+    allLocations = [];
 
     groups.forEach((group) => {
       const groupEl = document.createElement('div');
       groupEl.className = 'locgroup' + (group.expanded ? ' expanded' : '');
+      if (group.expanded) groupEl.dataset.defaultExpanded = '1';
 
       const header = document.createElement('button');
       header.type = 'button';
@@ -124,7 +130,7 @@
       header.innerHTML =
         '<span>' + group.name +
         ' <span class="locgroup-count">(' + group.locations.length + ')</span></span>' +
-        '<svg class="locgroup-chevron" viewBox="0 0 24 24" width="14" height="14">' +
+        '<svg class="locgroup-chevron" viewBox="0 0 24 24" width="13" height="13">' +
         '<polyline points="9,6 15,12 9,18" fill="none" stroke="currentColor" stroke-width="2.5" ' +
         'stroke-linecap="round" stroke-linejoin="round"/></svg>';
       header.addEventListener('click', () => {
@@ -136,6 +142,8 @@
       itemsEl.className = 'locgroup-items';
 
       group.locations.forEach((loc) => {
+        allLocations.push(loc);
+
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'locitem';
@@ -152,16 +160,7 @@
         name.textContent = loc.alt || 'Location';
         btn.appendChild(name);
 
-        btn.addEventListener('click', () => {
-          if (currentItemBtn) currentItemBtn.classList.remove('current');
-          btn.classList.add('current');
-          currentItemBtn = btn;
-
-          flyTo(loc);
-          // Mobile: dismiss so the user watches the fly-to.
-          // Desktop: stay open for browsing.
-          if (isMobile()) closeBrowser();
-        });
+        btn.addEventListener('click', () => pickLocation(loc, btn));
 
         itemsEl.appendChild(btn);
       });
@@ -190,128 +189,115 @@
       groupEl.style.display = groupHasMatch ? '' : 'none';
       if (groupHasMatch) anyVisible = true;
 
-      // Searching auto-expands matching groups; clearing restores default state
+      // Searching auto-expands matching groups; clearing restores defaults
       if (q && groupHasMatch) {
         groupEl.classList.add('expanded');
         groupEl.dataset.autoExpanded = '1';
       } else if (!q && groupEl.dataset.autoExpanded) {
         delete groupEl.dataset.autoExpanded;
-        groupEl.classList.remove('expanded');
-        // Restore groups that are expanded by default
-        if (groupEl.dataset.defaultExpanded === '1') groupEl.classList.add('expanded');
+        groupEl.classList.toggle('expanded', groupEl.dataset.defaultExpanded === '1');
       }
     });
 
-    if (emptyEl) emptyEl.style.display = anyVisible ? 'none' : 'block';
+    emptyEl.style.display = anyVisible ? 'none' : 'block';
+    setKbdFocus(null);
   }
 
   // =====================
-  // Mobile sheet dragging (half <-> full <-> dismiss)
+  // Keyboard navigation (Spotlight-style)
   // =====================
-  function enableSheetDrag() {
-    if (!handleEl) return;
+  function visibleItems() {
+    return Array.from(listEl.querySelectorAll('.locitem')).filter(
+      (el) => el.style.display !== 'none' &&
+              el.closest('.locgroup').style.display !== 'none' &&
+              el.closest('.locgroup').classList.contains('expanded')
+    );
+  }
 
-    let startY = 0;
-    let startHeight = 0;
+  function setKbdFocus(btn) {
+    if (kbdFocusBtn) kbdFocusBtn.classList.remove('kbd-focus');
+    kbdFocusBtn = btn;
+    if (kbdFocusBtn) {
+      kbdFocusBtn.classList.add('kbd-focus');
+      kbdFocusBtn.scrollIntoView({ block: 'nearest' });
+    }
+  }
 
-    function onMove(e) {
-      const y = e.touches ? e.touches[0].clientY : e.clientY;
-      const dy = startY - y; // positive = dragging up
-      const newH = Math.min(window.innerHeight * 0.92, Math.max(120, startHeight + dy));
-      browserEl.style.height = newH + 'px';
+  function moveKbdFocus(delta) {
+    const items = visibleItems();
+    if (!items.length) return;
+    const idx = kbdFocusBtn ? items.indexOf(kbdFocusBtn) : -1;
+    const next = Math.max(0, Math.min(items.length - 1, idx + delta));
+    setKbdFocus(items[next]);
+  }
+
+  searchEl.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); moveKbdFocus(+1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); moveKbdFocus(-1); }
+    else if (e.key === 'Enter') {
       e.preventDefault();
+      const target = kbdFocusBtn || visibleItems()[0];
+      if (target) target.click();
+    }
+  });
+
+  // =====================
+  // "Current location" pill label - nearest known place to map center
+  // =====================
+  function lonLatDistSq(a, b, cosLat) {
+    const dx = (a[0] - b[0]) * cosLat;
+    const dy = a[1] - b[1];
+    return dx * dx + dy * dy;
+  }
+
+  function updatePillLabel() {
+    const ol = WDWMX.ol;
+    const map = WDWMX.getMap && WDWMX.getMap();
+    if (!ol || !map || !allLocations.length) return;
+
+    const center = ol.proj.toLonLat(map.getView().getCenter());
+    const cosLat = Math.cos(center[1] * Math.PI / 180);
+
+    let best = null;
+    let bestDistSq = Infinity;
+    for (const loc of allLocations) {
+      if (!Array.isArray(loc.coords)) continue;
+      const d = lonLatDistSq(center, loc.coords, cosLat);
+      if (d < bestDistSq) { bestDistSq = d; best = loc; }
     }
 
-    function onEnd(e) {
-      document.removeEventListener('touchmove', onMove);
-      document.removeEventListener('touchend', onEnd);
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onEnd);
-
-      browserEl.classList.remove('dragging');
-      const h = browserEl.getBoundingClientRect().height;
-      const vh = window.innerHeight;
-      browserEl.style.height = '';
-
-      // Snap: below 30% dismisses, above 70% goes tall, otherwise half
-      if (h < vh * 0.3) {
-        closeBrowser();
-      } else if (h > vh * 0.7) {
-        browserEl.classList.add('tall');
-      } else {
-        browserEl.classList.remove('tall');
+    // "At" a place if center is within ~70% of its fit-width (min ~150m)
+    if (best) {
+      const radius = Math.max((parseFloat(best.width) || 0.004) * 0.7, 0.0015);
+      if (bestDistSq <= radius * radius) {
+        pillLabel.textContent = best.alt || parkName;
+        return;
       }
     }
-
-    function onStart(e) {
-      if (!isMobile() || !isOpen) return;
-      startY = e.touches ? e.touches[0].clientY : e.clientY;
-      startHeight = browserEl.getBoundingClientRect().height;
-      browserEl.classList.add('dragging');
-
-      document.addEventListener('touchmove', onMove, { passive: false });
-      document.addEventListener('touchend', onEnd);
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onEnd);
-    }
-
-    handleEl.addEventListener('touchstart', onStart, { passive: true });
-    handleEl.addEventListener('mousedown', onStart);
-  }
-
-  // =====================
-  // Dock trigger button
-  // =====================
-  function addDockButton() {
-    const dock = document.getElementById('location-dock');
-    if (!dock || document.getElementById('locbrowser-open')) return;
-
-    const btn = document.createElement('button');
-    btn.id = 'locbrowser-open';
-    btn.title = 'All places';
-    btn.innerHTML =
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
-      'stroke-linecap="round" stroke-linejoin="round">' +
-      '<rect x="3" y="3" width="7" height="7" rx="1.5"/>' +
-      '<rect x="14" y="3" width="7" height="7" rx="1.5"/>' +
-      '<rect x="3" y="14" width="7" height="7" rx="1.5"/>' +
-      '<rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
-    btn.addEventListener('click', toggleBrowser);
-    dock.appendChild(btn);
+    pillLabel.textContent = parkName;
   }
 
   // =====================
   // Wiring
   // =====================
-  if (closeBtn) closeBtn.addEventListener('click', closeBrowser);
-  if (backdropEl) backdropEl.addEventListener('click', closeBrowser);
-
-  if (searchEl) {
-    searchEl.addEventListener('input', () => applyFilter(searchEl.value));
-    // Focusing search on mobile expands the sheet so the keyboard doesn't cover the list
-    searchEl.addEventListener('focus', () => {
-      if (isMobile()) browserEl.classList.add('tall');
-    });
-  }
+  pillEl.addEventListener('click', openBrowser);
+  closeBtn.addEventListener('click', closeBrowser);
+  backdropEl.addEventListener('click', closeBrowser);
+  searchEl.addEventListener('input', () => applyFilter(searchEl.value));
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && isOpen) closeBrowser();
   });
 
-  enableSheetDrag();
-
-  // Wait for core.js boot to finish (dock populated, park config loaded)
+  // Wait for core.js boot to finish (park config loaded, map created)
   const bootPoll = setInterval(() => {
     const park = WDWMX.getPark && WDWMX.getPark();
-    const dock = document.getElementById('location-dock');
-    if (park && dock && dock.children.length > 0) {
+    const map = WDWMX.getMap && WDWMX.getMap();
+    if (park && map) {
       clearInterval(bootPoll);
       buildList(park);
-      // Remember which groups default to expanded (for search-clear restore)
-      listEl.querySelectorAll('.locgroup').forEach((g) => {
-        if (g.classList.contains('expanded')) g.dataset.defaultExpanded = '1';
-      });
-      addDockButton();
+      updatePillLabel();
+      map.on('moveend', updatePillLabel);
     }
   }, 100);
 
