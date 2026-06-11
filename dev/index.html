@@ -129,21 +129,29 @@
   <!-- DEV badge -->
   <div id="dev-badge">DEV</div>
 
-  <!-- DEV: Location Browser (desktop: left panel / mobile: bottom sheet) -->
+  <!-- DEV: Location pill (replaces the dock) + Spotlight-style panel -->
+  <button id="loc-pill" type="button" aria-haspopup="dialog" title="Explore places">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/>
+    </svg>
+    <span id="loc-pill-label">Explore places</span>
+  </button>
+
   <div id="locbrowser-backdrop"></div>
-  <aside id="locbrowser" role="dialog" aria-label="Explore locations">
-    <div id="locbrowser-handle"><span></span></div>
-    <header>
-      <h3 id="locbrowser-title">Explore</h3>
-      <button id="locbrowser-close" type="button" aria-label="Close">✕</button>
-    </header>
+  <div id="locbrowser" role="dialog" aria-label="Explore locations">
     <div id="locbrowser-search-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/>
+      </svg>
       <input id="locbrowser-search" type="search" placeholder="Search places…"
              autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <button id="locbrowser-close" type="button" aria-label="Close">✕</button>
     </div>
     <div id="locbrowser-list"></div>
     <div id="locbrowser-empty">No places match your search</div>
-  </aside>
+  </div>
 
   <!-- Info icon -->
   <img id="info-icon" src="icons/info.svg" alt="About & Disclaimers" title="About & Disclaimers">
