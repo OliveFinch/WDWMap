@@ -131,6 +131,7 @@
 
   <!-- DEV: Date pill (replaces the date nav row) + Spotlight-style panel -->
   <div id="date-pill">
+    <!-- Single-date mode elements -->
     <button id="date-pill-prev" type="button" aria-label="Previous date">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -153,6 +154,25 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <polyline points="9,6 15,12 9,18"/>
+      </svg>
+    </button>
+
+    <!-- Compare mode elements (hidden by default) -->
+    <button id="date-pill-left" type="button" aria-haspopup="dialog" title="Change left date">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      <span id="date-pill-left-label">Older</span>
+    </button>
+    <span id="date-pill-vs">vs</span>
+    <button id="date-pill-right" type="button" aria-haspopup="dialog" title="Change right date">
+      <span id="date-pill-right-label">Newer</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
       </svg>
     </button>
   </div>

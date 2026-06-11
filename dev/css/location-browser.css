@@ -422,6 +422,120 @@ body.datebrowser-open #date-pill {
   transform: translateX(-50%) scale(0.92);
 }
 
+/* =========================================================
+   Compare Mode — transform pill to show two dates
+   ========================================================= */
+
+/* Hide compare elements by default */
+#date-pill-left,
+#date-pill-vs,
+#date-pill-right {
+  display: none;
+}
+
+/* In compare mode, hide single-date elements and show compare elements */
+#date-pill.compare-mode #date-pill-prev,
+#date-pill.compare-mode #date-pill-main,
+#date-pill.compare-mode #date-pill-next {
+  display: none;
+}
+
+#date-pill.compare-mode #date-pill-left,
+#date-pill.compare-mode #date-pill-vs,
+#date-pill.compare-mode #date-pill-right {
+  display: flex;
+}
+
+/* Left date button (older) */
+#date-pill-left {
+  appearance: none;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: transparent;
+  padding: 5px 10px 5px 6px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1d1d1f;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  min-width: 0;
+}
+
+#date-pill-left:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+#date-pill-left svg {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  color: #6e6e73;
+}
+
+#date-pill-left-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 85px;
+}
+
+/* "vs" separator */
+#date-pill-vs {
+  font-size: 11px;
+  font-weight: 600;
+  color: #86868b;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 0 2px;
+  user-select: none;
+}
+
+/* Right date button (newer) */
+#date-pill-right {
+  appearance: none;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: transparent;
+  padding: 5px 6px 5px 10px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1d1d1f;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  min-width: 0;
+}
+
+#date-pill-right:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+#date-pill-right svg {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  color: #6e6e73;
+}
+
+#date-pill-right-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 85px;
+}
+
+/* Also hide compare mode pill when browser is open */
+body.datebrowser-open #date-pill.compare-mode {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) scale(0.92);
+}
+
 /* Date browser backdrop */
 #datebrowser-backdrop {
   position: fixed;
