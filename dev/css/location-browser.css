@@ -59,7 +59,7 @@
   height: 17px;
   flex: 0 0 auto;
   color: #6e6e73;
-  margin-left: -4px;
+  margin-left: -9px;
 }
 
 #loc-pill-label {
@@ -307,8 +307,8 @@ body.locbrowser-open #loc-pill {
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 9px 18px;
+  gap: 2px;
+  padding: 4px 6px;
   border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 999px;
   background: rgba(252, 252, 254, 0.72);
@@ -322,7 +322,6 @@ body.locbrowser-open #loc-pill {
   font-size: 14px;
   font-weight: 500;
   color: #1d1d1f;
-  cursor: pointer;
   z-index: 1200;
   transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
   touch-action: manipulation;
@@ -330,19 +329,72 @@ body.locbrowser-open #loc-pill {
 
 #date-pill:hover {
   background: rgba(255, 255, 255, 0.88);
-  transform: translateX(-50%) scale(1.03);
 }
 
-#date-pill:active {
-  transform: translateX(-50%) scale(0.98);
+/* Prev / next arrow buttons inside the pill */
+#date-pill-prev,
+#date-pill-next {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #6e6e73;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+  flex: 0 0 auto;
 }
 
-#date-pill svg {
+#date-pill-prev:hover,
+#date-pill-next:hover {
+  background: rgba(0, 0, 0, 0.07);
+}
+
+#date-pill-prev svg,
+#date-pill-next svg {
+  width: 14px;
+  height: 14px;
+}
+
+#date-pill-prev.disabled,
+#date-pill-next.disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* Center section: calendar icon + label + chevron, opens the menu */
+#date-pill-main {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  background: transparent;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  min-width: 0;
+}
+
+#date-pill-main:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+#date-pill-main > svg:first-child {
   width: 15px;
   height: 15px;
   flex: 0 0 auto;
   color: #6e6e73;
-  margin-left: -2px;
+  margin-left: -3px;
 }
 
 #date-pill-label {
@@ -354,8 +406,8 @@ body.locbrowser-open #loc-pill {
 #date-pill .date-pill-chevron {
   width: 12px;
   height: 12px;
+  flex: 0 0 auto;
   color: #8e8e93;
-  margin-right: -4px;
   transition: transform 0.2s ease;
 }
 
@@ -392,7 +444,7 @@ body.datebrowser-open #date-pill {
   top: calc(14px + env(safe-area-inset-top, 0));
   left: 50%;
   transform: translateX(-50%) translateY(-10px) scale(0.97);
-  width: min(320px, 88vw);
+  width: min(210px, 64vw);
   max-height: min(52vh, 420px);
   display: flex;
   flex-direction: column;
