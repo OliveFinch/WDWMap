@@ -731,21 +731,85 @@ body.datebrowser-open #date-pill.compare-mode {
 
 #info-close {
   appearance: none;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
   border: none;
-  border-radius: 999px;
+  border-radius: 50%;
   background: rgba(0, 0, 0, 0.07);
   color: #6e6e73;
-  font-family: inherit;
   font-size: 13px;
-  font-weight: 600;
-  padding: 7px 14px;
+  font-weight: 700;
+  line-height: 1;
   cursor: pointer;
   transition: background 0.15s ease;
 }
 
 #info-close:hover {
   background: rgba(0, 0, 0, 0.13);
-  color: #1d1d1f;
+}
+
+/* =========================================================
+   Park selector — match the frosted-glass flyout style
+   ========================================================= */
+#parks-overlay {
+  background: rgba(0, 0, 0, 0.18) !important;
+}
+
+#parks-modal {
+  border: 1px solid rgba(255, 255, 255, 0.65) !important;
+  border-radius: 18px !important;
+  background: rgba(250, 250, 252, 0.82) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  backdrop-filter: blur(28px) saturate(1.8);
+  box-shadow:
+    0 18px 60px rgba(0, 0, 0, 0.30),
+    0 2px 10px rgba(0, 0, 0, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif !important;
+}
+
+#parks-modal header {
+  padding: 14px 16px 10px !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  background: transparent !important;
+}
+
+#parks-modal header h3 {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #1d1d1f !important;
+}
+
+#parks-modal .body {
+  padding: 8px !important;
+}
+
+#parks-modal .park-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background: none !important;
+  border: none !important;
+  padding: 11px 14px !important;
+  border-radius: 11px !important;
+  cursor: pointer;
+  text-align: center;
+  font-family: inherit;
+  font-size: 15px !important;
+  color: #1d1d1f !important;
+  transition: background 0.12s ease;
+}
+
+#parks-modal .park-btn:hover {
+  background: rgba(0, 113, 227, 0.10) !important;
+}
+
+#parks-modal .park-btn.current {
+  background: rgba(0, 113, 227, 0.14) !important;
+  font-weight: 600 !important;
+  color: #0a3d91 !important;
 }
 
 /* =========================================================
