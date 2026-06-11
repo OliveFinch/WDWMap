@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Magic Parks Explorer (DEV)</title>
+
+  <!-- Prevent page zoom / smart zoom while keeping map gestures -->
+  <meta id="viewport-meta" name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+
+  <!-- OpenLayers CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
+
+  <!-- Your app CSS -->
+  <link rel="stylesheet" href="./css/app.css">
+
+  <!-- DEV: Location Browser mockup -->
+  <link rel="stylesheet" href="./css/location-browser.css">
+
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <meta name="theme-color" content="#23287b">
+  <meta property="og:title" content="Magic Parks Explorer">
+  <meta property="og:description" content="Explore historical Disney World maps with custom overlays.">
+  <meta property="og:image" content="icon-512.png">
+  <meta property="og:type" content="website">
+
+  <!-- DEV: analytics beacon removed so test sessions don't pollute stats -->
+
+</head>
+
+<body>
+  <div id="map"></div>
+
+  <!-- Hidden date buttons (kept for JS references, no longer visible) -->
+  <button id="left-date-btn" type="button" style="display:none!important;"></button>
+  <button id="date-btn" type="button" style="display:none!important;"></button>
+
+  <!-- TOP RIGHT -->
+  <div class="group-top-right" id="grp-top-right">
+    <button id="toggle-btn" class="btn-square" title="Switch Disney/Satellite">
+      <img id="toggle-icon-img" src="icons/satellite.svg" alt="Satellite">
+    </button>
+
+    
+    <button id="roads-btn" class="btn-square" title="Roads overlay">
+      <img id="roads-icon-img" src="icons/roads.svg" alt="Roads">
+    </button>
+<button id="compare-btn" class="btn-square" title="Compare Mode">
+      <img src="icons/compare.svg" alt="Compare">
+    </button>
+
+    <button id="highlight-btn" class="btn-square" title="Highlight Changes">
+      <img src="icons/highlight.svg" alt="Highlight">
+    </button>
+
+    <button id="settings-btn" class="btn-square" title="Show/Hide Sensitivity">
+      <img src="icons/settings.svg" alt="Settings">
+    </button>
+
+    <button id="daynight-btn" class="btn-square" title="Day/Night Mode" style="display:none;">
+      <img id="daynight-icon-img" src="icons/daynight.svg" alt="Day/Night">
+    </button>
+
+    <button id="rotate-btn" class="btn-square" title="Rotate Map 90°" style="display:none;">
+      <img src="icons/rotate.svg" alt="Rotate">
+    </button>
+  </div>
+
+  <!-- Popups -->
+  <div id="date-popup"></div>
+  <div id="left-date-popup"></div>
+
+  <!-- TOP LEFT -->
+  <div class="group-top-left" id="grp-top-left">
+    <div class="zoom-stack">
+      <button id="zoom-in-btn" class="btn-square" title="Zoom in">
+        <img src="icons/zoom_in.svg" alt="Zoom in">
+      </button>
+      <button id="zoom-out-btn" class="btn-square" title="Zoom out">
+        <img src="icons/zoom_out.svg" alt="Zoom out">
+      </button>
+    </div>
+  </div>
+
+  <!-- BOTTOM RIGHT -->
+  <div class="group-bottom-right" id="grp-bottom-right">
+    <!-- Changes / Report -->
+    <button id="changes-btn" class="btn-square" title="Recent changes">
+      <img src="icons/new.svg" alt="Changes">
+    </button>
+<button id="findme-btn" class="btn-square" title="Locate Me">
+      <img src="icons/locateme.svg" alt="Locate Me">
+    </button>
+
+    <button id="share-btn" class="btn-square" title="Share this view">
+      <img src="icons/share.svg" alt="Share">
+    </button>
+
+    <button id="parks-btn" class="btn-square" title="Switch Park">
+      <img src="icons/globe.svg" alt="Parks">
+    </button>
+</div>
+
+  <div id="findme-message"></div>
+  <div id="toast-message"></div>
+  <div id="date-nav-row">
+    <button id="date-prev-btn" class="date-nav-arrow" title="Previous date">
+      <svg viewBox="0 0 24 24" width="18" height="18"><polyline points="15,6 9,12 15,18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div id="current-date-display">
+      <span id="single-date-label"></span>
+      <span id="left-date-label"></span>
+      <span id="vs-label">vs</span>
+      <span id="right-date-label"></span>
+    </div>
+    <button id="date-next-btn" class="date-nav-arrow" title="Next date">
+      <svg viewBox="0 0 24 24" width="18" height="18"><polyline points="9,6 15,12 9,18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+
+  <!-- Location Dock -->
+  <!-- Populated from the park config's "locations" array (js/core.js) -->
+  <div id="location-dock" aria-label="Quick location shortcuts"></div>
+
+  <!-- DEV badge -->
+  <div id="dev-badge">DEV</div>
+
+  <!-- DEV: Location Browser (desktop: left panel / mobile: bottom sheet) -->
+  <div id="locbrowser-backdrop"></div>
+  <aside id="locbrowser" role="dialog" aria-label="Explore locations">
+    <div id="locbrowser-handle"><span></span></div>
+    <header>
+      <h3 id="locbrowser-title">Explore</h3>
+      <button id="locbrowser-close" type="button" aria-label="Close">✕</button>
+    </header>
+    <div id="locbrowser-search-row">
+      <input id="locbrowser-search" type="search" placeholder="Search places…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <div id="locbrowser-list"></div>
+    <div id="locbrowser-empty">No places match your search</div>
+  </aside>
+
+  <!-- Info icon -->
+  <img id="info-icon" src="icons/info.svg" alt="About & Disclaimers" title="About & Disclaimers">
+
+  <!-- Info overlay -->
+  <div id="info-overlay" role="dialog" aria-modal="true" aria-labelledby="info-title">
+    <div class="panel">
+      <header>
+        <h2 id="info-title">About Magic Parks Explorer</h2>
+        <button id="info-close" type="button" aria-label="Close">Close</button>
+      </header>
+      <section>
+        <p>
+          Magic Parks Explorer is a fan-made app by Ashley Burton that lets you delve into the 
+          fantastically detailed Disney resort maps, compare them over time, and explore how they’ve evolved.
+          Use the date selector on the top right to jump between years, the compare mode to swipe 
+          between two dates, and the dock to quickly pan to popular locations.
+        </p>
+
+        <p>
+          Connect with me on <a href="https://www.linkedin.com/in/ashleyjburton/">LinkedIn</a>.
+        </p>
+
+        <h3>Disclaimers</h3>
+        <ul>
+          <li>This is an unofficial fan project and is not affiliated with The Walt Disney Company.</li>
+          <li>All Disney map imagery © Disney, is publically avaiable and used here for educational and historical exploration.</li>
+          <li>Satellite imagery via ESRI Wayback and partners; roads via Google tiles.</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+
+  <!-- Service Mode overlay (activated by clicking info icon 4 times in 1.5s) -->
+  <div id="service-mode-overlay" style="display:none;">
+    <div id="service-mode-crosshair">
+      <div id="crosshair-h"></div>
+      <div id="crosshair-v"></div>
+      <div id="crosshair-center"></div>
+    </div>
+    <div id="service-mode-label">Service Mode</div>
+    <div id="service-mode-info">
+      <div id="service-mode-center"></div>
+      <div id="service-mode-hint">Click anywhere to copy center coordinates</div>
+    </div>
+    <div id="service-mode-server">
+      <div id="service-mode-server-info">
+        <span>Current: </span><span id="service-mode-current-server">--</span>
+      </div>
+      <div id="service-mode-custom">
+        <input type="text" id="service-mode-custom-input" placeholder="Disney map code">
+        <button id="service-mode-load-custom" type="button">Load</button>
+      </div>
+    </div>
+    <div id="service-mode-version-check">
+      <button id="service-mode-check-versions" type="button">Check Map Versions</button>
+      <div id="service-mode-version-status"></div>
+    </div>
+    <button id="service-mode-close" type="button">Exit Service Mode</button>
+  </div>
+
+  <div id="swipe-thumb"></div>
+  <div id="swipe-handle" title="Drag to compare"></div>
+
+  <div id="sensitivity-row">
+    <label for="sensitivity-slider">Highlight Sensitivity</label>
+    <input type="range" id="sensitivity-slider" min="10" max="30" value="20">
+  </div>
+
+  <!-- Changes board + Report modal (your existing markup) -->
+  <div id="changes-overlay" aria-hidden="true"></div>
+  <aside id="changes-board" aria-label="Recent changes" role="dialog" aria-modal="true">
+    <header>
+      <h3>Recent changes</h3>
+      <button id="changes-close" type="button">Close</button>
+    </header>
+    <div class="meta" id="changes-meta">Loading…</div>
+
+    <div class="changes-cta">
+      <div class="changes-cta-text">Want to report something that looks out of date?</div>
+      <button id="report-btn" type="button" class="changes-cta-btn">Report a change</button>
+    </div>
+    <div id="changes-list"></div>
+  </aside>
+
+
+  <div id="parks-overlay" aria-hidden="true"></div>
+  <div id="parks-modal" role="dialog" aria-modal="true" aria-label="Choose a park">
+    <header>
+      <h3>Choose a park</h3>
+</header>
+    <div class="body">
+      <div id="parks-list" class="parks-list"></div>
+    </div>
+  </div>
+
+  <div id="report-overlay" aria-hidden="true"></div>
+  <div id="report-modal" role="dialog" aria-modal="true" aria-label="Report a change">
+    <header>
+      <h3>Report a change</h3>
+      <button id="report-close" type="button">Close</button>
+    </header>
+
+    <div class="body">
+      <!-- Instruction you asked for -->
+      <p class="hint" style="margin-top:0;">
+        Before submitting, pan/zoom the map so the change is centred on screen. Your report will capture the current map, centre point and zoom level.
+      </p>
+
+      <div class="form-row">
+        <label for="report-name">Your name</label>
+        <input id="report-name" type="text" maxlength="60" placeholder="Optional">
+      </div>
+
+      <div class="form-row">
+        <label for="report-type">Type</label>
+        <select id="report-type">
+          <option value="new">New (ride, road, building)</option>
+          <option value="changed">Changed (layout, entrance, path)</option>
+          <option value="removed">Removed (closed, demolished)</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="report-desc">What changed?</label>
+        <textarea id="report-desc" maxlength="800" placeholder="Describe what you see, as clearly as you can."></textarea>
+      </div>
+    </div>
+
+    <div id="report-actions">
+      <button id="report-cancel" class="btn-secondary" type="button">Cancel</button>
+      <button id="report-submit" class="btn-primary" type="button">Send report</button>
+    </div>
+
+    <div id="report-status"></div>
+  </div>
+
+  <!-- OpenLayers JS -->
+  <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
+
+  <!-- Disable browser zoom (keep as-is, inline is fine) -->
+  <script>
+    (function () {
+      document.addEventListener('wheel', (e) => { if (e.ctrlKey || e.metaKey) e.preventDefault(); }, { passive: false, capture: true });
+      ['gesturestart', 'gesturechange', 'gestureend'].forEach(type => {
+        window.addEventListener(type, (e) => e.preventDefault(), { passive: false, capture: true });
+      });
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && ['+', '=', '-', '0'].includes(e.key)) { e.preventDefault(); }
+      }, { capture: true });
+      window.addEventListener('dblclick', (e) => { e.preventDefault(); }, { passive: false, capture: true });
+      document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+    })();
+  </script>
+
+  <!-- Your JS: core first, then app -->
+  <script src="./js/core.js" defer></script>
+  <script src="./js/app.js" defer></script>
+
+  <!-- DEV: Location Browser mockup -->
+  <script src="./js/location-browser.js" defer></script>
+</body>
+</html>
