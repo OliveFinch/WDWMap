@@ -2143,10 +2143,24 @@
     window.WDWMX.ol = ol;
     window.WDWMX.getMap = () => map;
     window.WDWMX.getCurrentCode = () => currentCode;
+    window.WDWMX.getLeftCode = () => leftCode;
     window.WDWMX.getRightCode = () => rightCode;
     window.WDWMX.getCompareMode = () => compareMode;
     window.WDWMX.getLabelForCode = (code) => getLabelForCode(code);
     window.WDWMX.setSingleDate = (code) => setSingleDate(code);
+    window.WDWMX.setCompareLeftDate = (code) => {
+      if (!compareMode || !showingDisney) return;
+      leftCode = code;
+      saveLastLeftCode(code);
+      (highlightMode ? launchHighlightMode : launchSwipeMode)();
+      updateDateUI();
+    };
+    window.WDWMX.setCompareRightDate = (code) => {
+      if (!compareMode || !showingDisney) return;
+      rightCode = code;
+      (highlightMode ? launchHighlightMode : launchSwipeMode)();
+      updateDateUI();
+    };
     window.WDWMX.getServers = () => serverOptions;
     window.WDWMX.getSatServers = () => satOptions;
     window.WDWMX.getServersUrl = (parkId) => getServersUrl(parkId);

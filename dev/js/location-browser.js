@@ -320,13 +320,19 @@
 (function () {
   'use strict';
 
+  const datePillEl = document.getElementById('date-pill');
   const datePillMain = document.getElementById('date-pill-main');
   const datePillPrev = document.getElementById('date-pill-prev');
   const datePillNext = document.getElementById('date-pill-next');
   const datePillLabel = document.getElementById('date-pill-label');
+  const datePillLeft = document.getElementById('date-pill-left');
+  const datePillLeftLabel = document.getElementById('date-pill-left-label');
+  const datePillRight = document.getElementById('date-pill-right');
+  const datePillRightLabel = document.getElementById('date-pill-right-label');
   const dateBrowserEl = document.getElementById('datebrowser');
   const dateBackdropEl = document.getElementById('datebrowser-backdrop');
   const dateCloseBtn = document.getElementById('datebrowser-close');
+  const dateBrowserTitle = document.getElementById('datebrowser-title');
   const dateListEl = document.getElementById('datebrowser-list');
 
   if (!datePillMain || !dateBrowserEl || !dateListEl) return;
@@ -334,8 +340,9 @@
   let isOpen = false;
   let currentDateBtn = null;
   let kbdFocusBtn = null;
+  let pickingSide = null; // null, 'left', or 'right' (for compare mode)
 
-  function openDateBrowser() {
+  function openDateBrowser(side) {
     // Close location browser if open
     document.body.classList.remove('locbrowser-open');
     const locPanel = document.getElementById('locbrowser');
@@ -343,10 +350,24 @@
     if (locPanel) locPanel.classList.remove('open');
     if (locBackdrop) locBackdrop.classList.remove('open');
 
+    pickingSide = side || null;
     isOpen = true;
     dateBrowserEl.classList.add('open');
     dateBackdropEl.classList.add('open');
     document.body.classList.add('datebrowser-open');
+
+    // Update title for compare mode
+    if (pickingSide === 'left') {
+      dateBrowserTitle.textContent = 'Select Older Date';
+      buildDateListForCompare('left');
+    } else if (pickingSide === 'right') {
+      dateBrowserTitle.textContent = 'Select Newer Date';
+      buildDateListForCompare('right');
+    } else {
+      dateBrowserTitle.textContent = 'Select Date';
+      buildDateList();
+    }
+
     // Scroll the current selection into view
     setTimeout(() => {
       if (currentDateBtn) {
@@ -357,6 +378,7 @@
 
   function closeDateBrowser() {
     isOpen = false;
+    pickingSide = null;
     dateBrowserEl.classList.remove('open');
     dateBackdropEl.classList.remove('open');
     document.body.classList.remove('datebrowser-open');
@@ -373,7 +395,7 @@
   }
 
   function visibleItems() {
-    return Array.from(dateListEl.querySelectorAll('.dateitem'));
+    return Array.from(dateListEl.querySelectorAll('.dateitem:not([style*="display: none"])'));
   }
 
   function moveKbdFocus(delta) {
@@ -389,7 +411,6 @@
 
     const servers = WDWMX.getServers ? WDWMX.getServers() : [];
     const currentCode = WDWMX.getCurrentCode ? WDWMX.getCurrentCode() : null;
-    const getLabelForCode = WDWMX.getLabelForCode || ((c) => c);
 
     // Reverse so newest is at the top
     const reversed = servers.slice().reverse();
@@ -425,35 +446,100 @@
     });
   }
 
-  // Keep the pill in sync with the app's date state (covers arrow nav,
-  // changes-board jumps, custom server loads - anything that moves the date)
-  function syncFromCore() {
-    const currentCode = WDWMX.getCurrentCode ? WDWMX.getCurrentCode() : null;
-    const getLabelForCode = WDWMX.getLabelForCode || ((c) => c);
-    if (currentCode) {
-      datePillLabel.textContent = getLabelForCode(currentCode) || currentCode;
-    }
+  function buildDateListForCompare(side) {
+    dateListEl.innerHTML = '';
 
-    // Update highlighted item in the list
-    if (currentDateBtn) currentDateBtn.classList.remove('current');
-    currentDateBtn = dateListEl.querySelector(`.dateitem[data-code="${currentCode}"]`);
-    if (currentDateBtn) currentDateBtn.classList.add('current');
+    const servers = WDWMX.getServers ? WDWMX.getServers() : [];
+    const leftCode = WDWMX.getLeftCode ? WDWMX.getLeftCode() : null;
+    const rightCode = WDWMX.getRightCode ? WDWMX.getRightCode() : null;
 
-    // Mirror the disabled state of core's hidden nav arrows
-    const corePrev = document.getElementById('date-prev-btn');
-    const coreNext = document.getElementById('date-next-btn');
-    if (corePrev) datePillPrev.classList.toggle('disabled', corePrev.classList.contains('disabled'));
-    if (coreNext) datePillNext.classList.toggle('disabled', coreNext.classList.contains('disabled'));
+    // Reverse so newest is at the top
+    const reversed = servers.slice().reverse();
+
+    // For left (older) side, only show dates older than right date
+    // For right (newer) side, only show dates newer than left date
+    const rightIdx = servers.findIndex(s => s.code === rightCode);
+    const leftIdx = servers.findIndex(s => s.code === leftCode);
+
+    reversed.forEach((server) => {
+      const serverIdx = servers.findIndex(s => s.code === server.code);
+
+      // Filter: left must be older (lower index) than right
+      // right must be newer (higher index) than left
+      if (side === 'left' && serverIdx >= rightIdx && rightIdx >= 0) return;
+      if (side === 'right' && serverIdx <= leftIdx && leftIdx >= 0) return;
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'dateitem';
+      btn.dataset.code = server.code;
+      btn.textContent = server.label || server.code;
+
+      // Highlight current selection for this side
+      const isCurrentSelection = (side === 'left' && server.code === leftCode) ||
+                                  (side === 'right' && server.code === rightCode);
+      if (isCurrentSelection) {
+        btn.classList.add('current');
+        currentDateBtn = btn;
+      }
+
+      btn.addEventListener('click', () => {
+        // Use the exposed API to set compare dates
+        if (side === 'left' && WDWMX.setCompareLeftDate) {
+          WDWMX.setCompareLeftDate(server.code);
+        } else if (side === 'right' && WDWMX.setCompareRightDate) {
+          WDWMX.setCompareRightDate(server.code);
+        }
+
+        closeDateBrowser();
+        setTimeout(syncFromCore, 80);
+      });
+
+      dateListEl.appendChild(btn);
+    });
   }
 
-  // Wiring
+  // Keep the pill in sync with the app's date state
+  function syncFromCore() {
+    const currentCode = WDWMX.getCurrentCode ? WDWMX.getCurrentCode() : null;
+    const leftCode = WDWMX.getLeftCode ? WDWMX.getLeftCode() : null;
+    const rightCode = WDWMX.getRightCode ? WDWMX.getRightCode() : null;
+    const getLabelForCode = WDWMX.getLabelForCode || ((c) => c);
+    const compareMode = WDWMX.getCompareMode ? WDWMX.getCompareMode() : false;
+
+    // Toggle compare mode class on the pill
+    datePillEl.classList.toggle('compare-mode', compareMode);
+
+    if (compareMode) {
+      // Sync left/right labels from the API
+      datePillLeftLabel.textContent = leftCode ? (getLabelForCode(leftCode) || leftCode) : 'Older';
+      datePillRightLabel.textContent = rightCode ? (getLabelForCode(rightCode) || rightCode) : 'Newer';
+    } else {
+      // Single date mode
+      if (currentCode) {
+        datePillLabel.textContent = getLabelForCode(currentCode) || currentCode;
+      }
+
+      // Update highlighted item in the list
+      if (currentDateBtn) currentDateBtn.classList.remove('current');
+      currentDateBtn = dateListEl.querySelector(`.dateitem[data-code="${currentCode}"]`);
+      if (currentDateBtn) currentDateBtn.classList.add('current');
+
+      // Mirror the disabled state of core's hidden nav arrows
+      const corePrev = document.getElementById('date-prev-btn');
+      const coreNext = document.getElementById('date-next-btn');
+      if (corePrev) datePillPrev.classList.toggle('disabled', corePrev.classList.contains('disabled'));
+      if (coreNext) datePillNext.classList.toggle('disabled', coreNext.classList.contains('disabled'));
+    }
+  }
+
+  // Wiring — Single date mode
   datePillMain.addEventListener('click', () => {
     if (isOpen) closeDateBrowser();
-    else openDateBrowser();
+    else openDateBrowser(null);
   });
 
-  // Arrows proxy to core.js's existing (hidden) nav buttons so all the
-  // step logic and bounds checking stay in one place
+  // Arrows proxy to core.js's existing (hidden) nav buttons
   datePillPrev.addEventListener('click', () => {
     const coreBtn = document.getElementById('date-prev-btn');
     if (coreBtn) coreBtn.click();
@@ -463,6 +549,16 @@
     const coreBtn = document.getElementById('date-next-btn');
     if (coreBtn) coreBtn.click();
     setTimeout(syncFromCore, 50);
+  });
+
+  // Wiring — Compare mode
+  datePillLeft.addEventListener('click', () => {
+    if (isOpen && pickingSide === 'left') closeDateBrowser();
+    else openDateBrowser('left');
+  });
+  datePillRight.addEventListener('click', () => {
+    if (isOpen && pickingSide === 'right') closeDateBrowser();
+    else openDateBrowser('right');
   });
 
   dateCloseBtn.addEventListener('click', closeDateBrowser);
@@ -484,11 +580,12 @@
       buildDateList();
       syncFromCore();
 
-      // Watch core's date label so the pill follows any date change made
-      // outside the pill (changes board, share links, service mode, etc.)
-      const coreLabel = document.getElementById('single-date-label');
-      if (coreLabel && window.MutationObserver) {
-        new MutationObserver(syncFromCore).observe(coreLabel, {
+      // Watch core's date display for compare mode changes and date updates
+      const currentDateDisplay = document.getElementById('current-date-display');
+      if (currentDateDisplay && window.MutationObserver) {
+        new MutationObserver(syncFromCore).observe(currentDateDisplay, {
+          attributes: true,
+          attributeFilter: ['class'],
           childList: true,
           characterData: true,
           subtree: true
