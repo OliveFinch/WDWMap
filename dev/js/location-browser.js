@@ -34,6 +34,13 @@
   // Open / close
   // =====================
   function openBrowser() {
+    // Close date browser if open
+    document.body.classList.remove('datebrowser-open');
+    const datePanel = document.getElementById('datebrowser');
+    const dateBackdrop = document.getElementById('datebrowser-backdrop');
+    if (datePanel) datePanel.classList.remove('open');
+    if (dateBackdrop) dateBackdrop.classList.remove('open');
+
     isOpen = true;
     browserEl.classList.add('open');
     backdropEl.classList.add('open');
@@ -271,10 +278,12 @@
       const radius = Math.max((parseFloat(best.width) || 0.004) * 0.7, 0.0015);
       if (bestDistSq <= radius * radius) {
         pillLabel.textContent = best.alt || parkName;
+        pillEl.classList.remove('fallback');
         return;
       }
     }
     pillLabel.textContent = parkName;
+    pillEl.classList.add('fallback');
   }
 
   // =====================
@@ -302,5 +311,143 @@
   }, 100);
 
   // Give up after 15s (e.g. boot failed); avoids polling forever
+  setTimeout(() => clearInterval(bootPoll), 15000);
+})();
+
+/* =========================================================
+   Date Browser — Spotlight-style date selector
+   ========================================================= */
+(function () {
+  'use strict';
+
+  const datePillEl = document.getElementById('date-pill');
+  const datePillLabel = document.getElementById('date-pill-label');
+  const dateBrowserEl = document.getElementById('datebrowser');
+  const dateBackdropEl = document.getElementById('datebrowser-backdrop');
+  const dateCloseBtn = document.getElementById('datebrowser-close');
+  const dateListEl = document.getElementById('datebrowser-list');
+
+  if (!datePillEl || !dateBrowserEl || !dateListEl) return;
+
+  let isOpen = false;
+  let currentDateBtn = null;
+  let kbdFocusBtn = null;
+
+  function openDateBrowser() {
+    // Close location browser if open
+    document.body.classList.remove('locbrowser-open');
+    const locPanel = document.getElementById('locbrowser');
+    const locBackdrop = document.getElementById('locbrowser-backdrop');
+    if (locPanel) locPanel.classList.remove('open');
+    if (locBackdrop) locBackdrop.classList.remove('open');
+
+    isOpen = true;
+    dateBrowserEl.classList.add('open');
+    dateBackdropEl.classList.add('open');
+    document.body.classList.add('datebrowser-open');
+    // Scroll the current selection into view
+    setTimeout(() => {
+      if (currentDateBtn) {
+        currentDateBtn.scrollIntoView({ block: 'center' });
+      }
+    }, 50);
+  }
+
+  function closeDateBrowser() {
+    isOpen = false;
+    dateBrowserEl.classList.remove('open');
+    dateBackdropEl.classList.remove('open');
+    document.body.classList.remove('datebrowser-open');
+    setKbdFocus(null);
+  }
+
+  function setKbdFocus(btn) {
+    if (kbdFocusBtn) kbdFocusBtn.classList.remove('kbd-focus');
+    kbdFocusBtn = btn;
+    if (kbdFocusBtn) {
+      kbdFocusBtn.classList.add('kbd-focus');
+      kbdFocusBtn.scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  function visibleItems() {
+    return Array.from(dateListEl.querySelectorAll('.dateitem'));
+  }
+
+  function moveKbdFocus(delta) {
+    const items = visibleItems();
+    if (!items.length) return;
+    const idx = kbdFocusBtn ? items.indexOf(kbdFocusBtn) : -1;
+    const next = Math.max(0, Math.min(items.length - 1, idx + delta));
+    setKbdFocus(items[next]);
+  }
+
+  function buildDateList() {
+    dateListEl.innerHTML = '';
+
+    const servers = WDWMX.getServers ? WDWMX.getServers() : [];
+    const currentCode = WDWMX.getCurrentCode ? WDWMX.getCurrentCode() : null;
+    const getLabelForCode = WDWMX.getLabelForCode || ((c) => c);
+
+    // Reverse so newest is at the top
+    const reversed = servers.slice().reverse();
+
+    reversed.forEach((server) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'dateitem';
+      btn.dataset.code = server.code;
+      btn.textContent = server.label || server.code;
+
+      if (server.code === currentCode) {
+        btn.classList.add('current');
+        currentDateBtn = btn;
+        datePillLabel.textContent = server.label || server.code;
+      }
+
+      btn.addEventListener('click', () => {
+        if (WDWMX.setSingleDate) {
+          WDWMX.setSingleDate(server.code);
+        }
+        datePillLabel.textContent = server.label || server.code;
+
+        // Update current styling
+        if (currentDateBtn) currentDateBtn.classList.remove('current');
+        btn.classList.add('current');
+        currentDateBtn = btn;
+
+        closeDateBrowser();
+      });
+
+      dateListEl.appendChild(btn);
+    });
+  }
+
+  // Wiring
+  datePillEl.addEventListener('click', () => {
+    if (isOpen) closeDateBrowser();
+    else openDateBrowser();
+  });
+
+  dateCloseBtn.addEventListener('click', closeDateBrowser);
+  dateBackdropEl.addEventListener('click', closeDateBrowser);
+
+  document.addEventListener('keydown', (e) => {
+    if (!isOpen) return;
+    if (e.key === 'Escape') { closeDateBrowser(); return; }
+    if (e.key === 'ArrowDown') { e.preventDefault(); moveKbdFocus(+1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); moveKbdFocus(-1); }
+    else if (e.key === 'Enter' && kbdFocusBtn) { e.preventDefault(); kbdFocusBtn.click(); }
+  });
+
+  // Wait for core.js boot
+  const bootPoll = setInterval(() => {
+    const servers = WDWMX.getServers && WDWMX.getServers();
+    if (servers && servers.length) {
+      clearInterval(bootPoll);
+      buildDateList();
+    }
+  }, 100);
+
   setTimeout(() => clearInterval(bootPoll), 15000);
 })();
