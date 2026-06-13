@@ -1,4 +1,4 @@
-{
+ {
   "parkId": "wdw",
   "name": "Walt Disney World",
   "tileTemplate": "https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/{code}/{z}/{x}/{y}.jpg",
@@ -34,7 +34,7 @@
     {
       "name": "Resort Hotels",
       "locations": [
-        { "coords": [-81.586600, 28.410300], "width": 0.0035, "icon": "icons/locations/marker.svg", "alt": "Grand Floridian Resort & Spa" },
+        { "coords": [-81.587231, 28.410852], "width": 0.005, "icon": "icons/locations/marker.svg", "alt": "Grand Floridian Resort & Spa" },
         { "coords": [-81.583600, 28.405600], "width": 0.0035, "icon": "icons/locations/marker.svg", "alt": "Polynesian Village Resort" },
         { "coords": [-81.574300, 28.415000], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Contemporary Resort" },
         { "coords": [-81.566600, 28.407600], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Wilderness Lodge" },
