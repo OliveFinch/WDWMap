@@ -72,9 +72,9 @@
         { "coords": [-81.556500, 28.337500], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "ESPN Wide World of Sports" },
         { "coords": [-81.593500, 28.408500], "width": 0.010, "icon": "icons/locations/marker.svg", "alt": "Magnolia & Palm Golf Courses" },
         { "coords": [-81.523000, 28.377000], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "Lake Buena Vista Golf Course" },
-        { "coords": [-81.561500, 28.364000], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Fantasia Gardens Mini Golf" },
-        { "coords": [-81.574000, 28.353500], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Winter Summerland Mini Golf" },
-        { "coords": [-81.580000, 28.406700], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Transportation & Ticket Center" }
+        { "coords": [-81.560526, 28.364074], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Fantasia Gardens Mini Golf" },
+        { "coords": [-81.574335, 28.353402], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Winter Summerland Mini Golf" },
+        { "coords": [-81.580035, 28.405038], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Transportation & Ticket Center" }
       ]
     }
   ],
