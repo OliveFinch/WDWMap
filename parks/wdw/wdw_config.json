@@ -45,6 +45,7 @@
         { "coords": [-81.555889, 28.366425], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "BoardWalk Inn & Villas" },
         { "coords": [-81.558633, 28.365583], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Walt Disney World Swan" },
         { "coords": [-81.560535, 28.367405], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Walt Disney World Dolphin" },
+        { "coords": [-81.561918, 28.364615], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Walt Disney Swan Reserve" },
         { "coords": [-81.542071, 28.362778], "width": 0.007, "icon": "icons/locations/marker.svg", "alt": "Caribbean Beach Resort" },
         { "coords": [-81.542013, 28.366035], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Riviera Resort" },
         { "coords": [-81.548574, 28.350275], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Art of Animation Resort" },
