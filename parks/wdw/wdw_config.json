@@ -97,7 +97,7 @@
     { "coords": [-81.542095, 28.391705], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Golden Oak Resort" },
     { "coords": [-81.528899, 28.406150], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Evermore Orlando Resort" }
   ]
-},
+}
   ],
   "minZoom": 11,
   "maxZoom": 20,
