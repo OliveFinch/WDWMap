@@ -73,13 +73,6 @@
       "name": "Disney Springs Resort Area",
       "locations": [
         { "coords": [-81.518325, 28.370757], "width": 0.008, "icon": "icons/locations/disney-springs.svg", "alt": "Disney Springs", "dock": true },
-        { "coords": [-coords], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Example Hotel" }
-      ]
-    },
-    {
-      "name": "Disney Springs Resort Area",
-      "locations": [
-        { "coords": [-81.518325, 28.370757], "width": 0.008, "icon": "icons/locations/disney-springs.svg", "alt": "Disney Springs", "dock": true },
         { "coords": [-81.514472, 28.376802], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Hilton Orlando Buena Vista Palace" },
         { "coords": [-81.511835, 28.375197], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Wyndham Garden Lake Buena Vista" },
         { "coords": [-81.511046, 28.372658], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Hilton Orlando Lake Buena Vista" },
@@ -88,7 +81,7 @@
         { "coords": [-81.508566, 28.378629], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Drury Plaza Hotel Orlando" },
         { "coords": [-81.506347, 28.379103], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "DoubleTree Suites by Hilton Orlando" }
       ]
-    }
+    },
   ],
   "minZoom": 11,
   "maxZoom": 20,
