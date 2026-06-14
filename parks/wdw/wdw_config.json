@@ -70,31 +70,25 @@
       ]
     },
     {
-      "name": "Shopping & Dining",
+      "name": "Disney Springs Resort Area",
       "locations": [
-        { "coords": [-81.518325, 28.370757], "width": 0.008, "icon": "icons/locations/disney-springs.svg", "alt": "Disney Springs", "dock": true }
+        { "coords": [-81.518325, 28.370757], "width": 0.008, "icon": "icons/locations/disney-springs.svg", "alt": "Disney Springs", "dock": true },
+        { "coords": [-coords], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Example Hotel" }
       ]
     },
-    {
-      "name": "Sports & Recreation",
-      "locations": [
-        { "coords": [-81.556500, 28.337500], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "ESPN Wide World of Sports" },
-        { "coords": [-81.603282, 28.402509], "width": 0.08, "icon": "icons/locations/marker.svg", "alt": "Magnolia Golf Course" },
-        { "coords": [-81.591238, 28.392922], "width": 0.08, "icon": "icons/locations/marker.svg", "alt": "Palm Golf Course" },
-        { "coords": [-81.595574, 28.405675], "width": 0.08, "icon": "icons/locations/marker.svg", "alt": "Oak Trail Golf Course" },
-        { "coords": [-81.523000, 28.377000], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "Lake Buena Vista Golf Course" },
-        { "coords": [-81.560526, 28.364074], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Fantasia Gardens Mini Golf" },
-        { "coords": [-81.574335, 28.353402], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Winter Summerland Mini Golf" },
-        { "coords": [-81.552287, 28.397210], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Horseback Trail Rides" },
-        { "coords": [-81.547804, 28.399323], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "Four Seasons Golf and Sports Club" },
-        { "coords": [-81.588808, 28.399792], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "Palm Driving Range" },
-        { "coords": [-81.537192, 28.352256], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "Waldorf Astoria Gold Club & Driving Range" },
-        { "coords": [-81.617026, 28.376568], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "Flamingo Crossings" },
-        { "coords": [-81.574115, 28.393301], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "Car Care Center" },
-        { "coords": [-81.521300, 28.365571], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "Team Disney" },
-        { "coords": [-81.580035, 28.405038], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Transportation & Ticket Center" }
-      ]
-    }
+{
+  "name": "Disney Springs Resort Area",
+  "locations": [
+    { "coords": [-81.518325, 28.370757], "width": 0.008, "icon": "icons/locations/disney-springs.svg", "alt": "Disney Springs", "dock": true },
+    { "coords": [-81.514472, 28.376802], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Hilton Orlando Buena Vista Palace" },
+    { "coords": [-81.511835, 28.375197], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Wyndham Garden Lake Buena Vista" },
+    { "coords": [-81.511046, 28.372658], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Hilton Orlando Lake Buena Vista" },
+    { "coords": [-81.508184, 28.375226], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Holiday Inn Orlando" },
+    { "coords": [-81.506828, 28.376809], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Renaissance Orlando Resort & Spa" },
+    { "coords": [-81.508566, 28.378629], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Drury Plaza Hotel Orlando" },
+    { "coords": [-81.506347, 28.379103], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "DoubleTree Suites by Hilton Orlando" }
+  ]
+}
   ],
   "minZoom": 11,
   "maxZoom": 20,
