@@ -32,20 +32,16 @@
       ]
     },
     {
-      "name": "Resort Hotels",
+      "name": "Disney Resorts",
       "locations": [
         { "coords": [-81.587757, 28.410853], "width": 0.005, "icon": "icons/locations/marker.svg", "alt": "Grand Floridian Resort & Spa" },
         { "coords": [-81.584337, 28.405531], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Polynesian Village Resort" },
         { "coords": [-81.574300, 28.415000], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Contemporary Resort" },
         { "coords": [-81.572666, 28.409327], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Wilderness Lodge" },
         { "coords": [-81.558528, 28.405654], "width": 0.009, "icon": "icons/locations/marker.svg", "alt": "Fort Wilderness Resort & Campground" },
-        { "coords": [-81.592426, 28.401971], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Shades of Green" },
         { "coords": [-81.558692, 28.370762], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Yacht Club Resort" },
         { "coords": [-81.556415, 28.371315], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Beach Club Resort" },
         { "coords": [-81.555889, 28.366425], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "BoardWalk Inn & Villas" },
-        { "coords": [-81.558633, 28.365583], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Walt Disney World Swan" },
-        { "coords": [-81.560535, 28.367405], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Walt Disney World Dolphin" },
-        { "coords": [-81.561918, 28.364615], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Walt Disney Swan Reserve" },
         { "coords": [-81.542071, 28.362778], "width": 0.007, "icon": "icons/locations/marker.svg", "alt": "Caribbean Beach Resort" },
         { "coords": [-81.542013, 28.366035], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Riviera Resort" },
         { "coords": [-81.548574, 28.350275], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Art of Animation Resort" },
@@ -61,6 +57,15 @@
         { "coords": [-81.536805, 28.380064], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Port Orleans Resort - French Quarter" }
       ]
     },
+       {
+      "name": "Partner Resorts",
+      "locations": [
+        { "coords": [-81.558633, 28.365583], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Walt Disney World Swan" },
+        { "coords": [-81.560535, 28.367405], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Walt Disney World Dolphin" },
+        { "coords": [-81.561918, 28.364615], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Walt Disney Swan Reserve" },
+        { "coords": [-81.592426, 28.401971], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Shades of Green" }
+      ]
+    },
     {
       "name": "Shopping & Dining",
       "locations": [
@@ -71,10 +76,19 @@
       "name": "Sports & Recreation",
       "locations": [
         { "coords": [-81.556500, 28.337500], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "ESPN Wide World of Sports" },
-        { "coords": [-81.593500, 28.408500], "width": 0.010, "icon": "icons/locations/marker.svg", "alt": "Magnolia & Palm Golf Courses" },
+        { "coords": [-81.603282, 28.402509], "width": 0.08, "icon": "icons/locations/marker.svg", "alt": "Magnolia Golf Course" },
+        { "coords": [-81.591238, 28.392922], "width": 0.08, "icon": "icons/locations/marker.svg", "alt": "Palm Golf Course" },
+        { "coords": [-81.595574, 28.405675], "width": 0.08, "icon": "icons/locations/marker.svg", "alt": "Oak Trail Golf Course" },
         { "coords": [-81.523000, 28.377000], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "Lake Buena Vista Golf Course" },
         { "coords": [-81.560526, 28.364074], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Fantasia Gardens Mini Golf" },
         { "coords": [-81.574335, 28.353402], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Winter Summerland Mini Golf" },
+        { "coords": [-81.552287, 28.397210], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Horseback Trail Rides" },
+        { "coords": [-81.547804, 28.399323], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "Four Seasons Golf and Sports Club" },
+        { "coords": [-81.588808, 28.399792], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "Palm Driving Range" },
+        { "coords": [-81.537192, 28.352256], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "Waldorf Astoria Gold Club & Driving Range" },
+        { "coords": [-81.617026, 28.376568], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "Flamingo Crossings" },
+        { "coords": [-81.574115, 28.393301], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "Car Care Center" },
+        { "coords": [-81.521300, 28.365571], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "Team Disney" },
         { "coords": [-81.580035, 28.405038], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Transportation & Ticket Center" }
       ]
     }
