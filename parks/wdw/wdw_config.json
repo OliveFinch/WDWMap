@@ -82,6 +82,22 @@
         { "coords": [-81.506347, 28.379103], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "DoubleTree Suites by Hilton Orlando" }
       ]
     },
+   {
+  "name": "Bonnet Creek Area",
+  "locations": [
+    { "coords": [-81.534403, 28.354411], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Waldorf Astoria Orlando" },
+    { "coords": [-81.536846, 28.359084], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Wyndham Grand Orlando Resort" },
+    { "coords": [-81.526316, 28.358068], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "JW Marriott Orlando Resort and Spa" }
+  ]
+},
+{
+  "name": "Golden Oak Area",
+  "locations": [
+    { "coords": [-81.546134, 28.402115], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Four Seasons Resort Orlando" },
+    { "coords": [-81.542095, 28.391705], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Golden Oak Resort" },
+    { "coords": [-81.528899, 28.406150], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Evermore Orlando Resort" }
+  ]
+},
   ],
   "minZoom": 11,
   "maxZoom": 20,
