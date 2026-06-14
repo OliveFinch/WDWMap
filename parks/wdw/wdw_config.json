@@ -105,7 +105,8 @@
     { "coords": [-81.617026, 28.376568], "width": 0.009, "icon": "icons/locations/marker.svg", "alt": "Flamingo Crossings" },
     { "coords": [-81.574115, 28.393301], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Car Care Centre" },
     { "coords": [-81.540580, 28.385688], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Best Friends Pet Hotel" },
-    { "coords": [-81.521300, 28.365571], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Team Disney" }
+    { "coords": [-81.521300, 28.365571], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Team Disney" },
+    { "coords": [-81.512783, 28.369731], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Casting Center" }
   ]
 },
    {
