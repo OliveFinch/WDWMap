@@ -36,7 +36,9 @@
       "locations": [
         { "coords": [-81.587757, 28.410853], "width": 0.005, "icon": "icons/locations/marker.svg", "alt": "Grand Floridian Resort & Spa" },
         { "coords": [-81.584337, 28.405531], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Polynesian Village Resort" },
+        { "coords": [-81.587135, 28.406969], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Island Tower at Polynesian Resort" },
         { "coords": [-81.574300, 28.415000], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Contemporary Resort" },
+        { "coords": [-81.573288, 28.416431], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Bay Lake Tower" },
         { "coords": [-81.572666, 28.409327], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Wilderness Lodge" },
         { "coords": [-81.558528, 28.405654], "width": 0.009, "icon": "icons/locations/marker.svg", "alt": "Fort Wilderness Resort & Campground" },
         { "coords": [-81.558692, 28.370762], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Yacht Club Resort" },
@@ -47,6 +49,7 @@
         { "coords": [-81.548574, 28.350275], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Art of Animation Resort" },
         { "coords": [-81.542920, 28.350282], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Pop Century Resort" },
         { "coords": [-81.603453, 28.352601], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Animal Kingdom Lodge" },
+        { "coords": [-81.605603, 28.354404], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Animal Kingdom Villas - Kidani Village" },
         { "coords": [-81.572770, 28.362880], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "Coronado Springs Resort" },
         { "coords": [-81.575303, 28.343631], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "All-Star Sports Resort" },
         { "coords": [-81.572750, 28.339591], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "All-Star Music Resort" },
