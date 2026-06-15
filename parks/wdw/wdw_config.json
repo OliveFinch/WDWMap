@@ -87,7 +87,7 @@
   "locations": [
     { "coords": [-81.556500, 28.337500], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "ESPN Wide World of Sports" },
     { "coords": [-81.523000, 28.377000], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "Lake Buena Vista Golf Course" },
-    { "coords": [-81.561500, 28.364000], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Fantasia Gardens Mini Golf" },
+    { "coords": [-81.560408, 28.363940], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Fantasia Gardens Mini Golf" },
     { "coords": [-81.574000, 28.353500], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Winter Summerland Mini Golf" },
     { "coords": [-81.547804, 28.399323], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Four Seasons Golf and Sports Club" },
     { "coords": [-81.552287, 28.397210], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Horseback Trail Rides" },
