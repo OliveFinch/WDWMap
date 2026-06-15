@@ -41,6 +41,7 @@
         { "coords": [-81.573288, 28.416431], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Bay Lake Tower" },
         { "coords": [-81.572666, 28.409327], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Wilderness Lodge" },
         { "coords": [-81.558528, 28.405654], "width": 0.009, "icon": "icons/locations/marker.svg", "alt": "Fort Wilderness Resort & Campground" },
+        { "coords": [-81.558053, 28.398823], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "The Cabins at Fort Wilderness" },
         { "coords": [-81.558692, 28.370762], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Yacht Club Resort" },
         { "coords": [-81.556415, 28.371315], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Beach Club Resort" },
         { "coords": [-81.555889, 28.366425], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "BoardWalk Inn & Villas" },
@@ -55,6 +56,7 @@
         { "coords": [-81.572750, 28.339591], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "All-Star Music Resort" },
         { "coords": [-81.572162, 28.336061], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "All-Star Movies Resort" },
         { "coords": [-81.521956, 28.376291], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "Saratoga Springs Resort & Spa" },
+        { "coords": [-81.529100, 28.378048], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Treehouse Villas at Saratoga Springs" },
         { "coords": [-81.533401, 28.375050], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "Old Key West Resort" },
         { "coords": [-81.536678, 28.386022], "width": 0.005, "icon": "icons/locations/marker.svg", "alt": "Port Orleans Resort - Riverside" },
         { "coords": [-81.536805, 28.380064], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Port Orleans Resort - French Quarter" }
@@ -86,7 +88,7 @@
   "name": "Sports & Recreation",
   "locations": [
     { "coords": [-81.556500, 28.337500], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "ESPN Wide World of Sports" },
-    { "coords": [-81.527556, 28.373764], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "Lake Buena Vista Golf Course" },
+    { "coords": [-81.527556, 28.373764], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Lake Buena Vista Golf Course" },
     { "coords": [-81.560408, 28.363940], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Fantasia Gardens Mini Golf" },
     { "coords": [-81.574000, 28.353500], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Winter Summerland Mini Golf" },
     { "coords": [-81.547804, 28.399323], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Four Seasons Golf and Sports Club" },
