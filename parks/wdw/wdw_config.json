@@ -41,7 +41,7 @@
         { "coords": [-81.573288, 28.416431], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Bay Lake Tower" },
         { "coords": [-81.572666, 28.409327], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Wilderness Lodge" },
         { "coords": [-81.563708, 28.410896], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Lakeside Lodge (opening 2027)" },
-        { "coords": [-81.558528, 28.405654], "width": 0.009, "icon": "icons/locations/marker.svg", "alt": "Fort Wilderness Resort & Campground" },
+        { "coords": [-81.558049, 28.407702], "width": 0.009, "icon": "icons/locations/marker.svg", "alt": "Fort Wilderness Resort & Campground" },
         { "coords": [-81.558053, 28.398823], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "The Cabins at Fort Wilderness" },
         { "coords": [-81.558692, 28.370762], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Yacht Club Resort" },
         { "coords": [-81.556415, 28.371315], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Beach Club Resort" },
@@ -98,8 +98,7 @@
     { "coords": [-81.595574, 28.405675], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Oak Trail Golf Course" },
     { "coords": [-81.603282, 28.402509], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Magnolia Golf Course" },
     { "coords": [-81.591238, 28.392922], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Palm Golf Course" },
-    { "coords": [-81.537192, 28.352256], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Waldorf Astoria Golf Club & Driving Range" },
-    { "coords": [-81.566480, 28.414164], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Discovery Island", "dock": false }
+    { "coords": [-81.537192, 28.352256], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Waldorf Astoria Golf Club & Driving Range" }
   ]
 },
 {
