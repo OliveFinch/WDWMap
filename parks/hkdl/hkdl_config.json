@@ -1,6 +1,7 @@
 {
   "parkId": "hkdl",
   "name": "Hong Kong Disneyland",
+  "enabled": true,
   "tileTemplate": "https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/hkdl/{code}/{z}/{x}/{y}.jpg",
   "supportsHistory": true,
   "versionCheck": true,

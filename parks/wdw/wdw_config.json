@@ -1,6 +1,7 @@
  {
   "parkId": "wdw",
   "name": "Walt Disney World",
+  "enabled": true,
   "tileTemplate": "https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/{code}/{z}/{x}/{y}.jpg",
   "supportsHistory": true,
   "versionCheck": true,

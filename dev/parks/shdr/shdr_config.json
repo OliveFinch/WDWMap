@@ -1,6 +1,7 @@
 {
   "parkId": "shdr",
   "name": "Shanghai Disney Resort",
+  "enabled": true,
   "tileTemplate": "https://secure.cdn1.wdpromedia.com/media/maps/prod/shdr-baidu-mob-en/{code}/{z}/{x}/{y}.jpg",
   "supportsHistory": true,
   "versionCheck": true,
