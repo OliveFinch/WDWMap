@@ -99,7 +99,8 @@
     { "coords": [-81.595574, 28.405675], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Oak Trail Golf Course" },
     { "coords": [-81.603282, 28.402509], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Magnolia Golf Course" },
     { "coords": [-81.591238, 28.392922], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Palm Golf Course" },
-    { "coords": [-81.537192, 28.352256], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Waldorf Astoria Golf Club & Driving Range" }
+    { "coords": [-81.537192, 28.352256], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Waldorf Astoria Golf Club & Driving Range" },
+    { "coords": [-81.566551, 28.414251], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Discovery Island" "hidden": true  }
   ]
 },
 {
