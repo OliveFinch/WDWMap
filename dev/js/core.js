@@ -2191,7 +2191,11 @@
     window.WDWMX.getSatServersUrl = (parkId) => getSatServersUrl(parkId);
     window.WDWMX.getParkId = () => currentParkId;
     window.WDWMX.getPark = () => getCurrentPark();
-    window.WDWMX.getParks = () => Object.values(PARKS).map(p => ({ parkId: p.parkId, name: p.name }));
+    // Parks with "enabled": false in their config are kept loadable (via URL
+    // param) but left out of the park selector, e.g. during internal works
+    window.WDWMX.getParks = () => Object.values(PARKS)
+      .filter((p) => p.enabled !== false)
+      .map(p => ({ parkId: p.parkId, name: p.name }));
 
   } catch (err) {
     alert('Failed to load server data: ' + err);

@@ -1,6 +1,6 @@
 /* global WDWMX */
 /*
- * Location Pill + Spotlight-style Browser (dev mockup)
+ * Location Pill + Spotlight-style Browser
  *
  * The pill (bottom center, replaces the dock) shows the current location -
  * the nearest known place to the map center - and opens a frosted-glass,
@@ -127,6 +127,12 @@
     allLocations = [];
 
     groups.forEach((group) => {
+      // Locations with "hidden": true stay out of the browse/search list but
+      // are still tracked for the hover ("you are here") label
+      const visibleLocs = group.locations.filter((loc) => !loc.hidden);
+      group.locations.forEach((loc) => allLocations.push(loc));
+      if (!visibleLocs.length) return;
+
       const groupEl = document.createElement('div');
       groupEl.className = 'locgroup' + (group.expanded ? ' expanded' : '');
       if (group.expanded) groupEl.dataset.defaultExpanded = '1';
@@ -136,7 +142,7 @@
       header.className = 'locgroup-header';
       header.innerHTML =
         '<span>' + group.name +
-        ' <span class="locgroup-count">(' + group.locations.length + ')</span></span>' +
+        ' <span class="locgroup-count">(' + visibleLocs.length + ')</span></span>' +
         '<svg class="locgroup-chevron" viewBox="0 0 24 24" width="13" height="13">' +
         '<polyline points="9,6 15,12 9,18" fill="none" stroke="currentColor" stroke-width="2.5" ' +
         'stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -148,9 +154,7 @@
       const itemsEl = document.createElement('div');
       itemsEl.className = 'locgroup-items';
 
-      group.locations.forEach((loc) => {
-        allLocations.push(loc);
-
+      visibleLocs.forEach((loc) => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'locitem';
@@ -257,10 +261,21 @@
     return dx * dx + dy * dy;
   }
 
+  // Only resolve to a named place once the user is zoomed in this far;
+  // when zoomed out the pill just shows the resort/park name
+  const MIN_LABEL_ZOOM = 16;
+
   function updatePillLabel() {
     const ol = WDWMX.ol;
     const map = WDWMX.getMap && WDWMX.getMap();
     if (!ol || !map || !allLocations.length) return;
+
+    const zoom = map.getView().getZoom();
+    if (!Number.isFinite(zoom) || zoom < MIN_LABEL_ZOOM) {
+      pillLabel.textContent = parkName;
+      pillEl.classList.add('fallback');
+      return;
+    }
 
     const center = ol.proj.toLonLat(map.getView().getCenter());
     const cosLat = Math.cos(center[1] * Math.PI / 180);

@@ -1,6 +1,7 @@
 {
   "parkId": "dlp",
   "name": "Disneyland Paris",
+  "enabled": true,
   "tileTemplate": "https://media.disneylandparis.com/mapTiles/images/{z}/{x}/{y}.jpg",
   "supportsHistory": false,
   "versionCheck": false,
