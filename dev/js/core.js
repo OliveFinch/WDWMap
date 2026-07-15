@@ -853,7 +853,24 @@
         let didDrag = false;
         let startY = 0;
         let startZoom = 0;
-        let zoomCenter = null; // map coordinate where the finger tapped
+        let zoomAnchor = null; // map coordinate where the finger tapped
+
+        // Zoom keeping the anchor's geographic point fixed at its screen
+        // position (the point under the finger stays under the finger),
+        // instead of recentring the map on it.
+        function zoomAboutAnchor(view, newZoom, anchor, duration) {
+          const oldCenter = view.getCenter();
+          const oldRes = view.getResolution();
+          const newRes = view.getResolutionForZoom(newZoom);
+          if (!oldCenter || !Number.isFinite(oldRes) || !Number.isFinite(newRes)) return;
+
+          const ratio = newRes / oldRes;
+          const newCenter = [
+            anchor[0] - (anchor[0] - oldCenter[0]) * ratio,
+            anchor[1] - (anchor[1] - oldCenter[1]) * ratio
+          ];
+          view.animate({ zoom: newZoom, center: newCenter, duration: duration });
+        }
 
         function moveHandler(e) {
           if (!isHoldZoom || !e.touches || e.touches.length !== 1) return;
@@ -867,12 +884,7 @@
           let newZoom = startZoom - (dy / 80);
           newZoom = Math.max(view.getMinZoom(), Math.min(view.getMaxZoom(), newZoom));
 
-          // Zoom anchored at the finger position
-          view.animate({
-            zoom: newZoom,
-            center: zoomCenter,
-            duration: 0
-          });
+          if (zoomAnchor) zoomAboutAnchor(view, newZoom, zoomAnchor, 0);
         }
 
         mapDiv.addEventListener('touchstart', (e) => {
@@ -895,7 +907,7 @@
             // Calculate pixel relative to the map element, not the viewport
             const rect = mapDiv.getBoundingClientRect();
             const pixel = [tapX - rect.left, tapY - rect.top];
-            zoomCenter = map.getCoordinateFromPixel(pixel);
+            zoomAnchor = map.getCoordinateFromPixel(pixel);
 
             mapDiv.addEventListener('touchmove', moveHandler, { passive: false });
           } else {
@@ -909,15 +921,12 @@
         mapDiv.addEventListener('touchend', () => {
           if (!isHoldZoom) return;
 
-          // If user double-tapped without dragging, zoom in one level at that point
-          if (!didDrag && zoomCenter) {
+          // If user double-tapped without dragging, zoom in one level
+          // anchored at the tap point (no recentring)
+          if (!didDrag && zoomAnchor) {
             const view = map.getView();
             const newZoom = Math.min(view.getMaxZoom(), startZoom + 1);
-            view.animate({
-              zoom: newZoom,
-              center: zoomCenter,
-              duration: 250
-            });
+            zoomAboutAnchor(view, newZoom, zoomAnchor, 250);
           }
 
           isHoldZoom = false;
