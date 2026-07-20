@@ -1784,15 +1784,7 @@
     if (!text) return;
 
     navigator.clipboard.writeText(text).then(() => {
-      // Flash the hint to indicate copy success
-      const hint = document.getElementById('service-mode-hint');
-      const original = hint.textContent;
-      hint.textContent = 'Copied!';
-      hint.style.fontWeight = 'bold';
-      setTimeout(() => {
-        hint.textContent = original;
-        hint.style.fontWeight = 'normal';
-      }, 1500);
+      showToast('Coords + width copied');
     }).catch(() => {
       // Fallback: show alert if clipboard fails
       alert('Coordinates: ' + text);
@@ -2312,7 +2304,7 @@
   const serviceModeSecretBtn = document.getElementById('service-mode-secret');
   if (serviceModeSecretBtn) {
     serviceModeSecretBtn.addEventListener('click', () => {
-      const pw = window.prompt('Enter service password:');
+      const pw = window.prompt('Enter password:');
       if (pw === null) return; // cancelled
       if (pw === 'service') {
         infoOverlay.classList.remove('open');
