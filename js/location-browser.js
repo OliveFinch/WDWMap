@@ -261,6 +261,23 @@
     return dx * dx + dy * dy;
   }
 
+  // Ray-casting point-in-polygon; poly is [[lon, lat], ...]
+  function pointInPolygon(pt, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = poly[i][0], yi = poly[i][1];
+      const xj = poly[j][0], yj = poly[j][1];
+      const intersects = ((yi > pt[1]) !== (yj > pt[1])) &&
+        (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi);
+      if (intersects) inside = !inside;
+    }
+    return inside;
+  }
+
+  function hasArea(loc) {
+    return Array.isArray(loc.area) && loc.area.length >= 3;
+  }
+
   // Only resolve to a named place once the user is zoomed in this far;
   // when zoomed out the pill just shows the resort/park name
   const MIN_LABEL_ZOOM = 16;
@@ -280,10 +297,28 @@
     const center = ol.proj.toLonLat(map.getView().getCenter());
     const cosLat = Math.cos(center[1] * Math.PI / 180);
 
+    // Locations with an "area" polygon show their name only while the
+    // center is inside it; if areas overlap, the nearest coords wins
+    let areaBest = null;
+    let areaBestDistSq = Infinity;
+    for (const loc of allLocations) {
+      if (!hasArea(loc) || !pointInPolygon(center, loc.area)) continue;
+      const anchor = Array.isArray(loc.coords) ? loc.coords : loc.area[0];
+      const d = lonLatDistSq(center, anchor, cosLat);
+      if (d < areaBestDistSq) { areaBestDistSq = d; areaBest = loc; }
+    }
+    if (areaBest) {
+      pillLabel.textContent = areaBest.alt || parkName;
+      pillEl.classList.remove('fallback');
+      return;
+    }
+
+    // Radius fallback for locations without an area polygon (their
+    // coords + width are the fly-to starting point, not the hover zone)
     let best = null;
     let bestDistSq = Infinity;
     for (const loc of allLocations) {
-      if (!Array.isArray(loc.coords)) continue;
+      if (!Array.isArray(loc.coords) || hasArea(loc)) continue;
       const d = lonLatDistSq(center, loc.coords, cosLat);
       if (d < bestDistSq) { bestDistSq = d; best = loc; }
     }

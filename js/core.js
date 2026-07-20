@@ -1794,6 +1794,16 @@
     updateLocationTool();
   }
 
+  // Map clicks in service mode: add a lasso vertex while drawing an area,
+  // otherwise copy the center coords + width
+  function serviceModeMapClick(evt) {
+    if (locationToolActive && areaDrawing && evt && evt.coordinate) {
+      addAreaVertex(evt.coordinate);
+      return;
+    }
+    copyCenterToClipboard();
+  }
+
   function copyCenterToClipboard() {
     if (!serviceMode || !map) return;
     const text = serviceModeCenter.dataset.copyText || '';
@@ -1821,9 +1831,16 @@
   const locationSelect = document.getElementById('service-mode-location-select');
   const locationBaselineEl = document.getElementById('service-mode-location-baseline');
   const extentBoxEl = document.getElementById('service-mode-extent-box');
+  const areaSvg = document.getElementById('service-mode-area-svg');
+  const areaDrawBtn = document.getElementById('service-mode-area-draw');
+  const areaUndoBtn = document.getElementById('service-mode-area-undo');
+  const areaClearBtn = document.getElementById('service-mode-area-clear');
+  const areaCountEl = document.getElementById('service-mode-area-count');
   let locationToolActive = false;
   let loadedLocation = null;      // baseline entry loaded from the park config
   let selectableLocations = [];   // flat list backing the select options
+  let areaDrawing = false;        // lasso mode: map taps add polygon vertices
+  let areaPoints = [];            // polygon vertices as [lon, lat]
 
   const METERS_PER_DEGREE = 111319.49079327358; // EPSG:3857 meters per degree of longitude
 
@@ -1842,26 +1859,90 @@
   }
 
   // Serialize a location entry in config.json field order; always emits an
-  // explicit "hidden" flag (dock is deprecated) and carries rotation through
+  // explicit "hidden" flag (dock is deprecated) and carries rotation and
+  // the "area" polygon ([[lon, lat], ...] hover zone) through
   function serializeLocation(loc) {
     let s = `{ "coords": [${loc.coords[0]}, ${loc.coords[1]}], "width": ${loc.width}, ` +
             `"icon": "${loc.icon || 'icons/locations/marker.svg'}", "alt": "${loc.alt || 'New Location'}"`;
     s += `, "hidden": ${loc.hidden === true}`;
     if (loc.rotation !== undefined) s += `, "rotation": ${loc.rotation}`;
+    if (Array.isArray(loc.area) && loc.area.length) {
+      s += ', "area": [' + loc.area.map((p) => `[${p[0]}, ${p[1]}]`).join(', ') + ']';
+    }
     return s + ' }';
   }
 
   // The edited line: current crosshair center + width input, keeping the
-  // loaded baseline's icon/alt/flags (or placeholders for a new location)
+  // loaded baseline's icon/alt/flags (or placeholders for a new location).
+  // The lasso tool's polygon (3+ points) rides along as "area".
   function locationConfigLine() {
     const center = ol.proj.toLonLat(map.getView().getCenter());
     let w = parseFloat(locationWidthInput && locationWidthInput.value);
     if (!Number.isFinite(w) || w <= 0) w = widthFromCurrentView();
-    const base = loadedLocation || {};
-    return serializeLocation(Object.assign({}, base, {
+    const merged = Object.assign({}, loadedLocation || {}, {
       coords: [parseFloat(center[0].toFixed(6)), parseFloat(center[1].toFixed(6))],
       width: w
-    }));
+    });
+    if (areaPoints.length >= 3) merged.area = areaPoints;
+    else delete merged.area;
+    return serializeLocation(merged);
+  }
+
+  // =====================
+  // Area lasso: tap the map to add polygon vertices for the hover zone
+  // =====================
+  function setAreaDrawing(on) {
+    areaDrawing = on;
+    if (areaDrawBtn) {
+      areaDrawBtn.classList.toggle('active', on);
+      areaDrawBtn.textContent = on ? 'Drawing… (tap map)' : 'Draw area';
+    }
+  }
+
+  function updateAreaStatus() {
+    if (!areaCountEl) return;
+    if (!areaPoints.length) {
+      areaCountEl.textContent = 'No area polygon';
+    } else {
+      areaCountEl.textContent = `${areaPoints.length} point${areaPoints.length === 1 ? '' : 's'}` +
+        (areaPoints.length < 3 ? ' — need 3+ for a polygon' : '');
+    }
+  }
+
+  function addAreaVertex(coord3857) {
+    const ll = ol.proj.toLonLat(coord3857);
+    areaPoints.push([parseFloat(ll[0].toFixed(6)), parseFloat(ll[1].toFixed(6))]);
+    updateAreaStatus();
+    updateLocationTool();
+  }
+
+  function drawAreaOverlay() {
+    if (!areaSvg) return;
+    if (!serviceMode || !locationToolActive || !areaPoints.length) {
+      areaSvg.innerHTML = '';
+      return;
+    }
+
+    const px = areaPoints
+      .map((p) => map.getPixelFromCoordinate(ol.proj.fromLonLat(p)))
+      .filter((p) => p);
+    if (px.length !== areaPoints.length) { areaSvg.innerHTML = ''; return; }
+
+    const pts = px.map((p) => `${p[0]},${p[1]}`).join(' ');
+    let html = '';
+    if (px.length >= 3) {
+      html += `<polygon points="${pts}" fill="rgba(255,140,0,0.15)" ` +
+              `stroke="rgba(255,140,0,0.95)" stroke-width="2" stroke-dasharray="6 4"/>`;
+    } else if (px.length === 2) {
+      html += `<polyline points="${pts}" fill="none" ` +
+              `stroke="rgba(255,140,0,0.95)" stroke-width="2" stroke-dasharray="6 4"/>`;
+    }
+    px.forEach((p, i) => {
+      html += `<circle cx="${p[0]}" cy="${p[1]}" r="4" ` +
+              `fill="${i === 0 ? '#fff' : 'rgba(255,140,0,0.95)'}" ` +
+              `stroke="rgba(255,140,0,0.95)" stroke-width="2"/>`;
+    });
+    areaSvg.innerHTML = html;
   }
 
   // Fill the "Load existing" dropdown from the current park's config
@@ -1894,6 +1975,11 @@
   function loadBaselineLocation(loc) {
     loadedLocation = loc;
 
+    // Seed the lasso with the baseline's area polygon (copy, not reference)
+    setAreaDrawing(false);
+    areaPoints = (loc && Array.isArray(loc.area)) ? loc.area.map((p) => p.slice()) : [];
+    updateAreaStatus();
+
     if (locationBaselineEl) {
       if (loc) {
         locationBaselineEl.style.display = 'block';
@@ -1924,6 +2010,8 @@
 
   function updateLocationTool() {
     if (!serviceMode || !locationToolActive || !map || !extentBoxEl) return;
+
+    drawAreaOverlay();
 
     const w = parseFloat(locationWidthInput.value);
     if (!Number.isFinite(w) || w <= 0) {
@@ -1961,9 +2049,12 @@
       if (locationToolEl) locationToolEl.style.display = locationToolActive ? 'block' : 'none';
       if (!locationToolActive) {
         if (extentBoxEl) extentBoxEl.style.display = 'none';
+        if (areaSvg) areaSvg.innerHTML = '';
+        setAreaDrawing(false);
         return;
       }
       populateLocationSelect();
+      updateAreaStatus();
       // Seed the width from whatever is on screen right now
       if (locationWidthInput && !locationWidthInput.value) {
         locationWidthInput.value = widthFromCurrentView();
@@ -1976,6 +2067,25 @@
     locationSelect.addEventListener('change', () => {
       const idx = parseInt(locationSelect.value, 10);
       loadBaselineLocation(Number.isFinite(idx) ? selectableLocations[idx] || null : null);
+    });
+  }
+
+  if (areaDrawBtn) {
+    areaDrawBtn.addEventListener('click', () => setAreaDrawing(!areaDrawing));
+  }
+  if (areaUndoBtn) {
+    areaUndoBtn.addEventListener('click', () => {
+      areaPoints.pop();
+      updateAreaStatus();
+      updateLocationTool();
+    });
+  }
+  if (areaClearBtn) {
+    areaClearBtn.addEventListener('click', () => {
+      areaPoints = [];
+      setAreaDrawing(false);
+      updateAreaStatus();
+      updateLocationTool();
     });
   }
 
@@ -2278,7 +2388,7 @@
 
     // Listen for map events - use 'postrender' for real-time updates during pan/zoom
     map.on('postrender', updateServiceModeCenter);
-    map.on('click', copyCenterToClipboard);
+    map.on('click', serviceModeMapClick);
 
     // Setup custom server loading
     const loadBtn = document.getElementById('service-mode-load-custom');
@@ -2306,9 +2416,11 @@
     // Restore normal cursor/finger-anchored zoom
     disableCenteredZoom();
 
+    setAreaDrawing(false);
+
     // Remove listeners
     map.un('postrender', updateServiceModeCenter);
-    map.un('click', copyCenterToClipboard);
+    map.un('click', serviceModeMapClick);
   }
 
   infoIcon.addEventListener('click', () => {

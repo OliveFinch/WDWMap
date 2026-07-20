@@ -247,6 +247,7 @@
     </div>
     <div id="service-mode-label">Service Mode</div>
     <div id="service-mode-extent-box"></div>
+    <svg id="service-mode-area-svg" aria-hidden="true"></svg>
     <div id="service-mode-info">
       <div id="service-mode-center"></div>
     </div>
@@ -262,6 +263,12 @@
           <input type="number" id="service-mode-width-input" step="0.0005" min="0.0005">
           <button id="service-mode-width-from-view" type="button" title="Set width from the current view">Fit view</button>
         </div>
+        <div class="loc-area-row">
+          <button id="service-mode-area-draw" type="button">Draw area</button>
+          <button id="service-mode-area-undo" type="button">Undo</button>
+          <button id="service-mode-area-clear" type="button">Clear</button>
+        </div>
+        <div id="service-mode-area-count">No area polygon</div>
         <div id="service-mode-location-json"></div>
         <button id="service-mode-copy-location" type="button">Copy config line</button>
       </div>
