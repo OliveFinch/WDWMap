@@ -1096,6 +1096,140 @@ html, body {
   cursor: wait;
 }
 
+/* Service Mode Location authoring tool */
+#service-mode-location {
+  position: absolute;
+  top: 110px; /* right side, below the Exit button */
+  right: 60px;
+  pointer-events: auto;
+  background: rgba(0, 60, 120, 0.92);
+  color: #fff;
+  font-size: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  max-width: 250px;
+}
+
+#service-mode-locations-btn {
+  padding: 6px 12px;
+  background: #fff;
+  color: #036;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+}
+
+#service-mode-locations-btn:hover {
+  background: #cdf;
+}
+
+#service-mode-locations-btn.active {
+  background: #2196f3;
+  color: #fff;
+}
+
+#service-mode-location-tool {
+  margin-top: 10px;
+}
+
+#service-mode-location-tool .loc-width-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#service-mode-width-input {
+  width: 80px;
+  padding: 4px 8px;
+  border: 1px solid #68a;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 12px;
+  background: rgba(255,255,255,0.9);
+}
+
+#service-mode-width-from-view {
+  padding: 4px 10px;
+  background: #fff;
+  color: #036;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#service-mode-width-from-view:hover {
+  background: #cdf;
+}
+
+#service-mode-location-json {
+  margin-top: 8px;
+  font-family: monospace;
+  font-size: 10.5px;
+  line-height: 1.5;
+  word-break: break-all;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 6px 8px;
+  border-radius: 4px;
+}
+
+#service-mode-copy-location {
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: #fff;
+  color: #036;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+}
+
+#service-mode-copy-location:hover {
+  background: #cdf;
+}
+
+/* The extent preview: what flyTo would fit for the entered coords + width */
+#service-mode-extent-box {
+  display: none;
+  position: absolute;
+  border: 2px dashed rgba(33, 150, 243, 0.95);
+  background: rgba(33, 150, 243, 0.10);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+/* Center guides inside the extent box */
+#service-mode-extent-box::before,
+#service-mode-extent-box::after {
+  content: '';
+  position: absolute;
+  background: rgba(33, 150, 243, 0.35);
+}
+
+#service-mode-extent-box::before {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-50%);
+}
+
+#service-mode-extent-box::after {
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
 #service-mode-version-status {
   font-family: monospace;
   line-height: 1.5;

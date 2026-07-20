@@ -246,9 +246,22 @@
       <div id="crosshair-center"></div>
     </div>
     <div id="service-mode-label">Service Mode</div>
+    <div id="service-mode-extent-box"></div>
     <div id="service-mode-info">
       <div id="service-mode-center"></div>
-      <div id="service-mode-hint">Click anywhere to copy center coordinates</div>
+      <div id="service-mode-hint">Tap the map to copy coords + width</div>
+    </div>
+    <div id="service-mode-location">
+      <button id="service-mode-locations-btn" type="button">Locations</button>
+      <div id="service-mode-location-tool" style="display:none;">
+        <div class="loc-width-row">
+          <label for="service-mode-width-input">Width</label>
+          <input type="number" id="service-mode-width-input" step="0.0005" min="0.0005">
+          <button id="service-mode-width-from-view" type="button" title="Set width from the current view">Fit view</button>
+        </div>
+        <div id="service-mode-location-json"></div>
+        <button id="service-mode-copy-location" type="button">Copy config line</button>
+      </div>
     </div>
     <div id="service-mode-server">
       <div id="service-mode-server-info">
