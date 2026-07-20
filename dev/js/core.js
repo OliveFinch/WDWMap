@@ -1764,15 +1764,18 @@
     const view = map.getView();
     const center = ol.proj.toLonLat(view.getCenter());
     const zoom = view.getZoom();
-    const coordText = `[${center[0].toFixed(6)}, ${center[1].toFixed(6)}], zoom: ${zoom.toFixed(1)}`;
-    let display = coordText;
+    const viewWidth = widthFromCurrentView();
+    const coordText = `"coords": [${center[0].toFixed(6)}, ${center[1].toFixed(6)}], "width": ${viewWidth}`;
+    let display = `[${center[0].toFixed(6)}, ${center[1].toFixed(6)}], zoom: ${zoom.toFixed(1)}\nview width: ${viewWidth}`;
     // Shanghai uses Baidu coordinate system - coordinates are not real-world lat/lon
     if (currentParkId === 'shdr') {
       display += '\n[Baidu coords - not WGS84]';
     }
     serviceModeCenter.textContent = display;
-    // Store for clipboard
+    // Store for clipboard: ready to paste into a park config location entry
     serviceModeCenter.dataset.copyText = coordText;
+
+    updateLocationTool();
   }
 
   function copyCenterToClipboard() {
@@ -1793,6 +1796,111 @@
     }).catch(() => {
       // Fallback: show alert if clipboard fails
       alert('Coordinates: ' + text);
+    });
+  }
+
+  // =====================
+  // Service Mode: location authoring tool
+  // Preview the exact extent the dock/pill flyTo would fit for a
+  // "coords" + "width" pair, and copy a ready-to-paste config line
+  // =====================
+  const locationsToggleBtn = document.getElementById('service-mode-locations-btn');
+  const locationToolEl = document.getElementById('service-mode-location-tool');
+  const locationWidthInput = document.getElementById('service-mode-width-input');
+  const locationJsonEl = document.getElementById('service-mode-location-json');
+  const locationCopyBtn = document.getElementById('service-mode-copy-location');
+  const locationFitBtn = document.getElementById('service-mode-width-from-view');
+  const extentBoxEl = document.getElementById('service-mode-extent-box');
+  let locationToolActive = false;
+
+  const METERS_PER_DEGREE = 111319.49079327358; // EPSG:3857 meters per degree of longitude
+
+  // The config "width" (degrees) that would reproduce the current view when
+  // fitted by the flyTo logic (which fits a width x width lon/lat square)
+  function widthFromCurrentView() {
+    if (!map) return 0.008;
+    const view = map.getView();
+    const res = view.getResolution();
+    const size = map.getSize();
+    if (!Number.isFinite(res) || !size) return 0.008;
+    const lat = ol.proj.toLonLat(view.getCenter())[1];
+    const cosLat = Math.max(Math.cos(lat * Math.PI / 180), 0.01);
+    const w = res * Math.min(size[0], size[1] * cosLat) / METERS_PER_DEGREE;
+    return parseFloat(w.toPrecision(3));
+  }
+
+  function locationConfigLine() {
+    const center = ol.proj.toLonLat(map.getView().getCenter());
+    let w = parseFloat(locationWidthInput && locationWidthInput.value);
+    if (!Number.isFinite(w) || w <= 0) w = widthFromCurrentView();
+    return `{ "coords": [${center[0].toFixed(6)}, ${center[1].toFixed(6)}], ` +
+           `"width": ${w}, "icon": "icons/locations/marker.svg", "alt": "New Location" }`;
+  }
+
+  function updateLocationTool() {
+    if (!serviceMode || !locationToolActive || !map || !extentBoxEl) return;
+
+    const w = parseFloat(locationWidthInput.value);
+    if (!Number.isFinite(w) || w <= 0) {
+      extentBoxEl.style.display = 'none';
+      return;
+    }
+
+    if (locationJsonEl) locationJsonEl.textContent = locationConfigLine();
+
+    // Draw the lon/lat square extent for center + width in screen pixels
+    const center = ol.proj.toLonLat(map.getView().getCenter());
+    const half = w / 2;
+    const extent = ol.proj.transformExtent(
+      [center[0] - half, center[1] - half, center[0] + half, center[1] + half],
+      'EPSG:4326', 'EPSG:3857'
+    );
+    const topLeft = map.getPixelFromCoordinate([extent[0], extent[3]]);
+    const bottomRight = map.getPixelFromCoordinate([extent[2], extent[1]]);
+    if (!topLeft || !bottomRight) {
+      extentBoxEl.style.display = 'none';
+      return;
+    }
+
+    extentBoxEl.style.display = 'block';
+    extentBoxEl.style.left = topLeft[0] + 'px';
+    extentBoxEl.style.top = topLeft[1] + 'px';
+    extentBoxEl.style.width = (bottomRight[0] - topLeft[0]) + 'px';
+    extentBoxEl.style.height = (bottomRight[1] - topLeft[1]) + 'px';
+  }
+
+  if (locationsToggleBtn) {
+    locationsToggleBtn.addEventListener('click', () => {
+      locationToolActive = !locationToolActive;
+      locationsToggleBtn.classList.toggle('active', locationToolActive);
+      if (locationToolEl) locationToolEl.style.display = locationToolActive ? 'block' : 'none';
+      if (!locationToolActive) {
+        if (extentBoxEl) extentBoxEl.style.display = 'none';
+        return;
+      }
+      // Seed the width from whatever is on screen right now
+      if (locationWidthInput && !locationWidthInput.value) {
+        locationWidthInput.value = widthFromCurrentView();
+      }
+      updateLocationTool();
+    });
+  }
+
+  if (locationWidthInput) locationWidthInput.addEventListener('input', updateLocationTool);
+
+  if (locationFitBtn) {
+    locationFitBtn.addEventListener('click', () => {
+      if (locationWidthInput) locationWidthInput.value = widthFromCurrentView();
+      updateLocationTool();
+    });
+  }
+
+  if (locationCopyBtn) {
+    locationCopyBtn.addEventListener('click', () => {
+      const line = locationConfigLine() + ',';
+      navigator.clipboard.writeText(line)
+        .then(() => showToast('Location config line copied'))
+        .catch(() => alert(line));
     });
   }
 
