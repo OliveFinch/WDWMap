@@ -911,6 +911,7 @@ html, body {
   left: 0;
   right: 0;
   height: 1px;
+  transform: translateY(-50%);
   background: rgba(255, 0, 0, 0.7);
   box-shadow: 0 0 2px #000;
 }
@@ -921,18 +922,20 @@ html, body {
   top: 0;
   bottom: 0;
   width: 1px;
+  transform: translateX(-50%);
   background: rgba(255, 0, 0, 0.7);
   box-shadow: 0 0 2px #000;
 }
 
+/* Centered via transform: the old -6px margins ignored the 2px borders
+   (16px total box), leaving the circle ~2px right/below true center */
 #crosshair-center {
   position: absolute;
   top: 50%;
   left: 50%;
   width: 12px;
   height: 12px;
-  margin-left: -6px;
-  margin-top: -6px;
+  transform: translate(-50%, -50%);
   border: 2px solid rgba(255, 0, 0, 0.9);
   border-radius: 50%;
   box-shadow: 0 0 3px #000;
@@ -985,7 +988,7 @@ html, body {
 #service-mode-close {
   position: absolute;
   top: 60px;
-  right: 12px;
+  right: 60px; /* clear of the top-right icon column */
   pointer-events: auto;
   appearance: none;
   background: rgba(180, 0, 0, 0.9);
@@ -1006,7 +1009,7 @@ html, body {
 /* Service Mode Server Info */
 #service-mode-server {
   position: absolute;
-  top: 80px;
+  top: 110px; /* below the zoom buttons */
   left: 12px;
   pointer-events: auto;
   background: rgba(0, 60, 120, 0.92);
@@ -1060,7 +1063,7 @@ html, body {
 /* Service Mode Version Check */
 #service-mode-version-check {
   position: absolute;
-  top: 170px;
+  top: 200px; /* below the shifted server box */
   left: 12px;
   pointer-events: auto;
   background: rgba(0, 60, 120, 0.92);

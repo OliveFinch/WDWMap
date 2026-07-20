@@ -1751,11 +1751,10 @@
   infoOverlay.addEventListener('click', (e) => { if (e.target === infoOverlay) infoOverlay.classList.remove('open'); });
 
   // =====================
-  // Service Mode (activated by clicking info icon 4 times in 1.5s)
+  // Service Mode (activated via the hidden spanner button on the About screen)
   // Shows current map center coordinates - click anywhere to copy
   // =====================
   let serviceMode = false;
-  let infoClickTimes = [];
   const serviceModeOverlay = document.getElementById('service-mode-overlay');
   const serviceModeCenter = document.getElementById('service-mode-center');
   const serviceModeClose = document.getElementById('service-mode-close');
@@ -2016,36 +2015,25 @@
     map.un('click', copyCenterToClipboard);
   }
 
-  function checkForServiceModeActivation() {
-    const now = Date.now();
-    // Remove clicks older than 3 seconds
-    infoClickTimes = infoClickTimes.filter(t => now - t < 3000);
-    infoClickTimes.push(now);
-
-    // If 4 clicks within 3 seconds, toggle service mode
-    if (infoClickTimes.length >= 4) {
-      infoClickTimes = [];
-      if (serviceMode) {
-        disableServiceMode();
-      } else {
-        enableServiceMode();
-      }
-      return true; // Prevent normal info overlay
-    }
-
-    // If we have recent clicks, suppress the overlay to allow rapid clicking
-    if (infoClickTimes.length > 1) {
-      return true;
-    }
-
-    return false;
-  }
-
   infoIcon.addEventListener('click', () => {
-    if (!checkForServiceModeActivation()) {
-      infoOverlay.classList.add('open');
-    }
+    infoOverlay.classList.add('open');
   });
+
+  // Secret service mode entry: inconspicuous spanner button on the About
+  // screen, gated behind a password prompt
+  const serviceModeSecretBtn = document.getElementById('service-mode-secret');
+  if (serviceModeSecretBtn) {
+    serviceModeSecretBtn.addEventListener('click', () => {
+      const pw = window.prompt('Enter service password:');
+      if (pw === null) return; // cancelled
+      if (pw === 'service') {
+        infoOverlay.classList.remove('open');
+        enableServiceMode();
+      } else {
+        showToast('Incorrect password');
+      }
+    });
+  }
 
   if (serviceModeClose) {
     serviceModeClose.addEventListener('click', disableServiceMode);
