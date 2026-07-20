@@ -1,0 +1,10 @@
+{
+  "locations": [
+    { "coords": [-107.344478, -83.052295], "width": 0.002, "icon": "icons/locations/shdr/shdr-castle.svg", "alt": "Disneyland Park", "hidden": false },
+    { "coords": [-107.338827, -83.052508], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Wishing Star Park", "hidden": false },
+    { "coords": [-107.34066, -83.052978], "width": 0.0015, "icon": "icons/locations/marker.svg", "alt": "Shanghai Disneyland Hotel", "hidden": false },
+    { "coords": [-107.348179, -83.052638], "width": 0.0015, "icon": "icons/locations/marker.svg", "alt": "Toy Story Hotel", "hidden": false },
+    { "coords": [-107.343507, -83.052561], "width": 0.0012, "icon": "icons/locations/marker.svg", "alt": "Disneytown", "hidden": false },
+    { "coords": [-107.339308, -83.053227], "width": 0.001, "icon": "icons/locations/marker.svg", "alt": "Visitor Center & Parking", "hidden": false }
+  ]
+}

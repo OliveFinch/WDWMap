@@ -16,20 +16,36 @@
 
   // =====================
   // Park Configurations
-  // Loaded from parks/{parkId}/{parkId}_config.json
+  // Loaded from parks/{parkId}/{parkId}_config.json, with location data
+  // (locations + locationGroups) from parks/{parkId}/{parkId}_locations.json
   // =====================
   let PARKS = {};
   const PARK_IDS = ['wdw', 'dlp', 'dlr', 'hkdl', 'shdr', 'tdr'];
 
-  // Load all park configs from JSON files
+  // Load all park configs (and their location files) from JSON
   async function loadParkConfigs() {
     const configs = await Promise.all(
       PARK_IDS.map(async (parkId) => {
         try {
-          const response = await fetch(`parks/${parkId}/${parkId}_config.json`);
-          if (response.ok) {
-            return await response.json();
+          const [cfgRes, locRes] = await Promise.all([
+            fetch(`parks/${parkId}/${parkId}_config.json`),
+            fetch(`parks/${parkId}/${parkId}_locations.json`)
+          ]);
+          if (!cfgRes.ok) return null;
+          const config = await cfgRes.json();
+
+          // Merge the locations file in; a config carrying its own
+          // locations/locationGroups still works as a fallback
+          if (locRes.ok) {
+            try {
+              const locData = await locRes.json();
+              if (Array.isArray(locData.locations)) config.locations = locData.locations;
+              if (Array.isArray(locData.locationGroups)) config.locationGroups = locData.locationGroups;
+            } catch (e) {
+              console.warn(`Failed to parse ${parkId} locations:`, e);
+            }
           }
+          return config;
         } catch (e) {
           console.warn(`Failed to load ${parkId} config:`, e);
         }
@@ -76,8 +92,8 @@
   // tileTemplate supports {code} (optional) and {z}/{x}/{y}
   // yScheme: 'xyz' (standard) or 'tms' (server expects flipped Y)
 
-  // Park-specific quick-access locations are now loaded from park config files
-  // (parks/{parkId}/{parkId}_config.json) in the "locations" array
+  // Park-specific quick-access locations are loaded from separate files
+  // (parks/{parkId}/{parkId}_locations.json): "locations" + "locationGroups"
 
   // Current park (default to WDW for now; UI switch can be added later)
   let currentParkId = 'wdw';

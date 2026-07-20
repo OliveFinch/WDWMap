@@ -5,11 +5,6 @@
   "tileTemplate": "https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/disneyland/{code}/{z}/{x}/{y}.jpg",
   "supportsHistory": true,
   "versionCheck": true,
-  "locations": [
-    { "coords": [-117.918958, 33.812624], "width": 0.003, "icon": "icons/locations/dlr/dlr-castle.svg", "alt": "Disneyland", "hidden": false },
-    { "coords": [-117.919703, 33.806176], "width": 0.004, "icon": "icons/locations/dlr/california-adventure.svg", "alt": "California Adventure", "hidden": false },
-    { "coords": [-117.922899, 33.809130], "width": 0.002, "icon": "icons/locations/dlr/downtown-disney.svg", "alt": "Downtown Disney", "hidden": false }
-  ],
   "minZoom": 14,
   "maxZoom": 20,
   "yScheme": "xyz",
