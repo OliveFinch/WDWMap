@@ -1227,6 +1227,49 @@ html, body {
   background: #cdf;
 }
 
+/* Area lasso overlay + controls */
+#service-mode-area-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+#service-mode-location-tool .loc-area-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+#service-mode-location-tool .loc-area-row button {
+  flex: 1 1 auto;
+  padding: 4px 8px;
+  background: #fff;
+  color: #036;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#service-mode-location-tool .loc-area-row button:hover {
+  background: #cdf;
+}
+
+#service-mode-area-draw.active {
+  background: #f80 !important;
+  color: #fff !important;
+}
+
+#service-mode-area-count {
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
 /* The extent preview: what flyTo would fit for the entered coords + width */
 #service-mode-extent-box {
   display: none;
