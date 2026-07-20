@@ -78,9 +78,14 @@
 
     const width = parseFloat(loc.width);
     if (Number.isFinite(width) && width > 0) {
-      const halfW = width / 2;
-      const extentLonLat = [lon - halfW, lat - halfW, lon + halfW, lat + halfW];
-      const extent3857 = ol.proj.transformExtent(extentLonLat, 'EPSG:4326', 'EPSG:3857');
+      // Fit the "view square": width degrees of longitude as a true
+      // projected square, so the whole region is visible on any device
+      // (landscape shows excess left/right, portrait excess top/bottom)
+      const halfMeters = (width * 111319.49079327358) / 2;
+      const extent3857 = [
+        target[0] - halfMeters, target[1] - halfMeters,
+        target[0] + halfMeters, target[1] + halfMeters
+      ];
       const resolution = view.getResolutionForExtent(extent3857, map.getSize());
       animateOpts.zoom = view.getZoomForResolution(resolution);
     } else {
