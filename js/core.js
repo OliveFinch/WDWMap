@@ -1810,8 +1810,12 @@
   const locationJsonEl = document.getElementById('service-mode-location-json');
   const locationCopyBtn = document.getElementById('service-mode-copy-location');
   const locationFitBtn = document.getElementById('service-mode-width-from-view');
+  const locationSelect = document.getElementById('service-mode-location-select');
+  const locationBaselineEl = document.getElementById('service-mode-location-baseline');
   const extentBoxEl = document.getElementById('service-mode-extent-box');
   let locationToolActive = false;
+  let loadedLocation = null;      // baseline entry loaded from the park config
+  let selectableLocations = [];   // flat list backing the select options
 
   const METERS_PER_DEGREE = 111319.49079327358; // EPSG:3857 meters per degree of longitude
 
@@ -1829,12 +1833,86 @@
     return parseFloat(w.toPrecision(3));
   }
 
+  // Serialize a location entry in config.json field order; carries any
+  // extra flags (dock, hidden, rotation) through from a loaded baseline
+  function serializeLocation(loc) {
+    let s = `{ "coords": [${loc.coords[0]}, ${loc.coords[1]}], "width": ${loc.width}, ` +
+            `"icon": "${loc.icon || 'icons/locations/marker.svg'}", "alt": "${loc.alt || 'New Location'}"`;
+    if (loc.dock) s += ', "dock": true';
+    if (loc.hidden) s += ', "hidden": true';
+    if (loc.rotation !== undefined) s += `, "rotation": ${loc.rotation}`;
+    return s + ' }';
+  }
+
+  // The edited line: current crosshair center + width input, keeping the
+  // loaded baseline's icon/alt/flags (or placeholders for a new location)
   function locationConfigLine() {
     const center = ol.proj.toLonLat(map.getView().getCenter());
     let w = parseFloat(locationWidthInput && locationWidthInput.value);
     if (!Number.isFinite(w) || w <= 0) w = widthFromCurrentView();
-    return `{ "coords": [${center[0].toFixed(6)}, ${center[1].toFixed(6)}], ` +
-           `"width": ${w}, "icon": "icons/locations/marker.svg", "alt": "New Location" }`;
+    const base = loadedLocation || {};
+    return serializeLocation(Object.assign({}, base, {
+      coords: [parseFloat(center[0].toFixed(6)), parseFloat(center[1].toFixed(6))],
+      width: w
+    }));
+  }
+
+  // Fill the "Load existing" dropdown from the current park's config
+  function populateLocationSelect() {
+    if (!locationSelect) return;
+    const park = getCurrentPark() || {};
+    const groups = (Array.isArray(park.locationGroups) && park.locationGroups.length)
+      ? park.locationGroups
+      : (Array.isArray(park.locations) && park.locations.length
+          ? [{ name: 'Locations', locations: park.locations }]
+          : []);
+
+    selectableLocations = [];
+    locationSelect.innerHTML = '<option value="">Load existing location…</option>';
+
+    groups.forEach((group) => {
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = group.name || 'Locations';
+      group.locations.forEach((loc) => {
+        const opt = document.createElement('option');
+        opt.value = String(selectableLocations.length);
+        opt.textContent = loc.alt || 'Location';
+        optgroup.appendChild(opt);
+        selectableLocations.push(loc);
+      });
+      if (optgroup.children.length) locationSelect.appendChild(optgroup);
+    });
+  }
+
+  function loadBaselineLocation(loc) {
+    loadedLocation = loc;
+
+    if (locationBaselineEl) {
+      if (loc) {
+        locationBaselineEl.style.display = 'block';
+        locationBaselineEl.textContent = serializeLocation(loc);
+      } else {
+        locationBaselineEl.style.display = 'none';
+        locationBaselineEl.textContent = '';
+      }
+    }
+
+    if (!loc || !Array.isArray(loc.coords)) {
+      updateLocationTool();
+      return;
+    }
+
+    // Seed the width from the baseline and fly to its extent so the
+    // dashed box shows exactly what the config currently produces
+    const w = parseFloat(loc.width) || 0.008;
+    if (locationWidthInput) locationWidthInput.value = w;
+
+    const half = w / 2;
+    const extent3857 = ol.proj.transformExtent(
+      [loc.coords[0] - half, loc.coords[1] - half, loc.coords[0] + half, loc.coords[1] + half],
+      'EPSG:4326', 'EPSG:3857'
+    );
+    map.getView().fit(extent3857, { duration: 450 });
   }
 
   function updateLocationTool() {
@@ -1878,11 +1956,19 @@
         if (extentBoxEl) extentBoxEl.style.display = 'none';
         return;
       }
+      populateLocationSelect();
       // Seed the width from whatever is on screen right now
       if (locationWidthInput && !locationWidthInput.value) {
         locationWidthInput.value = widthFromCurrentView();
       }
       updateLocationTool();
+    });
+  }
+
+  if (locationSelect) {
+    locationSelect.addEventListener('change', () => {
+      const idx = parseInt(locationSelect.value, 10);
+      loadBaselineLocation(Number.isFinite(idx) ? selectableLocations[idx] || null : null);
     });
   }
 
@@ -2083,6 +2169,92 @@
     showToast(`Loaded: ${code}`);
   }
 
+  // =====================
+  // Service Mode: crosshair-centered zoom
+  // While in service mode, wheel and pinch zoom about the map center
+  // (the crosshair) instead of the cursor/finger position, so the
+  // point being measured stays put
+  // =====================
+  let smWheelHandler = null;
+  let smTouchStartHandler = null;
+  let smTouchMoveHandler = null;
+  let smTouchEndHandler = null;
+
+  function setDefaultZoomInteractionsActive(active) {
+    map.getInteractions().forEach((i) => {
+      if (i instanceof ol.interaction.MouseWheelZoom || i instanceof ol.interaction.PinchZoom) {
+        i.setActive(active);
+      }
+    });
+  }
+
+  function clampZoom(view, z) {
+    return Math.max(view.getMinZoom(), Math.min(view.getMaxZoom(), z));
+  }
+
+  function enableCenteredZoom() {
+    const mapDiv = map.getTargetElement();
+    if (!mapDiv) return;
+
+    setDefaultZoomInteractionsActive(false);
+
+    // Wheel / trackpad: zoom about the center, scaled to the scroll delta
+    smWheelHandler = (e) => {
+      e.preventDefault();
+      const view = map.getView();
+      let dz = -e.deltaY / 250;
+      dz = Math.max(-1, Math.min(1, dz));
+      view.setZoom(clampZoom(view, (view.getZoom() || 0) + dz));
+    };
+
+    // Pinch: zoom about the center from the two-finger distance ratio
+    let pinching = false;
+    let pinchStartDist = 0;
+    let pinchStartZoom = 0;
+    const touchDist = (touches) => {
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.sqrt(dx * dx + dy * dy) || 1;
+    };
+
+    smTouchStartHandler = (e) => {
+      if (e.touches && e.touches.length === 2) {
+        pinching = true;
+        pinchStartDist = touchDist(e.touches);
+        pinchStartZoom = map.getView().getZoom() || 0;
+      }
+    };
+    smTouchMoveHandler = (e) => {
+      if (!pinching || !e.touches || e.touches.length !== 2) return;
+      e.preventDefault();
+      const view = map.getView();
+      const scale = touchDist(e.touches) / pinchStartDist;
+      view.setZoom(clampZoom(view, pinchStartZoom + Math.log2(scale)));
+    };
+    smTouchEndHandler = (e) => {
+      if (!e.touches || e.touches.length < 2) pinching = false;
+    };
+
+    mapDiv.addEventListener('wheel', smWheelHandler, { passive: false });
+    mapDiv.addEventListener('touchstart', smTouchStartHandler, { passive: true });
+    mapDiv.addEventListener('touchmove', smTouchMoveHandler, { passive: false });
+    mapDiv.addEventListener('touchend', smTouchEndHandler, { passive: true });
+  }
+
+  function disableCenteredZoom() {
+    const mapDiv = map.getTargetElement();
+
+    setDefaultZoomInteractionsActive(true);
+
+    if (mapDiv) {
+      if (smWheelHandler) mapDiv.removeEventListener('wheel', smWheelHandler);
+      if (smTouchStartHandler) mapDiv.removeEventListener('touchstart', smTouchStartHandler);
+      if (smTouchMoveHandler) mapDiv.removeEventListener('touchmove', smTouchMoveHandler);
+      if (smTouchEndHandler) mapDiv.removeEventListener('touchend', smTouchEndHandler);
+    }
+    smWheelHandler = smTouchStartHandler = smTouchMoveHandler = smTouchEndHandler = null;
+  }
+
   function enableServiceMode() {
     serviceMode = true;
     serviceModeOverlay.style.display = 'block';
@@ -2090,6 +2262,12 @@
     // Initial center update
     updateServiceModeCenter();
     updateServiceModeServerInfo();
+
+    // Zoom about the crosshair while in service mode
+    enableCenteredZoom();
+
+    // Refresh the Locations tool's park location list
+    populateLocationSelect();
 
     // Listen for map events - use 'postrender' for real-time updates during pan/zoom
     map.on('postrender', updateServiceModeCenter);
@@ -2117,6 +2295,9 @@
   function disableServiceMode() {
     serviceMode = false;
     serviceModeOverlay.style.display = 'none';
+
+    // Restore normal cursor/finger-anchored zoom
+    disableCenteredZoom();
 
     // Remove listeners
     map.un('postrender', updateServiceModeCenter);
