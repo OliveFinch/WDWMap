@@ -6,127 +6,127 @@
   "supportsHistory": true,
   "versionCheck": true,
   "locations": [
-    { "coords": [-81.581203, 28.418714], "width": 0.008, "icon": "icons/locations/magic-kingdom.svg", "alt": "Magic Kingdom" },
-    { "coords": [-81.549385, 28.371715], "width": 0.012, "icon": "icons/locations/epcot.svg", "alt": "Epcot" },
-    { "coords": [-81.560472, 28.356850], "width": 0.012, "icon": "icons/locations/hollywood-studios.svg", "alt": "Hollywood Studios" },
-    { "coords": [-81.590567, 28.358037], "width": 0.012, "icon": "icons/locations/animal-kingdom.svg", "alt": "Animal Kingdom" },
-    { "coords": [-81.529080, 28.366055], "width": 0.004, "icon": "icons/locations/typhoon-lagoon.svg", "alt": "Typhoon Lagoon" },
-    { "coords": [-81.574719, 28.351948], "width": 0.004, "icon": "icons/locations/blizzard-beach.svg", "alt": "Blizzard Beach" },
-    { "coords": [-81.518325, 28.370757], "width": 0.008, "icon": "icons/locations/disney-springs.svg", "alt": "Disney Springs" }
+    { "coords": [-81.581203, 28.418714], "width": 0.008, "icon": "icons/locations/magic-kingdom.svg", "alt": "Magic Kingdom", "hidden": false },
+    { "coords": [-81.549385, 28.371715], "width": 0.012, "icon": "icons/locations/epcot.svg", "alt": "Epcot", "hidden": false },
+    { "coords": [-81.560472, 28.356850], "width": 0.012, "icon": "icons/locations/hollywood-studios.svg", "alt": "Hollywood Studios", "hidden": false },
+    { "coords": [-81.590567, 28.358037], "width": 0.012, "icon": "icons/locations/animal-kingdom.svg", "alt": "Animal Kingdom", "hidden": false },
+    { "coords": [-81.529080, 28.366055], "width": 0.004, "icon": "icons/locations/typhoon-lagoon.svg", "alt": "Typhoon Lagoon", "hidden": false },
+    { "coords": [-81.574719, 28.351948], "width": 0.004, "icon": "icons/locations/blizzard-beach.svg", "alt": "Blizzard Beach", "hidden": false },
+    { "coords": [-81.518325, 28.370757], "width": 0.008, "icon": "icons/locations/disney-springs.svg", "alt": "Disney Springs", "hidden": false }
   ],
   "locationGroups": [
     {
       "name": "Theme Parks",
       "expanded": true,
       "locations": [
-        { "coords": [-81.581203, 28.418714], "width": 0.008, "icon": "icons/locations/magic-kingdom.svg", "alt": "Magic Kingdom", "dock": true },
-        { "coords": [-81.549385, 28.371715], "width": 0.012, "icon": "icons/locations/epcot.svg", "alt": "Epcot", "dock": true },
-        { "coords": [-81.560472, 28.356850], "width": 0.012, "icon": "icons/locations/hollywood-studios.svg", "alt": "Hollywood Studios", "dock": true },
-        { "coords": [-81.590567, 28.358037], "width": 0.012, "icon": "icons/locations/animal-kingdom.svg", "alt": "Animal Kingdom", "dock": true }
+        { "coords": [-81.581203, 28.418714], "width": 0.008, "icon": "icons/locations/magic-kingdom.svg", "alt": "Magic Kingdom", "hidden": false },
+        { "coords": [-81.549385, 28.371715], "width": 0.012, "icon": "icons/locations/epcot.svg", "alt": "Epcot", "hidden": false },
+        { "coords": [-81.560472, 28.356850], "width": 0.012, "icon": "icons/locations/hollywood-studios.svg", "alt": "Hollywood Studios", "hidden": false },
+        { "coords": [-81.590567, 28.358037], "width": 0.012, "icon": "icons/locations/animal-kingdom.svg", "alt": "Animal Kingdom", "hidden": false }
       ]
     },
     {
       "name": "Water Parks",
       "locations": [
-        { "coords": [-81.529080, 28.366055], "width": 0.004, "icon": "icons/locations/typhoon-lagoon.svg", "alt": "Typhoon Lagoon", "dock": true },
-        { "coords": [-81.574719, 28.351948], "width": 0.004, "icon": "icons/locations/blizzard-beach.svg", "alt": "Blizzard Beach", "dock": true }
+        { "coords": [-81.529080, 28.366055], "width": 0.004, "icon": "icons/locations/typhoon-lagoon.svg", "alt": "Typhoon Lagoon", "hidden": false },
+        { "coords": [-81.574719, 28.351948], "width": 0.004, "icon": "icons/locations/blizzard-beach.svg", "alt": "Blizzard Beach", "hidden": false }
       ]
     },
     {
       "name": "Disney Resorts",
       "locations": [
-        { "coords": [-81.587757, 28.410853], "width": 0.005, "icon": "icons/locations/marker.svg", "alt": "Grand Floridian Resort & Spa" },
-        { "coords": [-81.584337, 28.405531], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Polynesian Village Resort" },
-        { "coords": [-81.587135, 28.406969], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Island Tower at Polynesian Resort" },
-        { "coords": [-81.574300, 28.415000], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Contemporary Resort" },
-        { "coords": [-81.573288, 28.416431], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Bay Lake Tower" },
-        { "coords": [-81.572666, 28.409327], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Wilderness Lodge" },
-        { "coords": [-81.563708, 28.410896], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Lakeside Lodge (opening 2027)", "hidden": true  },
-        { "coords": [-81.558049, 28.407702], "width": 0.009, "icon": "icons/locations/marker.svg", "alt": "Fort Wilderness Resort & Campground" },
-        { "coords": [-81.558053, 28.398823], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "The Cabins at Fort Wilderness" },
-        { "coords": [-81.558692, 28.370762], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Yacht Club Resort" },
-        { "coords": [-81.556415, 28.371315], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Beach Club Resort" },
-        { "coords": [-81.555889, 28.366425], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "BoardWalk Inn & Villas" },
-        { "coords": [-81.542071, 28.362778], "width": 0.007, "icon": "icons/locations/marker.svg", "alt": "Caribbean Beach Resort" },
-        { "coords": [-81.542013, 28.366035], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Riviera Resort" },
-        { "coords": [-81.548574, 28.350275], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Art of Animation Resort" },
-        { "coords": [-81.542920, 28.350282], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Pop Century Resort" },
-        { "coords": [-81.603453, 28.352601], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Animal Kingdom Lodge" },
-        { "coords": [-81.605603, 28.354404], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Animal Kingdom Villas - Kidani Village" },
-        { "coords": [-81.572770, 28.362880], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "Coronado Springs Resort" },
-        { "coords": [-81.575303, 28.343631], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "All-Star Sports Resort" },
-        { "coords": [-81.572750, 28.339591], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "All-Star Music Resort" },
-        { "coords": [-81.572162, 28.336061], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "All-Star Movies Resort" },
-        { "coords": [-81.521956, 28.376291], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "Saratoga Springs Resort & Spa" },
-        { "coords": [-81.529100, 28.378048], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Treehouse Villas at Saratoga Springs" },
-        { "coords": [-81.533401, 28.375050], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "Old Key West Resort" },
-        { "coords": [-81.536678, 28.386022], "width": 0.005, "icon": "icons/locations/marker.svg", "alt": "Port Orleans Resort - Riverside" },
-        { "coords": [-81.536805, 28.380064], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Port Orleans Resort - French Quarter" }
+        { "coords": [-81.587757, 28.410853], "width": 0.005, "icon": "icons/locations/marker.svg", "alt": "Grand Floridian Resort & Spa", "hidden": false },
+        { "coords": [-81.584337, 28.405531], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Polynesian Village Resort", "hidden": false },
+        { "coords": [-81.587135, 28.406969], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Island Tower at Polynesian Resort", "hidden": false },
+        { "coords": [-81.574300, 28.415000], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Contemporary Resort", "hidden": false },
+        { "coords": [-81.573288, 28.416431], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Bay Lake Tower", "hidden": false },
+        { "coords": [-81.572666, 28.409327], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Wilderness Lodge", "hidden": false },
+        { "coords": [-81.563708, 28.410896], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Lakeside Lodge (opening 2027)", "hidden": true },
+        { "coords": [-81.558049, 28.407702], "width": 0.009, "icon": "icons/locations/marker.svg", "alt": "Fort Wilderness Resort & Campground", "hidden": false },
+        { "coords": [-81.558053, 28.398823], "width": 0.008, "icon": "icons/locations/marker.svg", "alt": "The Cabins at Fort Wilderness", "hidden": false },
+        { "coords": [-81.558692, 28.370762], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Yacht Club Resort", "hidden": false },
+        { "coords": [-81.556415, 28.371315], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Beach Club Resort", "hidden": false },
+        { "coords": [-81.555889, 28.366425], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "BoardWalk Inn & Villas", "hidden": false },
+        { "coords": [-81.542071, 28.362778], "width": 0.007, "icon": "icons/locations/marker.svg", "alt": "Caribbean Beach Resort", "hidden": false },
+        { "coords": [-81.542013, 28.366035], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Riviera Resort", "hidden": false },
+        { "coords": [-81.548574, 28.350275], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Art of Animation Resort", "hidden": false },
+        { "coords": [-81.542920, 28.350282], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Pop Century Resort", "hidden": false },
+        { "coords": [-81.603453, 28.352601], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Animal Kingdom Lodge", "hidden": false },
+        { "coords": [-81.605603, 28.354404], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Animal Kingdom Villas - Kidani Village", "hidden": false },
+        { "coords": [-81.572770, 28.362880], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "Coronado Springs Resort", "hidden": false },
+        { "coords": [-81.575303, 28.343631], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "All-Star Sports Resort", "hidden": false },
+        { "coords": [-81.572750, 28.339591], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "All-Star Music Resort", "hidden": false },
+        { "coords": [-81.572162, 28.336061], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "All-Star Movies Resort", "hidden": false },
+        { "coords": [-81.521956, 28.376291], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "Saratoga Springs Resort & Spa", "hidden": false },
+        { "coords": [-81.529100, 28.378048], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Treehouse Villas at Saratoga Springs", "hidden": false },
+        { "coords": [-81.533401, 28.375050], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "Old Key West Resort", "hidden": false },
+        { "coords": [-81.536678, 28.386022], "width": 0.005, "icon": "icons/locations/marker.svg", "alt": "Port Orleans Resort - Riverside", "hidden": false },
+        { "coords": [-81.536805, 28.380064], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Port Orleans Resort - French Quarter", "hidden": false }
       ]
     },
        {
       "name": "Partner Resorts",
       "locations": [
-        { "coords": [-81.558633, 28.365583], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Walt Disney World Swan" },
-        { "coords": [-81.560535, 28.367405], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Walt Disney World Dolphin" },
-        { "coords": [-81.561918, 28.364615], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Walt Disney Swan Reserve" },
-        { "coords": [-81.592426, 28.401971], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Shades of Green" }
+        { "coords": [-81.558633, 28.365583], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Walt Disney World Swan", "hidden": false },
+        { "coords": [-81.560535, 28.367405], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Walt Disney World Dolphin", "hidden": false },
+        { "coords": [-81.561918, 28.364615], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Walt Disney Swan Reserve", "hidden": false },
+        { "coords": [-81.592426, 28.401971], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Shades of Green", "hidden": false }
       ]
     },
     {
       "name": "Disney Springs Resort Area",
       "locations": [
-        { "coords": [-81.518325, 28.370757], "width": 0.008, "icon": "icons/locations/disney-springs.svg", "alt": "Disney Springs", "dock": true },
-        { "coords": [-81.514472, 28.376802], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Hilton Orlando Buena Vista Palace" },
-        { "coords": [-81.511835, 28.375197], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Wyndham Garden Lake Buena Vista" },
-        { "coords": [-81.511046, 28.372658], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Hilton Orlando Lake Buena Vista" },
-        { "coords": [-81.508184, 28.375226], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Holiday Inn Orlando" },
-        { "coords": [-81.506828, 28.376809], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Renaissance Orlando Resort & Spa" },
-        { "coords": [-81.508566, 28.378629], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Drury Plaza Hotel Orlando" },
-        { "coords": [-81.506347, 28.379103], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "DoubleTree Suites by Hilton Orlando" }
+        { "coords": [-81.518325, 28.370757], "width": 0.008, "icon": "icons/locations/disney-springs.svg", "alt": "Disney Springs", "hidden": false },
+        { "coords": [-81.514472, 28.376802], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Hilton Orlando Buena Vista Palace", "hidden": false },
+        { "coords": [-81.511835, 28.375197], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Wyndham Garden Lake Buena Vista", "hidden": false },
+        { "coords": [-81.511046, 28.372658], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Hilton Orlando Lake Buena Vista", "hidden": false },
+        { "coords": [-81.508184, 28.375226], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Holiday Inn Orlando", "hidden": false },
+        { "coords": [-81.506828, 28.376809], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Renaissance Orlando Resort & Spa", "hidden": false },
+        { "coords": [-81.508566, 28.378629], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Drury Plaza Hotel Orlando", "hidden": false },
+        { "coords": [-81.506347, 28.379103], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "DoubleTree Suites by Hilton Orlando", "hidden": false }
       ]
     },
 {
   "name": "Sports & Recreation",
   "locations": [
-    { "coords": [-81.556500, 28.337500], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "ESPN Wide World of Sports" },
-    { "coords": [-81.527556, 28.373764], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Lake Buena Vista Golf Course" },
-    { "coords": [-81.560408, 28.363940], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Fantasia Gardens Mini Golf" },
-    { "coords": [-81.574000, 28.353500], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Winter Summerland Mini Golf" },
-    { "coords": [-81.547804, 28.399323], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Four Seasons Golf and Sports Club" },
-    { "coords": [-81.552287, 28.397210], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Horseback Trail Rides" },
-    { "coords": [-81.588808, 28.399792], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Palm Driving Range" },
-    { "coords": [-81.595574, 28.405675], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Oak Trail Golf Course" },
-    { "coords": [-81.603282, 28.402509], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Magnolia Golf Course" },
-    { "coords": [-81.591238, 28.392922], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Palm Golf Course" },
-    { "coords": [-81.537192, 28.352256], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Waldorf Astoria Golf Club & Driving Range" }
+    { "coords": [-81.556500, 28.337500], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "ESPN Wide World of Sports", "hidden": false },
+    { "coords": [-81.527556, 28.373764], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Lake Buena Vista Golf Course", "hidden": false },
+    { "coords": [-81.560408, 28.363940], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Fantasia Gardens Mini Golf", "hidden": false },
+    { "coords": [-81.574000, 28.353500], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Winter Summerland Mini Golf", "hidden": false },
+    { "coords": [-81.547804, 28.399323], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Four Seasons Golf and Sports Club", "hidden": false },
+    { "coords": [-81.552287, 28.397210], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Horseback Trail Rides", "hidden": false },
+    { "coords": [-81.588808, 28.399792], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Palm Driving Range", "hidden": false },
+    { "coords": [-81.595574, 28.405675], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Oak Trail Golf Course", "hidden": false },
+    { "coords": [-81.603282, 28.402509], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Magnolia Golf Course", "hidden": false },
+    { "coords": [-81.591238, 28.392922], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Palm Golf Course", "hidden": false },
+    { "coords": [-81.537192, 28.352256], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Waldorf Astoria Golf Club & Driving Range", "hidden": false }
   ]
 },
 {
   "name": "Services & Operations",
   "locations": [
-    { "coords": [-81.579913, 28.405091], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Transportation & Ticket Center" },
-    { "coords": [-81.617026, 28.376568], "width": 0.009, "icon": "icons/locations/marker.svg", "alt": "Flamingo Crossings" },
-    { "coords": [-81.574115, 28.393301], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Car Care Centre" },
-    { "coords": [-81.540580, 28.385688], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Best Friends Pet Hotel" },
-    { "coords": [-81.521300, 28.365571], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Team Disney" },
-    { "coords": [-81.512783, 28.369731], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Casting Center" }
+    { "coords": [-81.579913, 28.405091], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Transportation & Ticket Center", "hidden": false },
+    { "coords": [-81.617026, 28.376568], "width": 0.009, "icon": "icons/locations/marker.svg", "alt": "Flamingo Crossings", "hidden": false },
+    { "coords": [-81.574115, 28.393301], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Car Care Centre", "hidden": false },
+    { "coords": [-81.540580, 28.385688], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Best Friends Pet Hotel", "hidden": false },
+    { "coords": [-81.521300, 28.365571], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Team Disney", "hidden": false },
+    { "coords": [-81.512783, 28.369731], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Casting Center", "hidden": false }
   ]
 },
    {
   "name": "Bonnet Creek Area",
   "locations": [
-    { "coords": [-81.534403, 28.354411], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Waldorf Astoria Orlando" },
-    { "coords": [-81.536846, 28.359084], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Wyndham Grand Orlando Resort" },
-    { "coords": [-81.526316, 28.358068], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "JW Marriott Orlando Resort and Spa" }
+    { "coords": [-81.534403, 28.354411], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Waldorf Astoria Orlando", "hidden": false },
+    { "coords": [-81.536846, 28.359084], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Wyndham Grand Orlando Resort", "hidden": false },
+    { "coords": [-81.526316, 28.358068], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "JW Marriott Orlando Resort and Spa", "hidden": false }
   ]
 },
 {
   "name": "Golden Oak Area",
   "locations": [
-    { "coords": [-81.546134, 28.402115], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Four Seasons Resort Orlando" },
-    { "coords": [-81.542095, 28.391705], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Golden Oak Resort" },
-    { "coords": [-81.528899, 28.406150], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Evermore Orlando Resort" }
+    { "coords": [-81.546134, 28.402115], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Four Seasons Resort Orlando", "hidden": false },
+    { "coords": [-81.542095, 28.391705], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Golden Oak Resort", "hidden": false },
+    { "coords": [-81.528899, 28.406150], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Evermore Orlando Resort", "hidden": false }
   ]
 }
   ],
