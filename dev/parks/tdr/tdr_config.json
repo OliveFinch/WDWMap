@@ -5,11 +5,6 @@
   "tileTemplate": "tdr-proxy",
   "supportsHistory": false,
   "versionCheck": false,
-  "locations": [
-    { "coords": [139.880790, 35.632283], "width": 0.004, "rotation": 205, "icon": "icons/locations/tdr/tdr-castle.svg", "alt": "Tokyo Disneyland", "hidden": false },
-    { "coords": [139.885709, 35.625239], "width": 0.008, "rotation": 135, "icon": "icons/locations/tdr/disneysea.svg", "alt": "Tokyo DisneySea", "hidden": false },
-    { "coords": [139.887318, 35.633259], "width": 0.005, "rotation": 270, "icon": "icons/locations/tdr/ikspiari.svg", "alt": "Ikspiari", "hidden": false }
-  ],
   "minZoom": 16,
   "maxZoom": 20,
   "yScheme": "xyz",

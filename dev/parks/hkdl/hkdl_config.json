@@ -5,15 +5,6 @@
   "tileTemplate": "https://cdn6.parksmedia.wdprapps.disney.com/media/maps/prod/hkdl/{code}/{z}/{x}/{y}.jpg",
   "supportsHistory": true,
   "versionCheck": true,
-  "locations": [
-    { "coords": [114.041407, 22.312656], "width": 0.003, "icon": "icons/locations/hkdl/hkdl-castle.svg", "alt": "Hong Kong Disneyland", "hidden": false },
-    { "coords": [114.037813, 22.321810], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "Inspiration Lake", "hidden": false },
-    { "coords": [114.044085, 22.307825], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Hong Kong Disneyland Hotel", "hidden": false },
-    { "coords": [114.038344, 22.307541], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Disney Explorers Lodge", "hidden": false },
-    { "coords": [114.036762, 22.308802], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Disney's Hollywood Hotel", "hidden": false },
-    { "coords": [114.028908, 22.332418], "width": 0.005, "icon": "icons/locations/marker.svg", "alt": "Disneyland Transportation Centre", "hidden": false },
-    { "coords": [114.045671, 22.316173], "width": 0.005, "icon": "icons/locations/marker.svg", "alt": "Sunny Bay Station & Car Park", "hidden": false }
-  ],
   "minZoom": 14,
   "maxZoom": 20,
   "yScheme": "xyz",

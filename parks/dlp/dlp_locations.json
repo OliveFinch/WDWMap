@@ -1,0 +1,7 @@
+{
+  "locations": [
+    { "coords": [2.77588, 48.8721], "width": 0.008, "icon": "icons/locations/dlp/disneyland_park_paris.svg", "alt": "Disneyland Park", "hidden": false },
+    { "coords": [2.7805, 48.8672], "width": 0.008, "icon": "icons/locations/dlp/disney_studios_paris.svg", "alt": "Walt Disney Studios", "hidden": false },
+    { "coords": [2.7858, 48.8698], "width": 0.005, "icon": "icons/locations/marker.svg", "alt": "Disney Village", "hidden": false }
+  ]
+}
