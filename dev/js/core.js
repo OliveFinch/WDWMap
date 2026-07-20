@@ -1833,13 +1833,12 @@
     return parseFloat(w.toPrecision(3));
   }
 
-  // Serialize a location entry in config.json field order; carries any
-  // extra flags (dock, hidden, rotation) through from a loaded baseline
+  // Serialize a location entry in config.json field order; always emits an
+  // explicit "hidden" flag (dock is deprecated) and carries rotation through
   function serializeLocation(loc) {
     let s = `{ "coords": [${loc.coords[0]}, ${loc.coords[1]}], "width": ${loc.width}, ` +
             `"icon": "${loc.icon || 'icons/locations/marker.svg'}", "alt": "${loc.alt || 'New Location'}"`;
-    if (loc.dock) s += ', "dock": true';
-    if (loc.hidden) s += ', "hidden": true';
+    s += `, "hidden": ${loc.hidden === true}`;
     if (loc.rotation !== undefined) s += `, "rotation": ${loc.rotation}`;
     return s + ' }';
   }
