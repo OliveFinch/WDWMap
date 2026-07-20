@@ -776,6 +776,38 @@ body.datebrowser-open #date-pill.compare-mode {
   background: rgba(0, 0, 0, 0.13);
 }
 
+/* Hidden service-mode entry: a barely-there spanner in the panel corner */
+#info-overlay .panel {
+  position: relative;
+}
+
+#service-mode-secret {
+  appearance: none;
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #86868b;
+  opacity: 0.25;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+#service-mode-secret:hover {
+  opacity: 0.7;
+}
+
+#service-mode-secret svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* =========================================================
    Park selector — flyout style matching date browser
    ========================================================= */

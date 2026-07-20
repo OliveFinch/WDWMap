@@ -1,10 +1,10 @@
 /* =========================================================
-   Location Pill + Spotlight-style Browser (dev mockup)
+   Location Pill + Spotlight-style Browser
    The pill replaces the dock at bottom center. Tapping it opens
    a frosted-glass panel that rises from the pill, search-first.
    ========================================================= */
 
-/* The pill replaces the dock entirely in this mockup */
+/* The pill replaces the dock entirely */
 #location-dock {
   display: none !important;
 }
@@ -776,6 +776,38 @@ body.datebrowser-open #date-pill.compare-mode {
   background: rgba(0, 0, 0, 0.13);
 }
 
+/* Hidden service-mode entry: a barely-there spanner in the panel corner */
+#info-overlay .panel {
+  position: relative;
+}
+
+#service-mode-secret {
+  appearance: none;
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #86868b;
+  opacity: 0.25;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+#service-mode-secret:hover {
+  opacity: 0.7;
+}
+
+#service-mode-secret svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* =========================================================
    Park selector — flyout style matching date browser
    ========================================================= */
@@ -906,27 +938,6 @@ body.datebrowser-open #date-pill.compare-mode {
   border: none;
   font-weight: 600;
   color: #0a3d91;
-}
-
-/* =========================================================
-   Dev badge
-   ========================================================= */
-#dev-badge {
-  position: fixed;
-  top: calc(8px + env(safe-area-inset-top, 0));
-  left: 50%;
-  transform: translateX(-50%);
-  background: #d32f2f;
-  color: #fff;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  z-index: 3000;
-  pointer-events: none;
-  opacity: 0.85;
 }
 
 /* =========================================================
