@@ -95,6 +95,18 @@
   // Park-specific quick-access locations are loaded from separate files
   // (parks/{parkId}/{parkId}_locations.json): "locations" + "locationGroups"
 
+  // A location "width" (degrees of longitude) as a true on-screen square in
+  // projected meters, centered on lon/lat. Fitting this square means the
+  // whole region stays visible on any device: landscape shows excess tiles
+  // left/right, portrait shows excess top/bottom.
+  const METERS_PER_DEGREE = 111319.49079327358; // EPSG:3857 meters per degree of longitude
+
+  function squareExtent3857(lon, lat, width) {
+    const c = ol.proj.fromLonLat([lon, lat]);
+    const half = (width * METERS_PER_DEGREE) / 2;
+    return [c[0] - half, c[1] - half, c[0] + half, c[1] + half];
+  }
+
   // Current park (default to WDW for now; UI switch can be added later)
   let currentParkId = 'wdw';
 
@@ -762,11 +774,7 @@
 
     // If park has defaultWidth, fit to extent instead of using zoom
     if (park.defaultWidth && park.defaultCenter) {
-      const lon = park.defaultCenter[0];
-      const lat = park.defaultCenter[1];
-      const halfW = park.defaultWidth / 2;
-      const extentLonLat = [lon - halfW, lat - halfW, lon + halfW, lat + halfW];
-      const extent3857 = ol.proj.transformExtent(extentLonLat, 'EPSG:4326', 'EPSG:3857');
+      const extent3857 = squareExtent3857(park.defaultCenter[0], park.defaultCenter[1], park.defaultWidth);
       map.getView().fit(extent3857, { duration: 0 });
     }
 
@@ -820,10 +828,8 @@
           // Use width-based extent fitting if available (adapts to screen size)
           const width = parseFloat(btn.dataset.width);
           if (Number.isFinite(width) && width > 0) {
-            // Calculate extent from center + width (use same value for height = square area)
-            const halfW = width / 2;
-            const extentLonLat = [lon - halfW, lat - halfW, lon + halfW, lat + halfW];
-            const extent3857 = ol.proj.transformExtent(extentLonLat, 'EPSG:4326', 'EPSG:3857');
+            // Fit the projected view square for center + width
+            const extent3857 = squareExtent3857(lon, lat, width);
 
             // Calculate zoom level to fit extent
             const view = map.getView();
@@ -1782,7 +1788,7 @@
     const zoom = view.getZoom();
     const viewWidth = widthFromCurrentView();
     const coordText = `"coords": [${center[0].toFixed(6)}, ${center[1].toFixed(6)}], "width": ${viewWidth}`;
-    let display = `[${center[0].toFixed(6)}, ${center[1].toFixed(6)}], zoom: ${zoom.toFixed(1)}\nview width: ${viewWidth}`;
+    let display = `[${center[0].toFixed(6)}, ${center[1].toFixed(6)}], zoom: ${zoom.toFixed(1)}\nview square: ${viewWidth}`;
     // Shanghai uses Baidu coordinate system - coordinates are not real-world lat/lon
     if (currentParkId === 'shdr') {
       display += '\n[Baidu coords - not WGS84]';
@@ -1842,19 +1848,16 @@
   let areaDrawing = false;        // lasso mode: map taps add polygon vertices
   let areaPoints = [];            // polygon vertices as [lon, lat]
 
-  const METERS_PER_DEGREE = 111319.49079327358; // EPSG:3857 meters per degree of longitude
-
-  // The config "width" (degrees) that would reproduce the current view when
-  // fitted by the flyTo logic (which fits a width x width lon/lat square)
+  // The config "width" (degrees) whose view square exactly fills the
+  // viewport's smaller dimension - i.e. reproduces the current view when
+  // fitted by the dock/pill flyTo logic
   function widthFromCurrentView() {
     if (!map) return 0.008;
     const view = map.getView();
     const res = view.getResolution();
     const size = map.getSize();
     if (!Number.isFinite(res) || !size) return 0.008;
-    const lat = ol.proj.toLonLat(view.getCenter())[1];
-    const cosLat = Math.max(Math.cos(lat * Math.PI / 180), 0.01);
-    const w = res * Math.min(size[0], size[1] * cosLat) / METERS_PER_DEGREE;
+    const w = res * Math.min(size[0], size[1]) / METERS_PER_DEGREE;
     return parseFloat(w.toPrecision(3));
   }
 
@@ -1995,17 +1998,12 @@
       return;
     }
 
-    // Seed the width from the baseline and fly to its extent so the
+    // Seed the width from the baseline and fly to its view square so the
     // dashed box shows exactly what the config currently produces
     const w = parseFloat(loc.width) || 0.008;
     if (locationWidthInput) locationWidthInput.value = w;
 
-    const half = w / 2;
-    const extent3857 = ol.proj.transformExtent(
-      [loc.coords[0] - half, loc.coords[1] - half, loc.coords[0] + half, loc.coords[1] + half],
-      'EPSG:4326', 'EPSG:3857'
-    );
-    map.getView().fit(extent3857, { duration: 450 });
+    map.getView().fit(squareExtent3857(loc.coords[0], loc.coords[1], w), { duration: 450 });
   }
 
   function updateLocationTool() {
@@ -2021,13 +2019,9 @@
 
     if (locationJsonEl) locationJsonEl.textContent = locationConfigLine();
 
-    // Draw the lon/lat square extent for center + width in screen pixels
+    // Draw the view square for center + width in screen pixels
     const center = ol.proj.toLonLat(map.getView().getCenter());
-    const half = w / 2;
-    const extent = ol.proj.transformExtent(
-      [center[0] - half, center[1] - half, center[0] + half, center[1] + half],
-      'EPSG:4326', 'EPSG:3857'
-    );
+    const extent = squareExtent3857(center[0], center[1], w);
     const topLeft = map.getPixelFromCoordinate([extent[0], extent[3]]);
     const bottomRight = map.getPixelFromCoordinate([extent[2], extent[1]]);
     if (!topLeft || !bottomRight) {
