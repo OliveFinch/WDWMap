@@ -3,5 +3,105 @@
     { "coords": [-117.918958, 33.812624], "width": 0.003, "icon": "icons/locations/dlr/dlr-castle.svg", "alt": "Disneyland", "hidden": false },
     { "coords": [-117.919703, 33.806176], "width": 0.004, "icon": "icons/locations/dlr/california-adventure.svg", "alt": "California Adventure", "hidden": false },
     { "coords": [-117.922899, 33.80913], "width": 0.002, "icon": "icons/locations/dlr/downtown-disney.svg", "alt": "Downtown Disney", "hidden": false }
+  ],
+  "locationGroups": [
+    {
+      "name": "Theme Parks",
+      "expanded": true,
+      "locations": [
+        { "coords": [-117.918958, 33.812624], "width": 0.003, "icon": "icons/locations/dlr/dlr-castle.svg", "alt": "Disneyland", "hidden": false },
+        { "coords": [-117.919703, 33.806176], "width": 0.004, "icon": "icons/locations/dlr/california-adventure.svg", "alt": "California Adventure", "hidden": false }
+      ]
+    },
+    {
+      "name": "Shopping & Dining",
+      "locations": [
+        { "coords": [-117.922899, 33.80913], "width": 0.002, "icon": "icons/locations/dlr/downtown-disney.svg", "alt": "Downtown Disney", "hidden": false }
+      ]
+    },
+    {
+      "name": "Disney Hotels",
+      "locations": [
+        { "coords": [-117.9253, 33.8077], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Disneyland Hotel", "hidden": false },
+        { "coords": [-117.9235, 33.806], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Disney's Grand Californian Hotel & Spa", "hidden": false },
+        { "coords": [-117.9264, 33.8054], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Pixar Place Hotel", "hidden": false }
+      ]
+    },
+    {
+      "name": "Anaheim Resort Hotels",
+      "locations": [
+        { "coords": [-117.9203, 33.8172], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Springhill Suites by Marriott Anaheim Maingate", "hidden": false },
+        { "coords": [-117.9288, 33.8113], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Holiday Inn & Suites Anaheim", "hidden": false },
+        { "coords": [-117.9265, 33.816], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Anaheim Majestic Garden Hotel", "hidden": false },
+        { "coords": [-117.914, 33.8119], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Four Points by Sheraton Anaheim", "hidden": false },
+        { "coords": [-117.915, 33.8095], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Howard Johnson Hotel and Water Playground", "hidden": false },
+        { "coords": [-117.9139, 33.8087], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Courtyard Anaheim", "hidden": false },
+        { "coords": [-117.9105, 33.8098], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Holiday Inn Express & Suites Anaheim", "hidden": false },
+        { "coords": [-117.9102, 33.8093], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Home2 Suites by Hilton", "hidden": false },
+        { "coords": [-117.9139, 33.8084], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Hilton Garden Inn", "hidden": false },
+        { "coords": [-117.9139, 33.808], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Fairfield Inn by Marriott", "hidden": false },
+        { "coords": [-117.915, 33.8073], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Camelot Inn & Suites", "hidden": false },
+        { "coords": [-117.915, 33.807], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Tropicana Inn & Suites", "hidden": false },
+        { "coords": [-117.915, 33.8068], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Best Western Plus Park Place Inn & Mini Suites", "hidden": false },
+        { "coords": [-117.915, 33.8057], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Best Western Plus Anaheim Inn", "hidden": false },
+        { "coords": [-117.9149, 33.8053], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Grand Legacy at the Park", "hidden": false },
+        { "coords": [-117.9176, 33.7995], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Element by Westin Anaheim Resort Convention Center", "hidden": false },
+        { "coords": [-117.9155, 33.7983], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "SunCoast Park Hotel Anaheim", "hidden": false },
+        { "coords": [-117.9108, 33.8054], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "The Viv Hotel Anaheim", "hidden": false },
+        { "coords": [-117.9129, 33.801], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Clementine Hotel & Suites Anaheim", "hidden": false },
+        { "coords": [-117.9147, 33.7994], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Motel 6 Anaheim Maingate", "hidden": false },
+        { "coords": [-117.911, 33.804], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Candlewood Suites Anaheim Resort Area", "hidden": false },
+        { "coords": [-117.91, 33.8027], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "CAMBRiA Hotel & Suites Anaheim Resort Area", "hidden": false },
+        { "coords": [-117.9135, 33.8034], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "JW Marriott Anaheim Resort", "hidden": false },
+        { "coords": [-117.9148, 33.8036], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Candy Cane Inn", "hidden": false },
+        { "coords": [-117.9165, 33.803], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Desert Palms Hotel & Suites", "hidden": false },
+        { "coords": [-117.917, 33.802], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Residence Inn Anaheim Resort Convention Center", "hidden": false },
+        { "coords": [-117.9152, 33.8021], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "SpringHill Suites Anaheim Resort Convention Center", "hidden": false },
+        { "coords": [-117.9147, 33.7988], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Hyatt House at Anaheim Resort Convention Center", "hidden": false },
+        { "coords": [-117.9147, 33.8017], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Anaheim Portofino Inn & Suites", "hidden": false },
+        { "coords": [-117.9155, 33.801], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Sheraton Park Hotel at the Anaheim Resort", "hidden": false },
+        { "coords": [-117.9153, 33.8044], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "The Anaheim Hotel", "hidden": false },
+        { "coords": [-117.9156, 33.8002], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Hotel Lulu Anaheim Resort", "hidden": false },
+        { "coords": [-117.914, 33.799], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Hampton Inn & Suites by Hilton Anaheim Resort Convention Center", "hidden": false },
+        { "coords": [-117.9127, 33.805], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Sonesta ES Suites Anaheim", "hidden": false },
+        { "coords": [-117.915, 33.7979], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Sonesta Anaheim Resort Area", "hidden": false },
+        { "coords": [-117.9209, 33.8021], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Hilton Anaheim", "hidden": false },
+        { "coords": [-117.9193, 33.8026], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Anaheim Marriott", "hidden": false },
+        { "coords": [-117.9167, 33.8005], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Clarion Hotel Anaheim Resort", "hidden": false },
+        { "coords": [-117.9153, 33.799], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Cortona Inn & Suites Anaheim Resort", "hidden": false },
+        { "coords": [-117.9147, 33.7985], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Hyatt Place at Anaheim Resort Convention Center", "hidden": false },
+        { "coords": [-117.9152, 33.7992], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Homewood Suites by Hilton Anaheim Resort Convention Center", "hidden": false },
+        { "coords": [-117.9155, 33.7986], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Best Western Plus Raffles Inn & Suites", "hidden": false },
+        { "coords": [-117.9147, 33.7982], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Courtyard by Marriott Anaheim Resort Convention Center", "hidden": false },
+        { "coords": [-117.9147, 33.7976], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Double Tree Suites by Hilton Hotel Anaheim Resort Convention Center", "hidden": false },
+        { "coords": [-117.922, 33.8029], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "The Westin Anaheim Resort", "hidden": false },
+        { "coords": [-117.9245, 33.8027], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Best Western Plus Stovall's Inn", "hidden": false },
+        { "coords": [-117.9256, 33.8029], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Best Western Plus Pavilions", "hidden": false }
+      ]
+    },
+    {
+      "name": "Garden Grove Hotels",
+      "locations": [
+        { "coords": [-117.9145, 33.791], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Hampton Inn & Suites by Hilton Anaheim Garden Grove", "hidden": false },
+        { "coords": [-117.915, 33.7905], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Embassy Suites by Hilton Anaheim South", "hidden": false },
+        { "coords": [-117.9147, 33.79], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Hilton Garden Inn Anaheim Garden Grove", "hidden": false },
+        { "coords": [-117.915, 33.7885], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Residence Inn by Marriott Anaheim Resort Area Grove Garden", "hidden": false },
+        { "coords": [-117.9152, 33.7878], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Hyatt Regency Orange County", "hidden": false },
+        { "coords": [-117.9147, 33.7873], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Homewood Suites by Hilton Anaheim Maingate Area", "hidden": false },
+        { "coords": [-117.9147, 33.7897], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Anaheim Marriott Suites", "hidden": false },
+        { "coords": [-117.915, 33.7868], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Delta Hotels by Marriott Anaheim Garden Grove", "hidden": false }
+      ]
+    },
+    {
+      "name": "Parking",
+      "locations": [
+        { "coords": [-117.9239, 33.8143], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Mickey & Friends Parking Structure", "hidden": false },
+        { "coords": [-117.9243, 33.8128], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Pixar Pals Parking Structure", "hidden": false },
+        { "coords": [-117.9113, 33.7987], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Toy Story Parking Area", "hidden": false },
+        { "coords": [-117.9245, 33.803], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Downtown Disney District Simba Parking Lot", "hidden": false },
+        { "coords": [-117.9117, 33.8046], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Anaheim GardenWalk Parking Structure", "hidden": false },
+        { "coords": [-117.923, 33.7993], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Anaheim Convention Center Car Park 4", "hidden": false }
+      ]
+    }
   ]
 }
