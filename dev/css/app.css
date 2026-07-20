@@ -1136,6 +1136,36 @@ html, body {
   margin-top: 10px;
 }
 
+#service-mode-location-select {
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid #68a;
+  border-radius: 4px;
+  font-size: 12px;
+  background: rgba(255,255,255,0.9);
+  color: #036;
+  margin-bottom: 8px;
+}
+
+/* Baseline readout for a loaded config location */
+#service-mode-location-baseline {
+  font-family: monospace;
+  font-size: 10.5px;
+  line-height: 1.5;
+  word-break: break-all;
+  background: rgba(120, 80, 0, 0.35);
+  border-left: 3px solid #fc0;
+  padding: 6px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+#service-mode-location-baseline::before {
+  content: 'Baseline: ';
+  color: #fc0;
+  font-weight: bold;
+}
+
 #service-mode-location-tool .loc-width-row {
   display: flex;
   align-items: center;
@@ -1175,8 +1205,15 @@ html, body {
   line-height: 1.5;
   word-break: break-all;
   background: rgba(0, 0, 0, 0.25);
+  border-left: 3px solid #2196f3;
   padding: 6px 8px;
   border-radius: 4px;
+}
+
+#service-mode-location-json::before {
+  content: 'Edited: ';
+  color: #8cf;
+  font-weight: bold;
 }
 
 #service-mode-copy-location {
