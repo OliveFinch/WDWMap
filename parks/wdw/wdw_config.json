@@ -7,7 +7,7 @@
   "versionCheck": true,
   "locations": [
     { "coords": [-81.581203, 28.418714], "width": 0.008, "icon": "icons/locations/magic-kingdom.svg", "alt": "Magic Kingdom" },
-    { "coords": [-81.549385, 28.371715], "width": 0.012, "icon": "icons/locations/epcot.svg", "alt": "Epcot" },
+    { "coords": [-81.549383, 28.372099], "width": 0.0105, "icon": "icons/locations/epcot.svg", "alt": "Epcot", "dock": true },
     { "coords": [-81.560472, 28.356850], "width": 0.012, "icon": "icons/locations/hollywood-studios.svg", "alt": "Hollywood Studios" },
     { "coords": [-81.590567, 28.358037], "width": 0.012, "icon": "icons/locations/animal-kingdom.svg", "alt": "Animal Kingdom" },
     { "coords": [-81.529080, 28.366055], "width": 0.004, "icon": "icons/locations/typhoon-lagoon.svg", "alt": "Typhoon Lagoon" },
