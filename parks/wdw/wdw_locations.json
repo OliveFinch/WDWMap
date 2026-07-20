@@ -13,7 +13,7 @@
       "name": "Theme Parks",
       "expanded": true,
       "locations": [
-        { "coords": [-81.581128, 28.418732], "width": 0.009, "icon": "icons/locations/magic-kingdom.svg", "alt": "Magic Kingdom", "hidden": false },
+        { "coords": [-81.581128, 28.418732], "width": 0.007, "icon": "icons/locations/magic-kingdom.svg", "alt": "Magic Kingdom", "hidden": false, "area": [[-81.585952, 28.419985], [-81.58465, 28.421251], [-81.582269, 28.421282], [-81.580953, 28.421728], [-81.579062, 28.421802], [-81.577722, 28.421376], [-81.576651, 28.421182], [-81.576435, 28.419336], [-81.577089, 28.418396], [-81.578979, 28.416594], [-81.580833, 28.415999], [-81.581692, 28.415956], [-81.583522, 28.416439], [-81.58545, 28.418075]] },
         { "coords": [-81.549392, 28.372079], "width": 0.01, "icon": "icons/locations/epcot.svg", "alt": "Epcot", "hidden": false },
         { "coords": [-81.559422, 28.357625], "width": 0.0085, "icon": "icons/locations/hollywood-studios.svg", "alt": "Hollywood Studios", "hidden": false },
         { "coords": [-81.591289, 28.35966], "width": 0.013, "icon": "icons/locations/animal-kingdom.svg", "alt": "Animal Kingdom", "hidden": false }
