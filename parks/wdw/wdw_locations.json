@@ -14,9 +14,9 @@
       "expanded": true,
       "locations": [
         { "coords": [-81.581128, 28.418732], "width": 0.007, "icon": "icons/locations/magic-kingdom.svg", "alt": "Magic Kingdom", "hidden": false, "area": [[-81.585952, 28.419985], [-81.58465, 28.421251], [-81.582269, 28.421282], [-81.580953, 28.421728], [-81.579062, 28.421802], [-81.577722, 28.421376], [-81.576651, 28.421182], [-81.576435, 28.419336], [-81.577089, 28.418396], [-81.578979, 28.416594], [-81.580833, 28.415999], [-81.581692, 28.415956], [-81.583522, 28.416439], [-81.58545, 28.418075]] },
-        { "coords": [-81.549392, 28.372079], "width": 0.01, "icon": "icons/locations/epcot.svg", "alt": "Epcot", "hidden": false },
+        { "coords": [-81.549379, 28.372097], "width": 0.01, "icon": "icons/locations/epcot.svg", "alt": "Epcot", "hidden": false, "area": [[-81.554565, 28.377863], [-81.553109, 28.378312], [-81.552573, 28.381281], [-81.549982, 28.381702], [-81.545549, 28.381274], [-81.542292, 28.379871], [-81.542545, 28.376818], [-81.546193, 28.376003], [-81.545719, 28.373323], [-81.545126, 28.368291], [-81.546431, 28.366857], [-81.548864, 28.366421], [-81.551522, 28.366532], [-81.553412, 28.367482], [-81.55418, 28.368546], [-81.554213, 28.370506], [-81.552972, 28.371564], [-81.552622, 28.372715], [-81.554079, 28.373129]] },
         { "coords": [-81.559422, 28.357625], "width": 0.0085, "icon": "icons/locations/hollywood-studios.svg", "alt": "Hollywood Studios", "hidden": false },
-        { "coords": [-81.591289, 28.35966], "width": 0.013, "icon": "icons/locations/animal-kingdom.svg", "alt": "Animal Kingdom", "hidden": false }
+        { "coords": [-81.590225, 28.357233], "width": 0.007, "icon": "icons/locations/animal-kingdom.svg", "alt": "Animal Kingdom", "hidden": false, "area": [[-81.586944, 28.348594], [-81.58347, 28.349583], [-81.585143, 28.359128], [-81.588205, 28.361693], [-81.586372, 28.365888], [-81.58938, 28.366767], [-81.592992, 28.368345], [-81.597316, 28.365619], [-81.59837, 28.360857], [-81.595478, 28.35438], [-81.592805, 28.349868]] }
       ]
     },
     {
@@ -70,7 +70,7 @@
     {
       "name": "Disney Springs Resort Area",
       "locations": [
-        { "coords": [-81.518538, 28.370491], "width": 0.0095, "icon": "icons/locations/disney-springs.svg", "alt": "Disney Springs", "hidden": false },
+        { "coords": [-81.517651, 28.37025], "width": 0.0055, "icon": "icons/locations/disney-springs.svg", "alt": "Disney Springs", "hidden": false, "area": [[-81.519528, 28.367751], [-81.522378, 28.368471], [-81.525011, 28.370171], [-81.525562, 28.371891], [-81.523905, 28.374582], [-81.51895, 28.372702], [-81.516555, 28.372916], [-81.514963, 28.373979], [-81.513375, 28.373059], [-81.513803, 28.370791], [-81.516853, 28.368334]] },
         { "coords": [-81.514425, 28.377009], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Hilton Orlando Buena Vista Palace", "hidden": false },
         { "coords": [-81.51192, 28.375267], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Wyndham Garden Lake Buena Vista", "hidden": false },
         { "coords": [-81.511181, 28.372544], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Hilton Orlando Lake Buena Vista", "hidden": false },
