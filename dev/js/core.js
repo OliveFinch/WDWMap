@@ -789,6 +789,11 @@
     window.addEventListener('resize', updateSwipeUI);
     window.addEventListener('scroll', updateSwipeUI, { passive: true });
 
+    // TDR: re-orient the map from the reference points as the view moves,
+    // and set the initial rotation for the starting view
+    map.on('moveend', applyTdrAutoRotation);
+    applyTdrAutoRotation();
+
     // Dock quick pan - populate based on current park
     const dock = document.getElementById('location-dock');
     if (dock) {
@@ -1527,8 +1532,69 @@
   // Show/hide TDR buttons based on current park
   function updateTdrButtons() {
     const isTdr = (currentParkId === 'tdr');
+    const park = getCurrentPark() || {};
+    const hasRotPoints = Array.isArray(park.rotationPoints) && park.rotationPoints.length > 0;
     if (daynightBtn) daynightBtn.style.display = isTdr ? 'flex' : 'none';
-    if (rotateBtn) rotateBtn.style.display = isTdr ? 'flex' : 'none';
+    // Manual 90° rotate is superseded by the reference-point system
+    if (rotateBtn) rotateBtn.style.display = (isTdr && !hasRotPoints) ? 'flex' : 'none';
+  }
+
+  // =====================
+  // TDR reference-point rotation
+  // The map's rotation at any spot is interpolated from a set of reference
+  // points (rotationPoints in tdr_config.json), each a { coords, rotation }.
+  // Uses inverse-distance-squared weighting with circular (angular) averaging
+  // so values wrap correctly (e.g. 350 and 10 average to 0, not 180).
+  // =====================
+  let rotationConfigActive = false;   // service-mode config tool is open
+  let rotationPointsDraft = [];       // working copy edited by that tool
+
+  function computeRotationFromPoints(lonLat, pts, fallbackDeg) {
+    if (!Array.isArray(pts) || !pts.length) return fallbackDeg || 0;
+    const cosLat = Math.cos(lonLat[1] * Math.PI / 180);
+    let sumX = 0, sumY = 0, sumW = 0;
+    for (const p of pts) {
+      if (!Array.isArray(p.coords)) continue;
+      const dx = (lonLat[0] - p.coords[0]) * cosLat;
+      const dy = lonLat[1] - p.coords[1];
+      const d2 = dx * dx + dy * dy;
+      const rad = (p.rotation || 0) * Math.PI / 180;
+      if (d2 < 1e-14) return (((p.rotation || 0) % 360) + 360) % 360; // on the point
+      const w = 1 / d2;
+      sumX += w * Math.cos(rad);
+      sumY += w * Math.sin(rad);
+      sumW += w;
+    }
+    if (sumW === 0) return fallbackDeg || 0;
+    const deg = Math.atan2(sumY, sumX) * 180 / Math.PI;
+    return ((deg % 360) + 360) % 360;
+  }
+
+  // The point set in effect: the service-mode draft while configuring,
+  // otherwise the park config's stored points
+  function activeTdrRotationPoints() {
+    if (rotationConfigActive) return rotationPointsDraft;
+    const park = getCurrentPark() || {};
+    return Array.isArray(park.rotationPoints) ? park.rotationPoints : [];
+  }
+
+  function tdrRotationForCenter(lonLat) {
+    const park = getCurrentPark() || {};
+    return computeRotationFromPoints(lonLat, activeTdrRotationPoints(), park.defaultRotation || 0);
+  }
+
+  // Re-orient the map to the interpolated rotation for the current center
+  function applyTdrAutoRotation() {
+    if (currentParkId !== 'tdr' || !map) return;
+    const pts = activeTdrRotationPoints();
+    if (!pts.length) return;
+    const center = ol.proj.toLonLat(map.getView().getCenter());
+    const targetRad = tdrRotationForCenter(center) * (Math.PI / 180);
+    const cur = map.getView().getRotation() || 0;
+    // Shortest angular difference; skip sub-0.25° churn to avoid feedback
+    const diff = Math.atan2(Math.sin(targetRad - cur), Math.cos(targetRad - cur));
+    if (Math.abs(diff) < (0.25 * Math.PI / 180)) return;
+    map.getView().setRotation(targetRad);
   }
 
 
@@ -1803,6 +1869,10 @@
     serviceModeCenter.dataset.copyText = coordText;
 
     updateLocationTool();
+    if (rotationConfigActive) {
+      drawRotationOverlay();
+      updateRotationLive();
+    }
   }
 
   // Map clicks in service mode: add a lasso vertex while drawing an area,
@@ -1841,8 +1911,6 @@
   const locationFitBtn = document.getElementById('service-mode-width-from-view');
   const locationSelect = document.getElementById('service-mode-location-select');
   const locationBaselineEl = document.getElementById('service-mode-location-baseline');
-  const rotationRow = document.getElementById('service-mode-rotation-row');
-  const rotationInput = document.getElementById('service-mode-rotation-input');
   const extentBoxEl = document.getElementById('service-mode-extent-box');
   const areaSvg = document.getElementById('service-mode-area-svg');
   const areaDrawBtn = document.getElementById('service-mode-area-draw');
@@ -1872,9 +1940,8 @@
   // explicit "hidden" flag (dock is deprecated) and carries rotation and
   // the "area" polygon ([[lon, lat], ...] hover zone) through
   function serializeLocation(loc) {
-    let s = `{ "coords": [${loc.coords[0]}, ${loc.coords[1]}], "width": ${loc.width}`;
-    if (loc.rotation !== undefined) s += `, "rotation": ${loc.rotation}`;
-    s += `, "icon": "${loc.icon || 'icons/locations/marker.svg'}", "alt": "${loc.alt || 'New Location'}"`;
+    let s = `{ "coords": [${loc.coords[0]}, ${loc.coords[1]}], "width": ${loc.width}, ` +
+            `"icon": "${loc.icon || 'icons/locations/marker.svg'}", "alt": "${loc.alt || 'New Location'}"`;
     s += `, "hidden": ${loc.hidden === true}`;
     if (Array.isArray(loc.area) && loc.area.length) {
       s += ', "area": [' + loc.area.map((p) => `[${p[0]}, ${p[1]}]`).join(', ') + ']';
@@ -1895,14 +1962,6 @@
     });
     if (areaPoints.length >= 3) merged.area = areaPoints;
     else delete merged.area;
-    // Rotation is TDR-only, taken from the rotation input (integer degrees)
-    if (currentParkId === 'tdr' && rotationInput && rotationInput.value !== '') {
-      const deg = parseFloat(rotationInput.value);
-      if (Number.isFinite(deg)) merged.rotation = ((Math.round(deg) % 360) + 360) % 360;
-      else delete merged.rotation;
-    } else {
-      delete merged.rotation;
-    }
     return serializeLocation(merged);
   }
 
@@ -2018,20 +2077,7 @@
     const w = parseFloat(loc.width) || 0.008;
     if (locationWidthInput) locationWidthInput.value = w;
 
-    // TDR: seed + apply the baseline's rotation so the preview matches
-    if (currentParkId === 'tdr' && rotationInput) {
-      const park = getCurrentPark() || {};
-      const rot = (loc.rotation !== undefined) ? loc.rotation : (park.defaultRotation || 0);
-      rotationInput.value = ((Math.round(rot) % 360) + 360) % 360;
-      map.getView().setRotation(rot * (Math.PI / 180));
-    }
-
     map.getView().fit(squareExtent3857(loc.coords[0], loc.coords[1], w), { duration: 450 });
-  }
-
-  // Rotation control is TDR-only (each TDR location has its own rotation)
-  function updateRotationRowVisibility() {
-    if (rotationRow) rotationRow.style.display = (currentParkId === 'tdr') ? 'flex' : 'none';
   }
 
   function updateLocationTool() {
@@ -2077,24 +2123,10 @@
       }
       populateLocationSelect();
       updateAreaStatus();
-      updateRotationRowVisibility();
-      // Seed the rotation input (TDR) from the current view rotation
-      if (currentParkId === 'tdr' && rotationInput && rotationInput.value === '') {
-        const deg = Math.round(map.getView().getRotation() * 180 / Math.PI);
-        rotationInput.value = ((deg % 360) + 360) % 360;
-      }
       // Seed the width from whatever is on screen right now
       if (locationWidthInput && !locationWidthInput.value) {
         locationWidthInput.value = widthFromCurrentView();
       }
-      updateLocationTool();
-    });
-  }
-
-  if (rotationInput) {
-    rotationInput.addEventListener('input', () => {
-      const deg = parseFloat(rotationInput.value);
-      if (Number.isFinite(deg)) map.getView().setRotation(deg * (Math.PI / 180));
       updateLocationTool();
     });
   }
@@ -2140,6 +2172,141 @@
       navigator.clipboard.writeText(line)
         .then(() => showToast('Location config line copied'))
         .catch(() => alert(line));
+    });
+  }
+
+  // =====================
+  // Service Mode: TDR rotation reference-point configuration tool
+  // =====================
+  const rotationConfigWrap = document.getElementById('service-mode-rotation');
+  const rotationConfigBtn = document.getElementById('service-mode-rotation-btn');
+  const rotationConfigTool = document.getElementById('service-mode-rotation-tool');
+  const rotationLiveEl = document.getElementById('service-mode-rotation-live');
+  const rotationDegInput = document.getElementById('service-mode-rotation-deg');
+  const rotationAddBtn = document.getElementById('service-mode-rotation-add');
+  const rotationListEl = document.getElementById('service-mode-rotation-list');
+  const rotationCopyBtn = document.getElementById('service-mode-rotation-copy');
+  const rotationSvg = document.getElementById('service-mode-rotation-svg');
+
+  function loadRotationDraft() {
+    const park = getCurrentPark() || {};
+    rotationPointsDraft = (Array.isArray(park.rotationPoints) ? park.rotationPoints : [])
+      .filter((p) => Array.isArray(p.coords))
+      .map((p) => ({ coords: [p.coords[0], p.coords[1]], rotation: p.rotation || 0 }));
+  }
+
+  function rotationPointsJson() {
+    const lines = rotationPointsDraft.map((p) =>
+      `    { "coords": [${p.coords[0]}, ${p.coords[1]}], "rotation": ${p.rotation} }`);
+    return '"rotationPoints": [\n' + lines.join(',\n') + '\n  ]';
+  }
+
+  function renderRotationList() {
+    if (!rotationListEl) return;
+    rotationListEl.innerHTML = '';
+    if (!rotationPointsDraft.length) {
+      rotationListEl.textContent = 'No reference points yet';
+      return;
+    }
+    rotationPointsDraft.forEach((p, i) => {
+      const row = document.createElement('div');
+      row.className = 'rot-item';
+      const label = document.createElement('span');
+      label.textContent = `${p.rotation}° @ ${p.coords[0].toFixed(5)}, ${p.coords[1].toFixed(5)}`;
+      row.appendChild(label);
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.textContent = '✕';
+      del.title = 'Remove point';
+      del.addEventListener('click', () => {
+        rotationPointsDraft.splice(i, 1);
+        renderRotationList();
+        drawRotationOverlay();
+        updateRotationLive();
+      });
+      row.appendChild(del);
+      rotationListEl.appendChild(row);
+    });
+  }
+
+  function updateRotationLive() {
+    if (!rotationLiveEl || !map) return;
+    const center = ol.proj.toLonLat(map.getView().getCenter());
+    const park = getCurrentPark() || {};
+    const deg = computeRotationFromPoints(center, rotationPointsDraft, park.defaultRotation || 0);
+    rotationLiveEl.textContent = Math.round(deg);
+  }
+
+  function drawRotationOverlay() {
+    if (!rotationSvg) return;
+    if (!serviceMode || !rotationConfigActive || !rotationPointsDraft.length) {
+      rotationSvg.innerHTML = '';
+      return;
+    }
+    let html = '';
+    rotationPointsDraft.forEach((p) => {
+      const px = map.getPixelFromCoordinate(ol.proj.fromLonLat(p.coords));
+      if (!px) return;
+      const rad = (p.rotation || 0) * Math.PI / 180;
+      const L = 28;
+      const ex = px[0] + L * Math.sin(rad);
+      const ey = px[1] - L * Math.cos(rad);
+      html += `<line x1="${px[0]}" y1="${px[1]}" x2="${ex}" y2="${ey}" ` +
+              `stroke="#12bdf0" stroke-width="2.5"/>`;
+      html += `<circle cx="${px[0]}" cy="${px[1]}" r="5" fill="#12bdf0" ` +
+              `stroke="#fff" stroke-width="2"/>`;
+      html += `<text x="${px[0] + 9}" y="${px[1] - 9}" fill="#12bdf0" ` +
+              `font-size="12" font-family="monospace" ` +
+              `stroke="#003" stroke-width="0.4" paint-order="stroke">${p.rotation}°</text>`;
+    });
+    rotationSvg.innerHTML = html;
+  }
+
+  function updateRotationConfigVisibility() {
+    if (rotationConfigWrap) {
+      rotationConfigWrap.style.display = (currentParkId === 'tdr') ? 'block' : 'none';
+    }
+  }
+
+  if (rotationConfigBtn) {
+    rotationConfigBtn.addEventListener('click', () => {
+      rotationConfigActive = !rotationConfigActive;
+      rotationConfigBtn.classList.toggle('active', rotationConfigActive);
+      if (rotationConfigTool) {
+        rotationConfigTool.style.display = rotationConfigActive ? 'block' : 'none';
+      }
+      if (rotationConfigActive) {
+        loadRotationDraft();
+        renderRotationList();
+        drawRotationOverlay();
+        updateRotationLive();
+      } else if (rotationSvg) {
+        rotationSvg.innerHTML = '';
+      }
+    });
+  }
+
+  if (rotationAddBtn) {
+    rotationAddBtn.addEventListener('click', () => {
+      const deg = parseFloat(rotationDegInput && rotationDegInput.value);
+      if (!Number.isFinite(deg)) { showToast('Enter a rotation in degrees'); return; }
+      const center = ol.proj.toLonLat(map.getView().getCenter());
+      rotationPointsDraft.push({
+        coords: [parseFloat(center[0].toFixed(6)), parseFloat(center[1].toFixed(6))],
+        rotation: ((Math.round(deg) % 360) + 360) % 360
+      });
+      renderRotationList();
+      drawRotationOverlay();
+      updateRotationLive();
+    });
+  }
+
+  if (rotationCopyBtn) {
+    rotationCopyBtn.addEventListener('click', () => {
+      const txt = rotationPointsJson();
+      navigator.clipboard.writeText(txt)
+        .then(() => showToast('rotationPoints JSON copied'))
+        .catch(() => alert(txt));
     });
   }
 
@@ -2419,6 +2586,9 @@
     // Zoom about the crosshair while in service mode
     enableCenteredZoom();
 
+    // Rotation config tool is TDR-only; show its entry button accordingly
+    updateRotationConfigVisibility();
+
     // Refresh the Locations tool's park location list
     populateLocationSelect();
 
@@ -2453,6 +2623,12 @@
     disableCenteredZoom();
 
     setAreaDrawing(false);
+
+    // Close the rotation config tool and clear its overlay
+    rotationConfigActive = false;
+    if (rotationConfigBtn) rotationConfigBtn.classList.remove('active');
+    if (rotationConfigTool) rotationConfigTool.style.display = 'none';
+    if (rotationSvg) rotationSvg.innerHTML = '';
 
     // Remove listeners
     map.un('postrender', updateServiceModeCenter);

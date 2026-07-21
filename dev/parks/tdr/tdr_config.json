@@ -11,6 +11,11 @@
   "defaultZoom": 17.0,
   "defaultWidth": 0.016,
   "defaultRotation": 205,
+  "rotationPoints": [
+    { "coords": [139.880790, 35.632283], "rotation": 205 },
+    { "coords": [139.885709, 35.625239], "rotation": 135 },
+    { "coords": [139.887318, 35.633259], "rotation": 270 }
+  ],
   "boundsByZoom": {
     "15": { "minX": 29115, "maxX": 29125, "minY": 12905, "maxY": 12915 },
     "16": { "minX": 58230, "maxX": 58250, "minY": 25810, "maxY": 25830 },
