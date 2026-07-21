@@ -82,25 +82,25 @@
     {
       "name": "Garden Grove Hotels",
       "locations": [
-        { "coords": [-117.9145, 33.791], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Hampton Inn & Suites by Hilton Anaheim Garden Grove", "hidden": false },
-        { "coords": [-117.915, 33.7905], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Embassy Suites by Hilton Anaheim South", "hidden": false },
-        { "coords": [-117.9147, 33.79], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Hilton Garden Inn Anaheim Garden Grove", "hidden": false },
-        { "coords": [-117.915, 33.7885], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Residence Inn by Marriott Anaheim Resort Area Grove Garden", "hidden": false },
-        { "coords": [-117.9152, 33.7878], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Hyatt Regency Orange County", "hidden": false },
-        { "coords": [-117.9147, 33.7873], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Homewood Suites by Hilton Anaheim Maingate Area", "hidden": false },
-        { "coords": [-117.9147, 33.7897], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Anaheim Marriott Suites", "hidden": false },
-        { "coords": [-117.915, 33.7868], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Delta Hotels by Marriott Anaheim Garden Grove", "hidden": false }
+        { "coords": [-117.915994, 33.792209], "width": 0.001, "icon": "icons/locations/marker.svg", "alt": "Hampton Inn & Suites by Hilton Anaheim Garden Grove", "hidden": false },
+        { "coords": [-117.916666, 33.79126], "width": 0.0011, "icon": "icons/locations/marker.svg", "alt": "Embassy Suites by Hilton Anaheim South", "hidden": false },
+        { "coords": [-117.915598, 33.790713], "width": 0.001, "icon": "icons/locations/marker.svg", "alt": "Hilton Garden Inn Anaheim Garden Grove", "hidden": false },
+        { "coords": [-117.915463, 33.789898], "width": 0.001, "icon": "icons/locations/marker.svg", "alt": "Residence Inn by Marriott Anaheim Resort Area Grove Garden", "hidden": false },
+        { "coords": [-117.916609, 33.789636], "width": 0.0015, "icon": "icons/locations/marker.svg", "alt": "Hyatt Regency Orange County", "hidden": false, "area": [[-117.915569, 33.7889], [-117.915564, 33.789392], [-117.916857, 33.790514], [-117.917412, 33.790525], [-117.917407, 33.788983]] },
+        { "coords": [-117.9178, 33.788409], "width": 0.0009, "icon": "icons/locations/marker.svg", "alt": "Homewood Suites by Hilton Anaheim Maingate Area", "hidden": false, "area": [[-117.918637, 33.788718], [-117.917297, 33.788724], [-117.917304, 33.788097], [-117.918608, 33.788069]] },
+        { "coords": [-117.917098, 33.787818], "width": 0.0015, "icon": "icons/locations/marker.svg", "alt": "Anaheim Marriott Suites", "hidden": false, "area": [[-117.917641, 33.787192], [-117.916865, 33.787217], [-117.916435, 33.787641], [-117.916589, 33.788161], [-117.917711, 33.78813]] },
+        { "coords": [-117.916257, 33.787125], "width": 0.0015, "icon": "icons/locations/marker.svg", "alt": "Delta Hotels by Marriott Anaheim Garden Grove", "hidden": false, "area": [[-117.917049, 33.787098], [-117.916278, 33.787702], [-117.915655, 33.787355], [-117.915801, 33.786656], [-117.917001, 33.786608]] }
       ]
     },
     {
       "name": "Parking",
       "locations": [
-        { "coords": [-117.9239, 33.8143], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Mickey & Friends Parking Structure", "hidden": false },
-        { "coords": [-117.9243, 33.8128], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Pixar Pals Parking Structure", "hidden": false },
-        { "coords": [-117.9113, 33.7987], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Toy Story Parking Area", "hidden": false },
-        { "coords": [-117.9245, 33.803], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Downtown Disney District Simba Parking Lot", "hidden": false },
-        { "coords": [-117.9117, 33.8046], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Anaheim GardenWalk Parking Structure", "hidden": false },
-        { "coords": [-117.923, 33.7993], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Anaheim Convention Center Car Park 4", "hidden": false }
+        { "coords": [-117.925376, 33.815284], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Mickey & Friends Parking Structure", "hidden": false, "area": [[-117.924186, 33.81444], [-117.924187, 33.816347], [-117.928152, 33.816273], [-117.928159, 33.814455]] },
+        { "coords": [-117.925663, 33.813623], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Pixar Pals Parking Structure", "hidden": false, "area": [[-117.924394, 33.814434], [-117.924523, 33.812851], [-117.928185, 33.812843], [-117.928217, 33.81445]] },
+        { "coords": [-117.910885, 33.80094], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Toy Story Parking Area", "hidden": false, "area": [[-117.912776, 33.803278], [-117.90853, 33.803281], [-117.908508, 33.802579], [-117.906681, 33.802576], [-117.906642, 33.801532], [-117.90873, 33.801476], [-117.908757, 33.798082], [-117.913279, 33.797859], [-117.913295, 33.798712], [-117.914897, 33.798732], [-117.914917, 33.800986], [-117.913697, 33.80099], [-117.913756, 33.802561], [-117.912862, 33.802572]] },
+        { "coords": [-117.92551, 33.804544], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Downtown Disney District Simba Parking Lot", "hidden": false, "area": [[-117.924276, 33.805515], [-117.924321, 33.803537], [-117.928104, 33.803478], [-117.928107, 33.806912], [-117.925745, 33.806916], [-117.925676, 33.805543]] },
+        { "coords": [-117.912268, 33.804865], "width": 0.0015, "icon": "icons/locations/marker.svg", "alt": "Anaheim GardenWalk Parking Structure", "hidden": false, "area": [[-117.912573, 33.805835], [-117.912588, 33.803732], [-117.911565, 33.803722], [-117.911579, 33.805832]] },
+        { "coords": [-117.923379, 33.798764], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Anaheim Convention Center Car Park 4", "hidden": false }
       ]
     }
   ]
