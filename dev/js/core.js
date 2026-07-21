@@ -789,12 +789,12 @@
     window.addEventListener('resize', updateSwipeUI);
     window.addEventListener('scroll', updateSwipeUI, { passive: true });
 
-    // TDR: re-orient the map from the reference points continuously as the
-    // view is panned (change:center fires throughout the drag/inertia), plus
-    // a final settle on moveend and the initial rotation for the start view
+    // TDR: re-orient the map from the rotation areas continuously as the view
+    // is panned (change:center fires throughout the drag/inertia), easing to
+    // the target; snap to the correct rotation immediately for the start view
     map.getView().on('change:center', scheduleTdrAutoRotation);
-    map.on('moveend', applyTdrAutoRotation);
-    applyTdrAutoRotation();
+    map.on('moveend', scheduleTdrAutoRotation);
+    applyTdrAutoRotationImmediate();
 
     // Dock quick pan - populate based on current park
     const dock = document.getElementById('location-dock');
@@ -1535,80 +1535,86 @@
   function updateTdrButtons() {
     const isTdr = (currentParkId === 'tdr');
     const park = getCurrentPark() || {};
-    const hasRotPoints = Array.isArray(park.rotationPoints) && park.rotationPoints.length > 0;
+    const hasRotAreas = Array.isArray(park.rotationAreas) && park.rotationAreas.length > 0;
     if (daynightBtn) daynightBtn.style.display = isTdr ? 'flex' : 'none';
-    // Manual 90° rotate is superseded by the reference-point system
-    if (rotateBtn) rotateBtn.style.display = (isTdr && !hasRotPoints) ? 'flex' : 'none';
+    // Manual 90° rotate is superseded by the rotation-area system
+    if (rotateBtn) rotateBtn.style.display = (isTdr && !hasRotAreas) ? 'flex' : 'none';
   }
 
   // =====================
-  // TDR reference-point rotation
-  // The map's rotation at any spot is interpolated from a set of reference
-  // points (rotationPoints in tdr_config.json), each a { coords, rotation }.
-  // Uses inverse-distance-squared weighting with circular (angular) averaging
-  // so values wrap correctly (e.g. 350 and 10 average to 0, not 180).
+  // TDR area-based rotation
+  // The map's rotation is set by which region the view center is in. Each
+  // region is a polygon with a rotation (rotationAreas in tdr_config.json:
+  // [{ rotation, area: [[lon,lat], ...] }]). First matching area wins; when
+  // the center is in no area the park defaultRotation applies. Transitions
+  // ease smoothly rather than snapping at boundaries.
   // =====================
   let rotationConfigActive = false;   // service-mode config tool is open
-  let rotationPointsDraft = [];       // working copy edited by that tool
+  let rotationAreasDraft = [];        // committed areas edited by that tool
 
-  function computeRotationFromPoints(lonLat, pts, fallbackDeg) {
-    if (!Array.isArray(pts) || !pts.length) return fallbackDeg || 0;
-    const cosLat = Math.cos(lonLat[1] * Math.PI / 180);
-    let sumX = 0, sumY = 0, sumW = 0;
-    for (const p of pts) {
-      if (!Array.isArray(p.coords)) continue;
-      const dx = (lonLat[0] - p.coords[0]) * cosLat;
-      const dy = lonLat[1] - p.coords[1];
-      const d2 = dx * dx + dy * dy;
-      const rad = (p.rotation || 0) * Math.PI / 180;
-      if (d2 < 1e-14) return (((p.rotation || 0) % 360) + 360) % 360; // on the point
-      const w = 1 / d2;
-      sumX += w * Math.cos(rad);
-      sumY += w * Math.sin(rad);
-      sumW += w;
+  // Ray-casting point-in-polygon; poly is [[lon, lat], ...]
+  function pointInPoly(pt, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = poly[i][0], yi = poly[i][1];
+      const xj = poly[j][0], yj = poly[j][1];
+      if (((yi > pt[1]) !== (yj > pt[1])) &&
+          (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi)) inside = !inside;
     }
-    if (sumW === 0) return fallbackDeg || 0;
-    const deg = Math.atan2(sumY, sumX) * 180 / Math.PI;
-    return ((deg % 360) + 360) % 360;
+    return inside;
   }
 
-  // The point set in effect: the service-mode draft while configuring,
-  // otherwise the park config's stored points
-  function activeTdrRotationPoints() {
-    if (rotationConfigActive) return rotationPointsDraft;
+  // The area set in effect: the service-mode draft while configuring,
+  // otherwise the park config's stored areas
+  function activeTdrRotationAreas() {
+    if (rotationConfigActive) return rotationAreasDraft;
     const park = getCurrentPark() || {};
-    return Array.isArray(park.rotationPoints) ? park.rotationPoints : [];
+    return Array.isArray(park.rotationAreas) ? park.rotationAreas : [];
   }
 
-  function tdrRotationForCenter(lonLat) {
+  function rotationForCenter(lonLat) {
     const park = getCurrentPark() || {};
-    return computeRotationFromPoints(lonLat, activeTdrRotationPoints(), park.defaultRotation || 0);
+    const areas = activeTdrRotationAreas();
+    for (const a of areas) {
+      if (Array.isArray(a.area) && a.area.length >= 3 && pointInPoly(lonLat, a.area)) {
+        return (((a.rotation || 0) % 360) + 360) % 360;
+      }
+    }
+    return park.defaultRotation || 0;
   }
 
-  // Re-orient the map to the interpolated rotation for the current center
-  function applyTdrAutoRotation() {
-    if (currentParkId !== 'tdr' || !map) return;
-    const pts = activeTdrRotationPoints();
-    if (!pts.length) return;
+  function rotationTargetRad() {
     const center = ol.proj.toLonLat(map.getView().getCenter());
-    const targetRad = tdrRotationForCenter(center) * (Math.PI / 180);
-    const cur = map.getView().getRotation() || 0;
-    // Shortest angular difference; skip sub-0.25° churn to avoid feedback
-    const diff = Math.atan2(Math.sin(targetRad - cur), Math.cos(targetRad - cur));
-    if (Math.abs(diff) < (0.25 * Math.PI / 180)) return;
-    map.getView().setRotation(targetRad);
+    return rotationForCenter(center) * (Math.PI / 180);
   }
 
-  // Coalesce continuous center changes (during a drag/inertia) to at most
-  // one rotation update per frame, so the map re-orients live as you pan
-  let rotationRafPending = false;
+  // Instantly orient to the target (used at boot / park load)
+  function applyTdrAutoRotationImmediate() {
+    if (currentParkId !== 'tdr' || !map) return;
+    if (!activeTdrRotationAreas().length) return;
+    map.getView().setRotation(rotationTargetRad());
+  }
+
+  // rAF loop: ease the view rotation toward the target so crossing a region
+  // boundary glides instead of snapping; self-stops once converged
+  let rotationAnimId = null;
+  function stepTdrRotation() {
+    rotationAnimId = null;
+    if (currentParkId !== 'tdr' || !map) return;
+    if (!activeTdrRotationAreas().length) return;
+    const targetRad = rotationTargetRad();
+    const cur = map.getView().getRotation() || 0;
+    const diff = Math.atan2(Math.sin(targetRad - cur), Math.cos(targetRad - cur));
+    if (Math.abs(diff) < (0.1 * Math.PI / 180)) {
+      if (cur !== targetRad) map.getView().setRotation(targetRad);
+      return; // converged
+    }
+    map.getView().setRotation(cur + diff * 0.3);
+    rotationAnimId = requestAnimationFrame(stepTdrRotation);
+  }
+
   function scheduleTdrAutoRotation() {
-    if (rotationRafPending) return;
-    rotationRafPending = true;
-    requestAnimationFrame(() => {
-      rotationRafPending = false;
-      applyTdrAutoRotation();
-    });
+    if (rotationAnimId == null) rotationAnimId = requestAnimationFrame(stepTdrRotation);
   }
 
 
@@ -1894,6 +1900,10 @@
   function serviceModeMapClick(evt) {
     if (locationToolActive && areaDrawing && evt && evt.coordinate) {
       addAreaVertex(evt.coordinate);
+      return;
+    }
+    if (rotationConfigActive && rotAreaDrawing && evt && evt.coordinate) {
+      addRotAreaVertex(evt.coordinate);
       return;
     }
     copyCenterToClipboard();
@@ -2190,50 +2200,84 @@
   }
 
   // =====================
-  // Service Mode: TDR rotation reference-point configuration tool
+  // Service Mode: TDR rotation-area configuration tool
+  // Draw a polygon (lasso) and assign it a rotation; builds the
+  // rotationAreas array for tdr_config.json
   // =====================
   const rotationConfigWrap = document.getElementById('service-mode-rotation');
   const rotationConfigBtn = document.getElementById('service-mode-rotation-btn');
   const rotationConfigTool = document.getElementById('service-mode-rotation-tool');
   const rotationLiveEl = document.getElementById('service-mode-rotation-live');
   const rotationDegInput = document.getElementById('service-mode-rotation-deg');
+  const rotationDrawBtn = document.getElementById('service-mode-rotation-draw');
+  const rotationUndoBtn = document.getElementById('service-mode-rotation-undo');
+  const rotationClearBtn = document.getElementById('service-mode-rotation-clear');
   const rotationAddBtn = document.getElementById('service-mode-rotation-add');
+  const rotationStatusEl = document.getElementById('service-mode-rotation-status');
   const rotationListEl = document.getElementById('service-mode-rotation-list');
   const rotationCopyBtn = document.getElementById('service-mode-rotation-copy');
   const rotationSvg = document.getElementById('service-mode-rotation-svg');
 
+  let rotAreaDrawing = false;      // tap-to-add-vertex mode for a new area
+  let rotAreaDraftPoints = [];     // in-progress polygon vertices [lon,lat]
+
   function loadRotationDraft() {
     const park = getCurrentPark() || {};
-    rotationPointsDraft = (Array.isArray(park.rotationPoints) ? park.rotationPoints : [])
-      .filter((p) => Array.isArray(p.coords))
-      .map((p) => ({ coords: [p.coords[0], p.coords[1]], rotation: p.rotation || 0 }));
+    rotationAreasDraft = (Array.isArray(park.rotationAreas) ? park.rotationAreas : [])
+      .filter((a) => Array.isArray(a.area))
+      .map((a) => ({ rotation: a.rotation || 0, area: a.area.map((p) => p.slice()) }));
   }
 
-  function rotationPointsJson() {
-    const lines = rotationPointsDraft.map((p) =>
-      `    { "coords": [${p.coords[0]}, ${p.coords[1]}], "rotation": ${p.rotation} }`);
-    return '"rotationPoints": [\n' + lines.join(',\n') + '\n  ]';
+  function rotationAreasJson() {
+    const lines = rotationAreasDraft.map((a) => {
+      const pts = a.area.map((p) => `[${p[0]}, ${p[1]}]`).join(', ');
+      return `    { "rotation": ${a.rotation}, "area": [${pts}] }`;
+    });
+    return '"rotationAreas": [\n' + lines.join(',\n') + '\n  ]';
+  }
+
+  function setRotAreaDrawing(on) {
+    rotAreaDrawing = on;
+    if (rotationDrawBtn) {
+      rotationDrawBtn.classList.toggle('active', on);
+      rotationDrawBtn.textContent = on ? 'Drawing… (tap map)' : 'Draw area';
+    }
+  }
+
+  function updateRotStatus() {
+    if (!rotationStatusEl) return;
+    const n = rotAreaDraftPoints.length;
+    rotationStatusEl.textContent = !n
+      ? 'No area drawn'
+      : `${n} point${n === 1 ? '' : 's'}` + (n < 3 ? ' — need 3+' : ' — ready to add');
+  }
+
+  function addRotAreaVertex(coord3857) {
+    const ll = ol.proj.toLonLat(coord3857);
+    rotAreaDraftPoints.push([parseFloat(ll[0].toFixed(6)), parseFloat(ll[1].toFixed(6))]);
+    updateRotStatus();
+    drawRotationOverlay();
   }
 
   function renderRotationList() {
     if (!rotationListEl) return;
     rotationListEl.innerHTML = '';
-    if (!rotationPointsDraft.length) {
-      rotationListEl.textContent = 'No reference points yet';
+    if (!rotationAreasDraft.length) {
+      rotationListEl.textContent = 'No rotation areas yet';
       return;
     }
-    rotationPointsDraft.forEach((p, i) => {
+    rotationAreasDraft.forEach((a, i) => {
       const row = document.createElement('div');
       row.className = 'rot-item';
       const label = document.createElement('span');
-      label.textContent = `${p.rotation}° @ ${p.coords[0].toFixed(5)}, ${p.coords[1].toFixed(5)}`;
+      label.textContent = `${a.rotation}° (${a.area.length} pts)`;
       row.appendChild(label);
       const del = document.createElement('button');
       del.type = 'button';
       del.textContent = '✕';
-      del.title = 'Remove point';
+      del.title = 'Remove area';
       del.addEventListener('click', () => {
-        rotationPointsDraft.splice(i, 1);
+        rotationAreasDraft.splice(i, 1);
         renderRotationList();
         drawRotationOverlay();
         updateRotationLive();
@@ -2246,33 +2290,51 @@
   function updateRotationLive() {
     if (!rotationLiveEl || !map) return;
     const center = ol.proj.toLonLat(map.getView().getCenter());
-    const park = getCurrentPark() || {};
-    const deg = computeRotationFromPoints(center, rotationPointsDraft, park.defaultRotation || 0);
-    rotationLiveEl.textContent = Math.round(deg);
+    rotationLiveEl.textContent = Math.round(rotationForCenter(center));
+  }
+
+  function polygonSvg(pts, fill, stroke, dash) {
+    const s = pts.map((p) => `${p[0]},${p[1]}`).join(' ');
+    const tag = pts.length >= 3 ? 'polygon' : 'polyline';
+    const f = pts.length >= 3 ? fill : 'none';
+    return `<${tag} points="${s}" fill="${f}" stroke="${stroke}" stroke-width="2"` +
+           (dash ? ` stroke-dasharray="6 4"` : '') + '/>';
   }
 
   function drawRotationOverlay() {
     if (!rotationSvg) return;
-    if (!serviceMode || !rotationConfigActive || !rotationPointsDraft.length) {
-      rotationSvg.innerHTML = '';
-      return;
-    }
+    if (!serviceMode || !rotationConfigActive) { rotationSvg.innerHTML = ''; return; }
+    const center = ol.proj.toLonLat(map.getView().getCenter());
     let html = '';
-    rotationPointsDraft.forEach((p) => {
-      const px = map.getPixelFromCoordinate(ol.proj.fromLonLat(p.coords));
-      if (!px) return;
-      const rad = (p.rotation || 0) * Math.PI / 180;
-      const L = 28;
-      const ex = px[0] + L * Math.sin(rad);
-      const ey = px[1] - L * Math.cos(rad);
-      html += `<line x1="${px[0]}" y1="${px[1]}" x2="${ex}" y2="${ey}" ` +
-              `stroke="#12bdf0" stroke-width="2.5"/>`;
-      html += `<circle cx="${px[0]}" cy="${px[1]}" r="5" fill="#12bdf0" ` +
-              `stroke="#fff" stroke-width="2"/>`;
-      html += `<text x="${px[0] + 9}" y="${px[1] - 9}" fill="#12bdf0" ` +
-              `font-size="12" font-family="monospace" ` +
-              `stroke="#003" stroke-width="0.4" paint-order="stroke">${p.rotation}°</text>`;
+
+    // Committed areas: filled polygons, highlighted when they contain center
+    rotationAreasDraft.forEach((a) => {
+      if (!Array.isArray(a.area) || a.area.length < 3) return;
+      const px = a.area.map((p) => map.getPixelFromCoordinate(ol.proj.fromLonLat(p)));
+      if (px.some((p) => !p)) return;
+      const hit = pointInPoly(center, a.area);
+      html += polygonSvg(px,
+        hit ? 'rgba(18,189,240,0.24)' : 'rgba(18,189,240,0.08)',
+        hit ? '#12bdf0' : 'rgba(18,189,240,0.6)', false);
+      const cx = px.reduce((s, p) => s + p[0], 0) / px.length;
+      const cy = px.reduce((s, p) => s + p[1], 0) / px.length;
+      html += `<text x="${cx}" y="${cy}" fill="#12bdf0" font-size="13" ` +
+              `font-family="monospace" text-anchor="middle" ` +
+              `stroke="#003" stroke-width="0.5" paint-order="stroke">${a.rotation}°</text>`;
     });
+
+    // In-progress polygon (orange dashed, like the location lasso)
+    if (rotAreaDraftPoints.length) {
+      const px = rotAreaDraftPoints.map((p) => map.getPixelFromCoordinate(ol.proj.fromLonLat(p)));
+      if (!px.some((p) => !p)) {
+        html += polygonSvg(px, 'rgba(255,140,0,0.15)', 'rgba(255,140,0,0.95)', true);
+        px.forEach((p, i) => {
+          html += `<circle cx="${p[0]}" cy="${p[1]}" r="4" ` +
+                  `fill="${i === 0 ? '#fff' : 'rgba(255,140,0,0.95)'}" ` +
+                  `stroke="rgba(255,140,0,0.95)" stroke-width="2"/>`;
+        });
+      }
+    }
     rotationSvg.innerHTML = html;
   }
 
@@ -2291,24 +2353,51 @@
       }
       if (rotationConfigActive) {
         loadRotationDraft();
+        rotAreaDraftPoints = [];
+        setRotAreaDrawing(false);
+        updateRotStatus();
         renderRotationList();
         drawRotationOverlay();
         updateRotationLive();
-      } else if (rotationSvg) {
-        rotationSvg.innerHTML = '';
+      } else {
+        setRotAreaDrawing(false);
+        rotAreaDraftPoints = [];
+        if (rotationSvg) rotationSvg.innerHTML = '';
       }
+    });
+  }
+
+  if (rotationDrawBtn) {
+    rotationDrawBtn.addEventListener('click', () => setRotAreaDrawing(!rotAreaDrawing));
+  }
+  if (rotationUndoBtn) {
+    rotationUndoBtn.addEventListener('click', () => {
+      rotAreaDraftPoints.pop();
+      updateRotStatus();
+      drawRotationOverlay();
+    });
+  }
+  if (rotationClearBtn) {
+    rotationClearBtn.addEventListener('click', () => {
+      rotAreaDraftPoints = [];
+      setRotAreaDrawing(false);
+      updateRotStatus();
+      drawRotationOverlay();
     });
   }
 
   if (rotationAddBtn) {
     rotationAddBtn.addEventListener('click', () => {
+      if (rotAreaDraftPoints.length < 3) { showToast('Draw an area (3+ points) first'); return; }
       const deg = parseFloat(rotationDegInput && rotationDegInput.value);
       if (!Number.isFinite(deg)) { showToast('Enter a rotation in degrees'); return; }
-      const center = ol.proj.toLonLat(map.getView().getCenter());
-      rotationPointsDraft.push({
-        coords: [parseFloat(center[0].toFixed(6)), parseFloat(center[1].toFixed(6))],
-        rotation: ((Math.round(deg) % 360) + 360) % 360
+      rotationAreasDraft.push({
+        rotation: ((Math.round(deg) % 360) + 360) % 360,
+        area: rotAreaDraftPoints.slice()
       });
+      rotAreaDraftPoints = [];
+      setRotAreaDrawing(false);
+      updateRotStatus();
       renderRotationList();
       drawRotationOverlay();
       updateRotationLive();
@@ -2317,9 +2406,9 @@
 
   if (rotationCopyBtn) {
     rotationCopyBtn.addEventListener('click', () => {
-      const txt = rotationPointsJson();
+      const txt = rotationAreasJson();
       navigator.clipboard.writeText(txt)
-        .then(() => showToast('rotationPoints JSON copied'))
+        .then(() => showToast('rotationAreas JSON copied'))
         .catch(() => alert(txt));
     });
   }
@@ -2640,6 +2729,8 @@
 
     // Close the rotation config tool and clear its overlay
     rotationConfigActive = false;
+    setRotAreaDrawing(false);
+    rotAreaDraftPoints = [];
     if (rotationConfigBtn) rotationConfigBtn.classList.remove('active');
     if (rotationConfigTool) rotationConfigTool.style.display = 'none';
     if (rotationSvg) rotationSvg.innerHTML = '';

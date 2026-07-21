@@ -281,13 +281,19 @@
       <button id="service-mode-rotation-btn" type="button">Rotation Points</button>
       <div id="service-mode-rotation-tool" style="display:none;">
         <div class="rot-live">Rotation here: <span id="service-mode-rotation-live">–</span>°</div>
+        <div class="rot-draw-row">
+          <button id="service-mode-rotation-draw" type="button">Draw area</button>
+          <button id="service-mode-rotation-undo" type="button">Undo</button>
+          <button id="service-mode-rotation-clear" type="button">Clear</button>
+        </div>
+        <div id="service-mode-rotation-status">No area drawn</div>
         <div class="rot-add-row">
           <label for="service-mode-rotation-deg">Set°</label>
           <input type="number" id="service-mode-rotation-deg" step="1" min="0" max="359" value="205">
-          <button id="service-mode-rotation-add" type="button">Add point here</button>
+          <button id="service-mode-rotation-add" type="button">Add area</button>
         </div>
         <div id="service-mode-rotation-list"></div>
-        <button id="service-mode-rotation-copy" type="button">Copy rotationPoints JSON</button>
+        <button id="service-mode-rotation-copy" type="button">Copy rotationAreas JSON</button>
       </div>
     </div>
     <div id="service-mode-server">

@@ -1354,6 +1354,40 @@ html, body {
   background: #cdf;
 }
 
+#service-mode-rotation-tool .rot-draw-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+#service-mode-rotation-tool .rot-draw-row button {
+  flex: 1 1 auto;
+  padding: 4px 8px;
+  background: #fff;
+  color: #036;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#service-mode-rotation-tool .rot-draw-row button:hover {
+  background: #cdf;
+}
+
+#service-mode-rotation-draw.active {
+  background: #f80;
+  color: #fff;
+}
+
+#service-mode-rotation-status {
+  margin-bottom: 6px;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
 #service-mode-rotation-list {
   margin: 8px 0;
   max-height: 140px;
