@@ -2,7 +2,6 @@
   "parkId": "tdr",
   "name": "Tokyo Disney Resort",
   "enabled": true,
-  "tileTemplate": "tdr-proxy",
   "supportsHistory": false,
   "versionCheck": false,
   "minZoom": 16,
