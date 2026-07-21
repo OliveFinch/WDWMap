@@ -1160,19 +1160,13 @@ html, body {
   font-weight: bold;
 }
 
-#service-mode-location-tool .loc-width-row,
-#service-mode-location-tool .loc-rotation-row {
+#service-mode-location-tool .loc-width-row {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-#service-mode-location-tool .loc-rotation-row {
-  margin-top: 6px;
-}
-
-#service-mode-width-input,
-#service-mode-rotation-input {
+#service-mode-width-input {
   width: 80px;
   padding: 4px 8px;
   border: 1px solid #68a;
@@ -1233,8 +1227,9 @@ html, body {
   background: #cdf;
 }
 
-/* Area lasso overlay + controls */
-#service-mode-area-svg {
+/* Map overlays (area lasso, rotation reference points) */
+#service-mode-area-svg,
+#service-mode-rotation-svg {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -1274,6 +1269,139 @@ html, body {
   margin-top: 4px;
   font-size: 11px;
   opacity: 0.85;
+}
+
+/* Rotation reference-point config panel (TDR only) */
+#service-mode-rotation {
+  position: absolute;
+  left: 12px;
+  bottom: 100px;
+  pointer-events: auto;
+  background: rgba(0, 60, 120, 0.92);
+  color: #fff;
+  font-size: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  max-width: 260px;
+}
+
+#service-mode-rotation-btn {
+  padding: 6px 12px;
+  background: #fff;
+  color: #036;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+}
+
+#service-mode-rotation-btn:hover {
+  background: #cdf;
+}
+
+#service-mode-rotation-btn.active {
+  background: #12bdf0;
+  color: #fff;
+}
+
+#service-mode-rotation-tool {
+  margin-top: 10px;
+}
+
+#service-mode-rotation-tool .rot-live {
+  margin-bottom: 8px;
+  font-family: monospace;
+}
+
+#service-mode-rotation-live {
+  font-weight: bold;
+  color: #8cf;
+}
+
+#service-mode-rotation-tool .rot-add-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#service-mode-rotation-deg {
+  width: 60px;
+  padding: 4px 8px;
+  border: 1px solid #68a;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 12px;
+  background: rgba(255,255,255,0.9);
+}
+
+#service-mode-rotation-add {
+  flex: 1 1 auto;
+  padding: 4px 8px;
+  background: #fff;
+  color: #036;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#service-mode-rotation-add:hover {
+  background: #cdf;
+}
+
+#service-mode-rotation-list {
+  margin: 8px 0;
+  max-height: 140px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 10.5px;
+}
+
+#service-mode-rotation-list .rot-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+
+#service-mode-rotation-list .rot-item button {
+  flex: 0 0 auto;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#service-mode-rotation-list .rot-item button:hover {
+  background: rgba(255,80,80,0.9);
+}
+
+#service-mode-rotation-copy {
+  padding: 6px 12px;
+  background: #fff;
+  color: #036;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+}
+
+#service-mode-rotation-copy:hover {
+  background: #cdf;
 }
 
 /* The extent preview: what flyTo would fit for the entered coords + width */

@@ -248,6 +248,7 @@
     <div id="service-mode-label">Service Mode</div>
     <div id="service-mode-extent-box"></div>
     <svg id="service-mode-area-svg" aria-hidden="true"></svg>
+    <svg id="service-mode-rotation-svg" aria-hidden="true"></svg>
     <div id="service-mode-info">
       <div id="service-mode-center"></div>
     </div>
@@ -263,10 +264,6 @@
           <input type="number" id="service-mode-width-input" step="0.0005" min="0.0005">
           <button id="service-mode-width-from-view" type="button" title="Set width from the current view">Fit view</button>
         </div>
-        <div class="loc-rotation-row" id="service-mode-rotation-row" style="display:none;">
-          <label for="service-mode-rotation-input">Rotation°</label>
-          <input type="number" id="service-mode-rotation-input" step="1" min="0" max="359">
-        </div>
         <div class="loc-area-row">
           <button id="service-mode-area-draw" type="button">Draw area</button>
           <button id="service-mode-area-undo" type="button">Undo</button>
@@ -275,6 +272,19 @@
         <div id="service-mode-area-count">No area polygon</div>
         <div id="service-mode-location-json"></div>
         <button id="service-mode-copy-location" type="button">Copy config line</button>
+      </div>
+    </div>
+    <div id="service-mode-rotation" style="display:none;">
+      <button id="service-mode-rotation-btn" type="button">Rotation Points</button>
+      <div id="service-mode-rotation-tool" style="display:none;">
+        <div class="rot-live">Rotation here: <span id="service-mode-rotation-live">–</span>°</div>
+        <div class="rot-add-row">
+          <label for="service-mode-rotation-deg">Set°</label>
+          <input type="number" id="service-mode-rotation-deg" step="1" min="0" max="359" value="205">
+          <button id="service-mode-rotation-add" type="button">Add point here</button>
+        </div>
+        <div id="service-mode-rotation-list"></div>
+        <button id="service-mode-rotation-copy" type="button">Copy rotationPoints JSON</button>
       </div>
     </div>
     <div id="service-mode-server">
