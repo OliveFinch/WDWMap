@@ -789,8 +789,10 @@
     window.addEventListener('resize', updateSwipeUI);
     window.addEventListener('scroll', updateSwipeUI, { passive: true });
 
-    // TDR: re-orient the map from the reference points as the view moves,
-    // and set the initial rotation for the starting view
+    // TDR: re-orient the map from the reference points continuously as the
+    // view is panned (change:center fires throughout the drag/inertia), plus
+    // a final settle on moveend and the initial rotation for the start view
+    map.getView().on('change:center', scheduleTdrAutoRotation);
     map.on('moveend', applyTdrAutoRotation);
     applyTdrAutoRotation();
 
@@ -1595,6 +1597,18 @@
     const diff = Math.atan2(Math.sin(targetRad - cur), Math.cos(targetRad - cur));
     if (Math.abs(diff) < (0.25 * Math.PI / 180)) return;
     map.getView().setRotation(targetRad);
+  }
+
+  // Coalesce continuous center changes (during a drag/inertia) to at most
+  // one rotation update per frame, so the map re-orients live as you pan
+  let rotationRafPending = false;
+  function scheduleTdrAutoRotation() {
+    if (rotationRafPending) return;
+    rotationRafPending = true;
+    requestAnimationFrame(() => {
+      rotationRafPending = false;
+      applyTdrAutoRotation();
+    });
   }
 
 
