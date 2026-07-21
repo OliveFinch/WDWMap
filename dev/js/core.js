@@ -2355,6 +2355,11 @@
         loadRotationDraft();
         rotAreaDraftPoints = [];
         setRotAreaDrawing(false);
+        // Start the Set° value from the current live rotation
+        if (rotationDegInput) {
+          const deg = Math.round((((map.getView().getRotation() * 180 / Math.PI) % 360) + 360) % 360);
+          rotationDegInput.value = deg;
+        }
         updateRotStatus();
         renderRotationList();
         drawRotationOverlay();
@@ -2364,6 +2369,15 @@
         rotAreaDraftPoints = [];
         if (rotationSvg) rotationSvg.innerHTML = '';
       }
+    });
+  }
+
+  // Editing the Set° value rotates the map live so you can eyeball the
+  // correct angle for the area instead of guessing it
+  if (rotationDegInput) {
+    rotationDegInput.addEventListener('input', () => {
+      const deg = parseFloat(rotationDegInput.value);
+      if (Number.isFinite(deg)) map.getView().setRotation(deg * (Math.PI / 180));
     });
   }
 
