@@ -20,7 +20,7 @@
     "19": { "minX": 465840, "maxX": 466000, "minY": 206480, "maxY": 206640 },
     "20": { "minX": 931680, "maxX": 932000, "minY": 412960, "maxY": 413280 }
   },
-  "tileBaseUrl": "https://contents-portal.tokyodisneyresort.jp/limited/map-image/20260122183830/{mode}/",
+  "tileBaseUrl": "https://contents-portal.tokyodisneyresort.jp/limited/map-image/{serverId}/{mode}/",
   "userAgent": "Disney Resort/3.10.9 (jp.tokyodisneyresort.portalapp; build:4; iOS 26.2.1) Alamofire/5.10.2",
   "cookies": {
     "CloudFront-Signature": "CloudFront-Signature': 'csYpiTNoniW7o~WK6aL-z2~D68eMyeyEsyiMlOos~j6E7qJoz9Xl5bsKc8bqGNg9mGWwNI96Sc22QeZC~oGelacRwtE5RXTaWBB9AGBCvJf0B4vfmxzSLu~f5L40tWq4NmMWTfaK~VCdTKx0sgDXyx6LWiwJ-64Fyn8czGjSZ63rt~FRNkIx8b~gjV2Cf2BBxKhFaQFzYgLEvvNT9XIbeBc1GC-5HntCtXzZrgmyC3NwdkDGdPiQ5Dl-9~I5xFVo3u6tfMnToDRntf4UNsstgwX9mD7grezBy07~3njjV9mWd0Ko6FPPG9vegDFpCCJms6i-n7sTr1DjvGvZHRa6jg__",

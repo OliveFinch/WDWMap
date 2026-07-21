@@ -3,8 +3,11 @@
 // (Keep in sync with parks/tdr/tdr_config.json)
 // =====================
 const TDR_CONFIG = {
-  // Base URL for TDR map tiles - {mode} is replaced with 'daytime' or 'nighttime'
-  tileBaseUrl: 'https://contents-portal.tokyodisneyresort.jp/limited/map-image/20260122183830/{mode}/',
+  // Base URL for TDR map tiles - {serverId} comes from tdr_dis_servers.json
+  // (passed as the ?sid= query param), {mode} is 'daytime' or 'nighttime'
+  tileBaseUrl: 'https://contents-portal.tokyodisneyresort.jp/limited/map-image/{serverId}/{mode}/',
+  // Fallback server ID used when the request omits a valid ?sid= param
+  defaultServerId: '20260122183830',
   // Required User-Agent header
   userAgent: 'Disney Resort/3.10.9 (jp.tokyodisneyresort.portalapp; build:4; iOS 26.2.1) Alamofire/5.10.2',
   // CloudFront signed cookies (time-limited) - expires Jun 13, 2026
@@ -62,7 +65,14 @@ export default {
       const mode = url.searchParams.get('mode') || 'daytime';
       const validMode = (mode === 'nighttime') ? 'nighttime' : 'daytime';
 
-      const tileUrl = TDR_CONFIG.tileBaseUrl.replace('{mode}', validMode) + tilePath;
+      // Server ID from ?sid= (tdr_dis_servers.json); must be digits only so
+      // it can't inject a different host/path. Falls back to the default.
+      const sidParam = url.searchParams.get('sid') || '';
+      const serverId = /^\d+$/.test(sidParam) ? sidParam : TDR_CONFIG.defaultServerId;
+
+      const tileUrl = TDR_CONFIG.tileBaseUrl
+        .replace('{serverId}', serverId)
+        .replace('{mode}', validMode) + tilePath;
 
       try {
         const tileResponse = await fetch(tileUrl, {
