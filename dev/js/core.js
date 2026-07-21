@@ -793,7 +793,11 @@
     // is panned (change:center fires throughout the drag/inertia), easing to
     // the target; snap to the correct rotation immediately for the start view.
     // A real drag cancels any hand-set preview so auto-rotation resumes.
-    map.on('pointerdrag', () => { rotationManualPreview = false; scheduleTdrAutoRotation(); });
+    map.on('pointerdrag', () => {
+      if (rotationHold) return;   // keep the held angle while placing coords
+      rotationManualPreview = false;
+      scheduleTdrAutoRotation();
+    });
     map.getView().on('change:center', scheduleTdrAutoRotation);
     map.on('moveend', scheduleTdrAutoRotation);
     applyTdrAutoRotationImmediate();
@@ -1644,13 +1648,16 @@
   // (otherwise the rotate-induced recenter would immediately snap it back);
   // cleared as soon as the user actually drags the map
   let rotationManualPreview = false;
+  // "Hold rotation" locks the current angle even while panning, so the map
+  // stays put while placing an area's coordinates
+  let rotationHold = false;
 
   // rAF loop: ease the view rotation toward the target so crossing a region
   // boundary glides instead of snapping; self-stops once converged
   let rotationAnimId = null;
   function stepTdrRotation() {
     rotationAnimId = null;
-    if (currentParkId !== 'tdr' || !map || rotationManualPreview) return;
+    if (currentParkId !== 'tdr' || !map || rotationManualPreview || rotationHold) return;
     if (!activeTdrRotationAreas().length) return;
     const targetRad = rotationTargetRad();
     const cur = map.getView().getRotation() || 0;
@@ -1664,7 +1671,7 @@
   }
 
   function scheduleTdrAutoRotation() {
-    if (rotationManualPreview) return;
+    if (rotationManualPreview || rotationHold) return;
     if (rotationAnimId == null) rotationAnimId = requestAnimationFrame(stepTdrRotation);
   }
 
@@ -2260,6 +2267,7 @@
   const rotationConfigTool = document.getElementById('service-mode-rotation-tool');
   const rotationLiveEl = document.getElementById('service-mode-rotation-live');
   const rotationDegInput = document.getElementById('service-mode-rotation-deg');
+  const rotationHoldBtn = document.getElementById('service-mode-rotation-hold');
   const rotationDrawBtn = document.getElementById('service-mode-rotation-draw');
   const rotationUndoBtn = document.getElementById('service-mode-rotation-undo');
   const rotationClearBtn = document.getElementById('service-mode-rotation-clear');
@@ -2406,6 +2414,7 @@
         loadRotationDraft();
         rotAreaDraftPoints = [];
         setRotAreaDrawing(false);
+        setRotationHold(false);
         // Start the Set° value from the current live rotation
         if (rotationDegInput) {
           const deg = Math.round((((map.getView().getRotation() * 180 / Math.PI) % 360) + 360) % 360);
@@ -2417,10 +2426,9 @@
         updateRotationLive();
       } else {
         setRotAreaDrawing(false);
+        setRotationHold(false);
         rotAreaDraftPoints = [];
-        rotationManualPreview = false;
         if (rotationSvg) rotationSvg.innerHTML = '';
-        scheduleTdrAutoRotation();
       }
     });
   }
@@ -2435,6 +2443,19 @@
       rotationManualPreview = true;
       map.getView().setRotation(deg * (Math.PI / 180));
     });
+  }
+
+  function setRotationHold(on) {
+    rotationHold = on;
+    if (rotationHoldBtn) {
+      rotationHoldBtn.classList.toggle('active', on);
+      rotationHoldBtn.textContent = on ? 'Holding rotation' : 'Hold rotation';
+    }
+    if (!on) { rotationManualPreview = false; scheduleTdrAutoRotation(); }
+  }
+
+  if (rotationHoldBtn) {
+    rotationHoldBtn.addEventListener('click', () => setRotationHold(!rotationHold));
   }
 
   if (rotationDrawBtn) {
@@ -2800,6 +2821,8 @@
     // Close the rotation config tool and clear its overlay
     rotationConfigActive = false;
     rotationManualPreview = false;
+    rotationHold = false;
+    if (rotationHoldBtn) { rotationHoldBtn.classList.remove('active'); rotationHoldBtn.textContent = 'Hold rotation'; }
     setRotAreaDrawing(false);
     rotAreaDraftPoints = [];
     if (rotationConfigBtn) rotationConfigBtn.classList.remove('active');

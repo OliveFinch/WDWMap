@@ -1354,6 +1354,28 @@ html, body {
   background: #cdf;
 }
 
+#service-mode-rotation-hold {
+  width: 100%;
+  padding: 6px 12px;
+  margin-bottom: 8px;
+  background: #fff;
+  color: #036;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#service-mode-rotation-hold:hover {
+  background: #cdf;
+}
+
+#service-mode-rotation-hold.active {
+  background: #2e7d32;
+  color: #fff;
+}
+
 #service-mode-rotation-tool .rot-draw-row {
   display: flex;
   gap: 6px;
