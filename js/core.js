@@ -1566,6 +1566,30 @@
     return inside;
   }
 
+  // Squared distance from a point to a segment (planar, pre-scaled coords)
+  function distToSegSq(px, py, ax, ay, bx, by) {
+    const dx = bx - ax, dy = by - ay;
+    const l2 = dx * dx + dy * dy;
+    let t = l2 > 0 ? ((px - ax) * dx + (py - ay) * dy) / l2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    const cx = ax + t * dx, cy = ay + t * dy;
+    const ex = px - cx, ey = py - cy;
+    return ex * ex + ey * ey;
+  }
+
+  // Squared distance from a point to a polygon's edges. Longitude is scaled
+  // by cos(lat) so weighting isn't skewed by latitude.
+  function pointToPolyDistSq(pt, poly, cosLat) {
+    const px = pt[0] * cosLat, py = pt[1];
+    let min = Infinity;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const d = distToSegSq(px, py,
+        poly[j][0] * cosLat, poly[j][1], poly[i][0] * cosLat, poly[i][1]);
+      if (d < min) min = d;
+    }
+    return min;
+  }
+
   // The area set in effect: the service-mode draft while configuring,
   // otherwise the park config's stored areas
   function activeTdrRotationAreas() {
@@ -1574,15 +1598,34 @@
     return Array.isArray(park.rotationAreas) ? park.rotationAreas : [];
   }
 
+  // Inside an area -> its exact rotation. In the gaps between areas -> a
+  // distance-weighted circular average of every area's rotation (inverse
+  // square of nearest-edge distance), so rotation transitions smoothly
+  // across the gap rather than snapping at a boundary.
   function rotationForCenter(lonLat) {
     const park = getCurrentPark() || {};
-    const areas = activeTdrRotationAreas();
+    const areas = (activeTdrRotationAreas() || []).filter(
+      (a) => Array.isArray(a.area) && a.area.length >= 3);
+    if (!areas.length) return park.defaultRotation || 0;
+
     for (const a of areas) {
-      if (Array.isArray(a.area) && a.area.length >= 3 && pointInPoly(lonLat, a.area)) {
-        return (((a.rotation || 0) % 360) + 360) % 360;
-      }
+      if (pointInPoly(lonLat, a.area)) return (((a.rotation || 0) % 360) + 360) % 360;
     }
-    return park.defaultRotation || 0;
+
+    const cosLat = Math.cos(lonLat[1] * Math.PI / 180);
+    let sumX = 0, sumY = 0, sumW = 0;
+    for (const a of areas) {
+      const d2 = pointToPolyDistSq(lonLat, a.area, cosLat);
+      const rad = (a.rotation || 0) * Math.PI / 180;
+      if (d2 < 1e-16) return (((a.rotation || 0) % 360) + 360) % 360; // on an edge
+      const w = 1 / d2;
+      sumX += w * Math.cos(rad);
+      sumY += w * Math.sin(rad);
+      sumW += w;
+    }
+    if (sumW === 0) return park.defaultRotation || 0;
+    const deg = Math.atan2(sumY, sumX) * 180 / Math.PI;
+    return ((deg % 360) + 360) % 360;
   }
 
   function rotationTargetRad() {
