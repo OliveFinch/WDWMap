@@ -1,7 +1,7 @@
 {
   "locations": [
-    { "coords": [139.88079, 35.632283], "width": 0.004, "rotation": 205, "icon": "icons/locations/tdr/tdr-castle.svg", "alt": "Tokyo Disneyland", "hidden": false },
-    { "coords": [139.885709, 35.625239], "width": 0.008, "rotation": 135, "icon": "icons/locations/tdr/disneysea.svg", "alt": "Tokyo DisneySea", "hidden": false },
-    { "coords": [139.887318, 35.633259], "width": 0.005, "rotation": 270, "icon": "icons/locations/tdr/ikspiari.svg", "alt": "Ikspiari", "hidden": false }
+    { "coords": [139.880711, 35.632218], "width": 0.00449, "rotation": 205, "icon": "icons/locations/tdr/tdr-castle.svg", "alt": "Tokyo Disneyland", "hidden": false, "area": [[139.882034, 35.63535], [139.884276, 35.634388], [139.886521, 35.632409], [139.885966, 35.63101], [139.883533, 35.629936], [139.880315, 35.629223], [139.878328, 35.629837], [139.877059, 35.630635], [139.876062, 35.632377], [139.875983, 35.636566], [139.877066, 35.638332]] },
+    { "coords": [139.885898, 35.626288], "width": 0.00652, "rotation": 135, "icon": "icons/locations/tdr/disneysea.svg", "alt": "Tokyo DisneySea", "hidden": false, "area": [[139.887736, 35.629764], [139.891294, 35.626385], [139.89027, 35.624609], [139.887915, 35.623074], [139.886172, 35.623283], [139.880688, 35.624649], [139.879861, 35.62726], [139.875471, 35.628372], [139.875262, 35.630009], [139.876812, 35.630637], [139.878576, 35.629772], [139.880531, 35.62901]] },
+    { "coords": [139.886994, 35.633568], "width": 0.00389, "rotation": 270, "icon": "icons/locations/tdr/ikspiari.svg", "alt": "Ikspiari", "hidden": false, "area": [[139.883813, 35.634941], [139.884244, 35.635827], [139.887848, 35.634556], [139.890329, 35.632599], [139.888665, 35.631449]] }
   ]
 }
