@@ -61,17 +61,17 @@
     {
       "name": "Partner Resorts",
       "locations": [
-        { "coords": [-81.559182, 28.36526], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Walt Disney World Swan", "hidden": false },
-        { "coords": [-81.560535, 28.367405], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Walt Disney World Dolphin", "hidden": false },
-        { "coords": [-81.561937, 28.364443], "width": 0.0015, "icon": "icons/locations/marker.svg", "alt": "Walt Disney Swan Reserve", "hidden": false },
-        { "coords": [-81.592426, 28.401971], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Shades of Green", "hidden": false }
+        { "coords": [-81.558645, 28.365702], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Walt Disney World Swan", "hidden": false, "area": [[-81.558895, 28.366964], [-81.557467, 28.36565], [-81.558347, 28.364319], [-81.559774, 28.364204], [-81.561037, 28.365019]] },
+        { "coords": [-81.560377, 28.367257], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Walt Disney World Dolphin", "hidden": false, "area": [[-81.561472, 28.365156], [-81.558943, 28.367696], [-81.559744, 28.36865], [-81.56021, 28.370427], [-81.562232, 28.370076], [-81.562586, 28.366067]] },
+        { "coords": [-81.561937, 28.364443], "width": 0.0015, "icon": "icons/locations/marker.svg", "alt": "Walt Disney Swan Reserve", "hidden": false, "area": [[-81.56269, 28.365202], [-81.56155, 28.365063], [-81.561313, 28.363888], [-81.562422, 28.363611]] },
+        { "coords": [-81.592426, 28.401971], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Shades of Green", "hidden": false, "area": [[-81.592701, 28.402711], [-81.590689, 28.403136], [-81.589592, 28.401686], [-81.591775, 28.400306], [-81.594433, 28.400176], [-81.595358, 28.401428]] }
       ]
     },
     {
       "name": "Disney Springs Resort Area",
       "locations": [
         { "coords": [-81.517651, 28.37025], "width": 0.0055, "icon": "icons/locations/disney-springs.svg", "alt": "Disney Springs", "hidden": false, "area": [[-81.519528, 28.367751], [-81.522378, 28.368471], [-81.525011, 28.370171], [-81.525562, 28.371891], [-81.523905, 28.374582], [-81.51895, 28.372702], [-81.516555, 28.372916], [-81.514963, 28.373979], [-81.513375, 28.373059], [-81.513803, 28.370791], [-81.516853, 28.368334]] },
-        { "coords": [-81.514425, 28.377009], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Hilton Orlando Buena Vista Palace", "hidden": false },
+        { "coords": [-81.514425, 28.377009], "width": 0.0025, "icon": "icons/locations/marker.svg", "alt": "Hilton Orlando Buena Vista Palace", "hidden": false, "area": [[-81.512906, 28.373877], [-81.513754, 28.378575], [-81.517736, 28.378593], [-81.517078, 28.376176], [-81.513643, 28.37374]] },
         { "coords": [-81.51192, 28.375267], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Wyndham Garden Lake Buena Vista", "hidden": false },
         { "coords": [-81.511181, 28.372544], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Hilton Orlando Lake Buena Vista", "hidden": false },
         { "coords": [-81.508209, 28.375132], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Holiday Inn Orlando", "hidden": false },
@@ -86,26 +86,26 @@
         { "coords": [-81.556716, 28.337528], "width": 0.009, "icon": "icons/locations/marker.svg", "alt": "ESPN Wide World of Sports", "hidden": false },
         { "coords": [-81.52746, 28.373776], "width": 0.005, "icon": "icons/locations/marker.svg", "alt": "Lake Buena Vista Golf Course", "hidden": false },
         { "coords": [-81.560453, 28.363963], "width": 0.001, "icon": "icons/locations/marker.svg", "alt": "Fantasia Gardens Mini Golf", "hidden": false },
-        { "coords": [-81.574356, 28.353518], "width": 0.0015, "icon": "icons/locations/marker.svg", "alt": "Winter Summerland Mini Golf", "hidden": false },
+        { "coords": [-81.574356, 28.353518], "width": 0.0015, "icon": "icons/locations/marker.svg", "alt": "Winter Summerland Mini Golf", "hidden": false, "area": [[-81.575111, 28.353337], [-81.574444, 28.353266], [-81.573698, 28.352904], [-81.573471, 28.353121], [-81.57431, 28.353871], [-81.575299, 28.353723]] },
         { "coords": [-81.547804, 28.399323], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Four Seasons Golf and Sports Club" },
         { "coords": [-81.552521, 28.39748], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Horseback Trail Rides", "hidden": false },
-        { "coords": [-81.588975, 28.400072], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Palm Driving Range", "hidden": false },
+        { "coords": [-81.588975, 28.400072], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Palm Driving Range", "hidden": false, "area": [[-81.590957, 28.400821], [-81.589269, 28.401613], [-81.587301, 28.399245], [-81.588677, 28.398558]] },
         { "coords": [-81.595574, 28.405675], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Oak Trail Golf Course" },
         { "coords": [-81.603282, 28.402509], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Magnolia Golf Course" },
         { "coords": [-81.589917, 28.393461], "width": 0.0105, "icon": "icons/locations/marker.svg", "alt": "Palm Golf Course", "hidden": false },
-        { "coords": [-81.537238, 28.351394], "width": 0.0075, "icon": "icons/locations/marker.svg", "alt": "Waldorf Astoria Golf Club & Driving Range", "hidden": false },
+        { "coords": [-81.537238, 28.351394], "width": 0.0075, "icon": "icons/locations/marker.svg", "alt": "Waldorf Astoria Golf Club & Driving Range", "hidden": false, "area": [[-81.540808, 28.357744], [-81.540694, 28.34757], [-81.533692, 28.347438], [-81.533727, 28.35101], [-81.536694, 28.353991], [-81.536569, 28.356387]] },
         { "coords": [-81.566296, 28.414286], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Discovery Island", "hidden": true }
       ]
     },
     {
       "name": "Services & Operations",
       "locations": [
-        { "coords": [-81.579913, 28.405091], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Transportation & Ticket Center", "hidden": false },
-        { "coords": [-81.617045, 28.376452], "width": 0.0135, "icon": "icons/locations/marker.svg", "alt": "Flamingo Crossings", "hidden": false },
+        { "coords": [-81.579913, 28.405091], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Transportation & Ticket Center", "hidden": false, "area": [[-81.58125, 28.406253], [-81.581096, 28.403871], [-81.577593, 28.403907], [-81.575988, 28.405405], [-81.579434, 28.406756]] },
+        { "coords": [-81.617045, 28.376452], "width": 0.0135, "icon": "icons/locations/marker.svg", "alt": "Flamingo Crossings", "hidden": false, "area": [[-81.614309, 28.383338], [-81.610556, 28.370067], [-81.620742, 28.370178], [-81.623561, 28.372813], [-81.623616, 28.38343]] },
         { "coords": [-81.574327, 28.393316], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Car Care Centre", "hidden": false },
         { "coords": [-81.540623, 28.385696], "width": 0.0015, "icon": "icons/locations/marker.svg", "alt": "Best Friends Pet Hotel", "hidden": false },
         { "coords": [-81.521246, 28.365611], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Team Disney", "hidden": false },
-        { "coords": [-81.512728, 28.369789], "width": 0.001, "icon": "icons/locations/marker.svg", "alt": "Casting Center", "hidden": false }
+        { "coords": [-81.512728, 28.369789], "width": 0.001, "icon": "icons/locations/marker.svg", "alt": "Casting Center", "hidden": false, "area": [[-81.513404, 28.369582], [-81.512588, 28.370324], [-81.512091, 28.37], [-81.512962, 28.369227]] }
       ]
     },
     {
