@@ -61,6 +61,7 @@
         { "coords": [-117.915898, 33.802225], "width": 0.0005, "icon": "icons/locations/marker.svg", "alt": "Anaheim Portofino Inn & Suites", "hidden": false, "area": [[-117.916565, 33.802418], [-117.915526, 33.802424], [-117.915543, 33.802037], [-117.916575, 33.802042]] },
         { "coords": [-117.916287, 33.801102], "width": 0.002, "icon": "icons/locations/marker.svg", "alt": "Sheraton Park Hotel at the Anaheim Resort", "hidden": false },
         { "coords": [-117.914034, 33.806039], "width": 0.0019, "icon": "icons/locations/marker.svg", "alt": "The Anaheim Hotel", "hidden": false },
+        { "coords": [-117.914239, 33.804941], "width": 0.001, "icon": "icons/locations/marker.svg", "alt": "Castle Inn & Suites", "hidden": false, "area": [[-117.91504, 33.805294], [-117.913414, 33.805296], [-117.9134, 33.804665], [-117.91506, 33.80465]] },
         { "coords": [-117.91445, 33.801798], "width": 0.0015, "icon": "icons/locations/marker.svg", "alt": "Hotel Lulu Anaheim Resort", "hidden": false },
         { "coords": [-117.907601, 33.802967], "width": 0.0015, "icon": "icons/locations/marker.svg", "alt": "Hampton Inn & Suites by Hilton Anaheim Resort Convention Center", "hidden": false },
         { "coords": [-117.90153, 33.800961], "width": 0.001, "icon": "icons/locations/marker.svg", "alt": "Sonesta ES Suites Anaheim", "hidden": false },
