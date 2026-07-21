@@ -21,14 +21,14 @@ const TDR_CONFIG = {
   defaultServerId: '20260122183830',
 
   // Required User-Agent header (mimics the official TDR app)
-  userAgent: 'Disney Resort/3.11.5 (jp.tokyodisneyresort.portalapp; build:2; iOS 26.5.0) Alamofire/5.10.2',
+  userAgent: 'TokyoDisneyResortApp/3.11.8 Android/14 sdk_gphone64_arm64',
 
   // CloudFront signed cookies (time-limited authentication)
   // These expire and need to be refreshed periodically
   cookies: {
-    'CloudFront-Signature': 'oL8TUu8mlOPfQUPRjPzc7lG3sX0qnZaTYFFpWS1yVSmRL-YeQUCRo5ji95ZLISZyDIPRo6AscYjCN98nf-SI5tThB-iGnyQjJaYtjHn~3NwlRQzfDVEZqMM9Nq0zvG~PZHtVqCR4mXh~DmtHYPBefMzQisH5mA9AU19KSzASWH8lQjLXda0Pwhngqwba~G-hDeDcc2ts1r8AwZpDB8RcIvydw1JpsVw3h~EcdnD3uhWTWnWcxxk0DKF8gIC3m4ujEzaFws8mwhxWKmzmjk032FupaASeeEE2kGqLCvsRnJW~s3Xu~Ric99k2KznmPPlfOULJ4ca5sY1eJBvQSW4cHg__',
+    'CloudFront-Signature': 'csYpiTNoniW7o~WK6aL-z2~D68eMyeyEsyiMlOos~j6E7qJoz9Xl5bsKc8bqGNg9mGWwNI96Sc22QeZC~oGelacRwtE5RXTaWBB9AGBCvJf0B4vfmxzSLu~f5L40tWq4NmMWTfaK~VCdTKx0sgDXyx6LWiwJ-64Fyn8czGjSZ63rt~FRNkIx8b~gjV2Cf2BBxKhFaQFzYgLEvvNT9XIbeBc1GC-5HntCtXzZrgmyC3NwdkDGdPiQ5Dl-9~I5xFVo3u6tfMnToDRntf4UNsstgwX9mD7grezBy07~3njjV9mWd0Ko6FPPG9vegDFpCCJms6i-n7sTr1DjvGvZHRa6jg__',
     'CloudFront-Key-Pair-Id': 'APKAIJUGP2GGEWDAPMTQ',
-    'CloudFront-Policy': 'eyJTdGF0ZW1lbnQiOiBbeyJSZXNvdXJjZSI6Imh0dHBzOi8vY29udGVudHMtcG9ydGFsLnRva3lvZGlzbmV5cmVzb3J0LmpwLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NzI0NDIzNzl9LCJJcEFkZHJlc3MiOnsiQVdTOlNvdXJjZUlwIjoiMC4wLjAuMC8wIn19fV19'
+    'CloudFront-Policy': 'eyJTdGF0ZW1lbnQiOiBbeyJSZXNvdXJjZSI6Imh0dHBzOi8vY29udGVudHMtcG9ydGFsLnRva3lvZGlzbmV5cmVzb3J0LmpwLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODcyMDgzOTR9LCJJcEFkZHJlc3MiOnsiQVdTOlNvdXJjZUlwIjoiMC4wLjAuMC8wIn19fV19'
   }
 };
 

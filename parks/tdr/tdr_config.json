@@ -21,12 +21,12 @@
     "20": { "minX": 931680, "maxX": 932000, "minY": 412960, "maxY": 413280 }
   },
   "tileBaseUrl": "https://contents-portal.tokyodisneyresort.jp/limited/map-image/{serverId}/{mode}/",
-  "userAgent": "Disney Resort/3.10.9 (jp.tokyodisneyresort.portalapp; build:4; iOS 26.2.1) Alamofire/5.10.2",
+  "userAgent": "TokyoDisneyResortApp/3.11.8 Android/14 sdk_gphone64_arm64",
   "cookies": {
-    "CloudFront-Signature": "oL8TUu8mlOPfQUPRjPzc7lG3sX0qnZaTYFFpWS1yVSmRL-YeQUCRo5ji95ZLISZyDIPRo6AscYjCN98nf-SI5tThB-iGnyQjJaYtjHn~3NwlRQzfDVEZqMM9Nq0zvG~PZHtVqCR4mXh~DmtHYPBefMzQisH5mA9AU19KSzASWH8lQjLXda0Pwhngqwba~G-hDeDcc2ts1r8AwZpDB8RcIvydw1JpsVw3h~EcdnD3uhWTWnWcxxk0DKF8gIC3m4ujEzaFws8mwhxWKmzmjk032FupaASeeEE2kGqLCvsRnJW~s3Xu~Ric99k2KznmPPlfOULJ4ca5sY1eJBvQSW4cHg__",
+    "CloudFront-Signature": "csYpiTNoniW7o~WK6aL-z2~D68eMyeyEsyiMlOos~j6E7qJoz9Xl5bsKc8bqGNg9mGWwNI96Sc22QeZC~oGelacRwtE5RXTaWBB9AGBCvJf0B4vfmxzSLu~f5L40tWq4NmMWTfaK~VCdTKx0sgDXyx6LWiwJ-64Fyn8czGjSZ63rt~FRNkIx8b~gjV2Cf2BBxKhFaQFzYgLEvvNT9XIbeBc1GC-5HntCtXzZrgmyC3NwdkDGdPiQ5Dl-9~I5xFVo3u6tfMnToDRntf4UNsstgwX9mD7grezBy07~3njjV9mWd0Ko6FPPG9vegDFpCCJms6i-n7sTr1DjvGvZHRa6jg__",
     "CloudFront-Key-Pair-Id": "APKAIJUGP2GGEWDAPMTQ",
-    "CloudFront-Policy": "eyJTdGF0ZW1lbnQiOiBbeyJSZXNvdXJjZSI6Imh0dHBzOi8vY29udGVudHMtcG9ydGFsLnRva3lvZGlzbmV5cmVzb3J0LmpwLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODEzMTY2MDh9LCJJcEFkZHJlc3MiOnsiQVdTOlNvdXJjZUlwIjoiMC4wLjAuMC8wIn19fV19"
+    "CloudFront-Policy": "eyJTdGF0ZW1lbnQiOiBbeyJSZXNvdXJjZSI6Imh0dHBzOi8vY29udGVudHMtcG9ydGFsLnRva3lvZGlzbmV5cmVzb3J0LmpwLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODcyMDgzOTR9LCJJcEFkZHJlc3MiOnsiQVdTOlNvdXJjZUlwIjoiMC4wLjAuMC8wIn19fV19"
   },
-  "cookieExpires": "2026-06-13T02:10:08Z",
+  "cookieExpires": "2026-08-20T06:46:34Z",
   "proxyUrl": "https://wdw-magic-explorer-api.gullet-erase2v.workers.dev/tdr-tiles/"
 }
