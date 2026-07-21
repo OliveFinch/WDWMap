@@ -1160,13 +1160,19 @@ html, body {
   font-weight: bold;
 }
 
-#service-mode-location-tool .loc-width-row {
+#service-mode-location-tool .loc-width-row,
+#service-mode-location-tool .loc-rotation-row {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-#service-mode-width-input {
+#service-mode-location-tool .loc-rotation-row {
+  margin-top: 6px;
+}
+
+#service-mode-width-input,
+#service-mode-rotation-input {
   width: 80px;
   padding: 4px 8px;
   border: 1px solid #68a;
