@@ -1841,6 +1841,8 @@
   const locationFitBtn = document.getElementById('service-mode-width-from-view');
   const locationSelect = document.getElementById('service-mode-location-select');
   const locationBaselineEl = document.getElementById('service-mode-location-baseline');
+  const rotationRow = document.getElementById('service-mode-rotation-row');
+  const rotationInput = document.getElementById('service-mode-rotation-input');
   const extentBoxEl = document.getElementById('service-mode-extent-box');
   const areaSvg = document.getElementById('service-mode-area-svg');
   const areaDrawBtn = document.getElementById('service-mode-area-draw');
@@ -1870,10 +1872,10 @@
   // explicit "hidden" flag (dock is deprecated) and carries rotation and
   // the "area" polygon ([[lon, lat], ...] hover zone) through
   function serializeLocation(loc) {
-    let s = `{ "coords": [${loc.coords[0]}, ${loc.coords[1]}], "width": ${loc.width}, ` +
-            `"icon": "${loc.icon || 'icons/locations/marker.svg'}", "alt": "${loc.alt || 'New Location'}"`;
-    s += `, "hidden": ${loc.hidden === true}`;
+    let s = `{ "coords": [${loc.coords[0]}, ${loc.coords[1]}], "width": ${loc.width}`;
     if (loc.rotation !== undefined) s += `, "rotation": ${loc.rotation}`;
+    s += `, "icon": "${loc.icon || 'icons/locations/marker.svg'}", "alt": "${loc.alt || 'New Location'}"`;
+    s += `, "hidden": ${loc.hidden === true}`;
     if (Array.isArray(loc.area) && loc.area.length) {
       s += ', "area": [' + loc.area.map((p) => `[${p[0]}, ${p[1]}]`).join(', ') + ']';
     }
@@ -1893,6 +1895,14 @@
     });
     if (areaPoints.length >= 3) merged.area = areaPoints;
     else delete merged.area;
+    // Rotation is TDR-only, taken from the rotation input (integer degrees)
+    if (currentParkId === 'tdr' && rotationInput && rotationInput.value !== '') {
+      const deg = parseFloat(rotationInput.value);
+      if (Number.isFinite(deg)) merged.rotation = ((Math.round(deg) % 360) + 360) % 360;
+      else delete merged.rotation;
+    } else {
+      delete merged.rotation;
+    }
     return serializeLocation(merged);
   }
 
@@ -2008,7 +2018,20 @@
     const w = parseFloat(loc.width) || 0.008;
     if (locationWidthInput) locationWidthInput.value = w;
 
+    // TDR: seed + apply the baseline's rotation so the preview matches
+    if (currentParkId === 'tdr' && rotationInput) {
+      const park = getCurrentPark() || {};
+      const rot = (loc.rotation !== undefined) ? loc.rotation : (park.defaultRotation || 0);
+      rotationInput.value = ((Math.round(rot) % 360) + 360) % 360;
+      map.getView().setRotation(rot * (Math.PI / 180));
+    }
+
     map.getView().fit(squareExtent3857(loc.coords[0], loc.coords[1], w), { duration: 450 });
+  }
+
+  // Rotation control is TDR-only (each TDR location has its own rotation)
+  function updateRotationRowVisibility() {
+    if (rotationRow) rotationRow.style.display = (currentParkId === 'tdr') ? 'flex' : 'none';
   }
 
   function updateLocationTool() {
@@ -2054,10 +2077,24 @@
       }
       populateLocationSelect();
       updateAreaStatus();
+      updateRotationRowVisibility();
+      // Seed the rotation input (TDR) from the current view rotation
+      if (currentParkId === 'tdr' && rotationInput && rotationInput.value === '') {
+        const deg = Math.round(map.getView().getRotation() * 180 / Math.PI);
+        rotationInput.value = ((deg % 360) + 360) % 360;
+      }
       // Seed the width from whatever is on screen right now
       if (locationWidthInput && !locationWidthInput.value) {
         locationWidthInput.value = widthFromCurrentView();
       }
+      updateLocationTool();
+    });
+  }
+
+  if (rotationInput) {
+    rotationInput.addEventListener('input', () => {
+      const deg = parseFloat(rotationInput.value);
+      if (Number.isFinite(deg)) map.getView().setRotation(deg * (Math.PI / 180));
       updateLocationTool();
     });
   }
