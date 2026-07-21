@@ -54,8 +54,8 @@
         { "coords": [-81.521956, 28.376291], "width": 0.006, "icon": "icons/locations/marker.svg", "alt": "Saratoga Springs Resort & Spa", "hidden": false, "area": [[-81.517338, 28.372512], [-81.51595, 28.374726], [-81.520043, 28.379846], [-81.522342, 28.381912], [-81.528153, 28.378611], [-81.522991, 28.374236]] },
         { "coords": [-81.529542, 28.37773], "width": 0.005, "icon": "icons/locations/marker.svg", "alt": "Treehouse Villas at Saratoga Springs", "hidden": false, "area": [[-81.532339, 28.378926], [-81.530329, 28.379889], [-81.527207, 28.377763], [-81.526986, 28.376114], [-81.528899, 28.375396]] },
         { "coords": [-81.533128, 28.3735], "width": 0.0075, "icon": "icons/locations/marker.svg", "alt": "Old Key West Resort", "hidden": false, "area": [[-81.537292, 28.375993], [-81.53358, 28.377909], [-81.531321, 28.374917], [-81.5289, 28.371344], [-81.532341, 28.369422], [-81.534868, 28.369853]] },
-        { "coords": [-81.536631, 28.386731], "width": 0.0065, "icon": "icons/locations/marker.svg", "alt": "Port Orleans Resort - Riverside", "hidden": false },
-        { "coords": [-81.536351, 28.380905], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Port Orleans Resort - French Quarter", "hidden": false }
+        { "coords": [-81.536575, 28.38622], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Port Orleans Resort - Riverside", "hidden": false, "area": [[-81.537974, 28.38375], [-81.540787, 28.389514], [-81.533002, 28.390477], [-81.532818, 28.385335], [-81.535004, 28.382811]] },
+        { "coords": [-81.536795, 28.380492], "width": 0.0035, "icon": "icons/locations/marker.svg", "alt": "Port Orleans Resort - French Quarter", "hidden": false, "area": [[-81.538782, 28.382468], [-81.537412, 28.383064], [-81.534704, 28.381286], [-81.534082, 28.379455], [-81.53686, 28.378744]] }
       ]
     },
     {
