@@ -14,8 +14,11 @@
 // TDR Configuration - UPDATE THESE WHEN EXPIRED
 // =====================
 const TDR_CONFIG = {
-  // Base URL for TDR map tiles
-  tileBaseUrl: 'https://contents-portal.tokyodisneyresort.jp/limited/map-image/20260122183830/daytime/',
+  // Base URL for TDR map tiles - {serverId} comes from tdr_dis_servers.json
+  // (passed as the ?sid= query param); it changes over time
+  tileBaseUrl: 'https://contents-portal.tokyodisneyresort.jp/limited/map-image/{serverId}/daytime/',
+  // Fallback server ID used when the request omits a valid ?sid= param
+  defaultServerId: '20260122183830',
 
   // Required User-Agent header (mimics the official TDR app)
   userAgent: 'Disney Resort/3.11.5 (jp.tokyodisneyresort.portalapp; build:2; iOS 26.5.0) Alamofire/5.10.2',
@@ -49,7 +52,12 @@ export default {
     }
 
     const tilePath = pathMatch[1];
-    const tileUrl = TDR_CONFIG.tileBaseUrl + tilePath;
+
+    // Server ID from ?sid= (tdr_dis_servers.json); digits only so it can't
+    // inject a different host/path. Falls back to the default.
+    const sidParam = url.searchParams.get('sid') || '';
+    const serverId = /^\d+$/.test(sidParam) ? sidParam : TDR_CONFIG.defaultServerId;
+    const tileUrl = TDR_CONFIG.tileBaseUrl.replace('{serverId}', serverId) + tilePath;
 
     try {
       // Fetch the tile from TDR with required authentication

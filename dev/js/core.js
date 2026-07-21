@@ -462,7 +462,12 @@
         const yy = (park.yScheme === 'tms') ? ((n - 1) - y) : y;
 
         if (isTdr) {
-          return TDR_CONFIG.proxyUrl + `z${z}/${x}_${yy}.jpg?mode=${tdrTimeMode}`;
+          // Pass the active TDR server ID (from tdr_dis_servers.json) so the
+          // proxy builds the right tile URL; it changes over time and is
+          // updated by editing that file, no code/worker change needed
+          let url = TDR_CONFIG.proxyUrl + `z${z}/${x}_${yy}.jpg?mode=${tdrTimeMode}`;
+          if (currentCode) url += `&sid=${encodeURIComponent(currentCode)}`;
+          return url;
         }
 
         let url = tpl;

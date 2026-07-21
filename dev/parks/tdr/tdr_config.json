@@ -1,7 +1,7 @@
 {
   "parkId": "tdr",
   "name": "Tokyo Disney Resort",
-  "enabled": false,
+  "enabled": true,
   "tileTemplate": "tdr-proxy",
   "supportsHistory": false,
   "versionCheck": false,
@@ -20,7 +20,7 @@
     "19": { "minX": 465840, "maxX": 466000, "minY": 206480, "maxY": 206640 },
     "20": { "minX": 931680, "maxX": 932000, "minY": 412960, "maxY": 413280 }
   },
-  "tileBaseUrl": "https://contents-portal.tokyodisneyresort.jp/limited/map-image/20260122183830/{mode}/",
+  "tileBaseUrl": "https://contents-portal.tokyodisneyresort.jp/limited/map-image/{serverId}/{mode}/",
   "userAgent": "Disney Resort/3.10.9 (jp.tokyodisneyresort.portalapp; build:4; iOS 26.2.1) Alamofire/5.10.2",
   "cookies": {
     "CloudFront-Signature": "oL8TUu8mlOPfQUPRjPzc7lG3sX0qnZaTYFFpWS1yVSmRL-YeQUCRo5ji95ZLISZyDIPRo6AscYjCN98nf-SI5tThB-iGnyQjJaYtjHn~3NwlRQzfDVEZqMM9Nq0zvG~PZHtVqCR4mXh~DmtHYPBefMzQisH5mA9AU19KSzASWH8lQjLXda0Pwhngqwba~G-hDeDcc2ts1r8AwZpDB8RcIvydw1JpsVw3h~EcdnD3uhWTWnWcxxk0DKF8gIC3m4ujEzaFws8mwhxWKmzmjk032FupaASeeEE2kGqLCvsRnJW~s3Xu~Ric99k2KznmPPlfOULJ4ca5sY1eJBvQSW4cHg__",
