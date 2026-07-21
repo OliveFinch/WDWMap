@@ -791,7 +791,9 @@
 
     // TDR: re-orient the map from the rotation areas continuously as the view
     // is panned (change:center fires throughout the drag/inertia), easing to
-    // the target; snap to the correct rotation immediately for the start view
+    // the target; snap to the correct rotation immediately for the start view.
+    // A real drag cancels any hand-set preview so auto-rotation resumes.
+    map.on('pointerdrag', () => { rotationManualPreview = false; scheduleTdrAutoRotation(); });
     map.getView().on('change:center', scheduleTdrAutoRotation);
     map.on('moveend', scheduleTdrAutoRotation);
     applyTdrAutoRotationImmediate();
@@ -1595,12 +1597,17 @@
     map.getView().setRotation(rotationTargetRad());
   }
 
+  // When the config tool previews a hand-set angle we suppress auto-rotation
+  // (otherwise the rotate-induced recenter would immediately snap it back);
+  // cleared as soon as the user actually drags the map
+  let rotationManualPreview = false;
+
   // rAF loop: ease the view rotation toward the target so crossing a region
   // boundary glides instead of snapping; self-stops once converged
   let rotationAnimId = null;
   function stepTdrRotation() {
     rotationAnimId = null;
-    if (currentParkId !== 'tdr' || !map) return;
+    if (currentParkId !== 'tdr' || !map || rotationManualPreview) return;
     if (!activeTdrRotationAreas().length) return;
     const targetRad = rotationTargetRad();
     const cur = map.getView().getRotation() || 0;
@@ -1614,6 +1621,7 @@
   }
 
   function scheduleTdrAutoRotation() {
+    if (rotationManualPreview) return;
     if (rotationAnimId == null) rotationAnimId = requestAnimationFrame(stepTdrRotation);
   }
 
@@ -2367,7 +2375,9 @@
       } else {
         setRotAreaDrawing(false);
         rotAreaDraftPoints = [];
+        rotationManualPreview = false;
         if (rotationSvg) rotationSvg.innerHTML = '';
+        scheduleTdrAutoRotation();
       }
     });
   }
@@ -2377,7 +2387,10 @@
   if (rotationDegInput) {
     rotationDegInput.addEventListener('input', () => {
       const deg = parseFloat(rotationDegInput.value);
-      if (Number.isFinite(deg)) map.getView().setRotation(deg * (Math.PI / 180));
+      if (!Number.isFinite(deg)) return;
+      // Hold this angle (suppress auto-rotation) until the map is dragged
+      rotationManualPreview = true;
+      map.getView().setRotation(deg * (Math.PI / 180));
     });
   }
 
@@ -2743,6 +2756,7 @@
 
     // Close the rotation config tool and clear its overlay
     rotationConfigActive = false;
+    rotationManualPreview = false;
     setRotAreaDrawing(false);
     rotAreaDraftPoints = [];
     if (rotationConfigBtn) rotationConfigBtn.classList.remove('active');
