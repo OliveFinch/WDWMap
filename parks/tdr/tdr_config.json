@@ -7,8 +7,8 @@
   "minZoom": 16,
   "maxZoom": 20,
   "yScheme": "xyz",
-  "defaultCenter": [139.880790, 35.632283],
-  "defaultZoom": 17.0,
+  "defaultCenter": [139.879544, 35.634312],
+  "defaultZoom": 18.5,
   "defaultWidth": 0.016,
   "defaultRotation": 205,
   "rotationAreas": [
