@@ -2354,7 +2354,18 @@
     if (rotationDegInput) rotationDegInput.value = a.rotation;
     if (rotationEditRow) rotationEditRow.style.display = 'flex';
     setRotationHold(true);
-    if (map) map.getView().setRotation((a.rotation || 0) * (Math.PI / 180));
+    if (map) {
+      map.getView().setRotation((a.rotation || 0) * (Math.PI / 180));
+      // Frame the area so all its vertices (the handles) are on screen
+      if (Array.isArray(a.area) && a.area.length) {
+        const lons = a.area.map((p) => p[0]);
+        const lats = a.area.map((p) => p[1]);
+        const ext = ol.proj.transformExtent(
+          [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)],
+          'EPSG:4326', 'EPSG:3857');
+        map.getView().fit(ext, { duration: 350, padding: [70, 70, 70, 70], maxZoom: 19 });
+      }
+    }
     updateRotStatus();
     renderRotationList();
     drawRotationOverlay();
@@ -2479,13 +2490,14 @@
       html += `<text x="${cx}" y="${cy}" fill="${editing ? '#f80' : '#12bdf0'}" font-size="13" ` +
               `font-family="monospace" text-anchor="middle" ` +
               `stroke="#003" stroke-width="0.5" paint-order="stroke">#${i + 1} · ${a.rotation}°</text>`;
-      // Draggable vertex handles for the area being edited
+      // Draggable vertex handles for the area being edited (white fill +
+      // orange ring so they stand out on any map background)
       if (editing) {
         px.forEach((p, vi) => {
           const sel = (vi === rotAreaSelectedVertex);
-          html += `<circle cx="${p[0]}" cy="${p[1]}" r="${sel ? 7 : 5}" ` +
-                  `fill="${sel ? '#fff' : 'rgba(255,140,0,0.95)'}" ` +
-                  `stroke="#f80" stroke-width="${sel ? 3 : 2}"/>`;
+          html += `<circle cx="${p[0]}" cy="${p[1]}" r="${sel ? 9 : 7}" ` +
+                  `fill="${sel ? '#f80' : '#fff'}" ` +
+                  `stroke="#f80" stroke-width="3"/>`;
         });
       }
     });
