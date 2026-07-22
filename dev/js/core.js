@@ -1967,10 +1967,8 @@
       addRotAreaVertex(evt.coordinate);
       return;
     }
-    if (rotationConfigActive && rotAreaEditIndex >= 0 && evt && evt.coordinate) {
-      editRotAreaClick(evt.coordinate);
-      return;
-    }
+    // While editing an area, vertices are dragged (see the pointer handlers),
+    // so plain map clicks do nothing here
   }
 
   function copyCenterToClipboard() {
@@ -2323,9 +2321,7 @@
   function updateRotStatus() {
     if (!rotationStatusEl) return;
     if (rotAreaEditIndex >= 0) {
-      rotationStatusEl.textContent = rotAreaSelectedVertex >= 0
-        ? `Editing #${rotAreaEditIndex + 1} — tap to move point ${rotAreaSelectedVertex + 1}`
-        : `Editing #${rotAreaEditIndex + 1} — tap a point to pick it up`;
+      rotationStatusEl.textContent = `Editing #${rotAreaEditIndex + 1} — drag a point to move it`;
       return;
     }
     const n = rotAreaDraftPoints.length;
@@ -2370,7 +2366,7 @@
     renderRotationList();
     drawRotationOverlay();
     updateRotationLive();
-    showToast(`Editing #${i + 1} — tap a point, then tap to move it`);
+    showToast(`Editing #${i + 1} — drag its points to move them`);
   }
 
   function stopEditRotationArea() {
@@ -2383,30 +2379,78 @@
     drawRotationOverlay();
   }
 
-  // A tap while editing: pick up the nearest vertex, or drop the held one
-  function editRotAreaClick(coord3857) {
+  // Index of the vertex under a map pixel (within snap radius), or -1
+  function editVertexAtPixel(pixel) {
+    if (rotAreaEditIndex < 0) return -1;
     const a = rotationAreasDraft[rotAreaEditIndex];
-    if (!a || !Array.isArray(a.area)) return;
-    const clickPx = map.getPixelFromCoordinate(coord3857);
+    if (!a || !Array.isArray(a.area)) return -1;
     let nearest = -1, nd = Infinity;
     a.area.forEach((p, vi) => {
       const vpx = map.getPixelFromCoordinate(ol.proj.fromLonLat(p));
       if (!vpx) return;
-      const dx = vpx[0] - clickPx[0], dy = vpx[1] - clickPx[1];
+      const dx = vpx[0] - pixel[0], dy = vpx[1] - pixel[1];
       const d = dx * dx + dy * dy;
       if (d < nd) { nd = d; nearest = vi; }
     });
-    const THRESH = 24 * 24; // px² snap radius for picking a vertex
-    if (nearest >= 0 && nd <= THRESH) {
-      rotAreaSelectedVertex = nearest;          // pick up
-    } else if (rotAreaSelectedVertex >= 0) {
-      const ll = ol.proj.toLonLat(coord3857);   // drop the held vertex here
-      a.area[rotAreaSelectedVertex] = [parseFloat(ll[0].toFixed(6)), parseFloat(ll[1].toFixed(6))];
+    return (nearest >= 0 && nd <= 26 * 26) ? nearest : -1;  // 26px snap radius
+  }
+
+  // Drag a vertex directly: grab on pointerdown, follow pointermove, drop on
+  // pointerup. DragPan is suspended for the duration so the map won't pan.
+  let draggingVertex = -1;
+  let dragPanInteraction = null;
+
+  function enableRotationVertexDrag() {
+    const el = map && map.getTargetElement();
+    if (!el) return;
+
+    function pixelFromEvent(e) {
+      const rect = el.getBoundingClientRect();
+      return [e.clientX - rect.left, e.clientY - rect.top];
     }
-    updateRotStatus();
-    if (rotationEditRow) rotationEditRow.style.display = 'flex';
-    drawRotationOverlay();
-    updateRotationLive();
+
+    el.addEventListener('pointerdown', (e) => {
+      if (!serviceMode || !rotationConfigActive || rotAreaEditIndex < 0) return;
+      const vi = editVertexAtPixel(pixelFromEvent(e));
+      if (vi < 0) return;
+      draggingVertex = vi;
+      rotAreaSelectedVertex = vi;
+      if (!dragPanInteraction) {
+        map.getInteractions().forEach((it) => {
+          if (it instanceof ol.interaction.DragPan) dragPanInteraction = it;
+        });
+      }
+      if (dragPanInteraction) dragPanInteraction.setActive(false);
+      if (el.setPointerCapture) { try { el.setPointerCapture(e.pointerId); } catch (err) {} }
+      e.preventDefault();
+      if (rotationEditRow) rotationEditRow.style.display = 'flex';
+      updateRotStatus();
+      drawRotationOverlay();
+    });
+
+    el.addEventListener('pointermove', (e) => {
+      if (draggingVertex < 0) return;
+      const a = rotationAreasDraft[rotAreaEditIndex];
+      if (!a) return;
+      const coord = map.getCoordinateFromPixel(pixelFromEvent(e));
+      if (!coord) return;
+      const ll = ol.proj.toLonLat(coord);
+      a.area[draggingVertex] = [parseFloat(ll[0].toFixed(6)), parseFloat(ll[1].toFixed(6))];
+      e.preventDefault();
+      drawRotationOverlay();
+      updateRotationLive();
+    });
+
+    function endVertexDrag() {
+      if (draggingVertex < 0) return;
+      draggingVertex = -1;
+      if (dragPanInteraction) dragPanInteraction.setActive(true);
+      renderRotationList();
+      drawRotationOverlay();
+      updateRotationLive();
+    }
+    el.addEventListener('pointerup', endVertexDrag);
+    el.addEventListener('pointercancel', endVertexDrag);
   }
 
   function deleteSelectedRotVertex() {
@@ -2486,10 +2530,16 @@
         editing ? 'rgba(255,140,0,0.95)' : (hit ? '#12bdf0' : 'rgba(18,189,240,0.6)'), false);
       const cx = px.reduce((s, p) => s + p[0], 0) / px.length;
       const cy = px.reduce((s, p) => s + p[1], 0) / px.length;
-      // #index matches the list so each polygon is identifiable
-      html += `<text x="${cx}" y="${cy}" fill="${editing ? '#f80' : '#12bdf0'}" font-size="13" ` +
-              `font-family="monospace" text-anchor="middle" ` +
-              `stroke="#003" stroke-width="0.5" paint-order="stroke">#${i + 1} · ${a.rotation}°</text>`;
+      // #index matches the list so each polygon is identifiable; a filled
+      // pill keeps it legible over any map background
+      const txt = `#${i + 1} · ${a.rotation}°`;
+      const fs = editing ? 16 : 13;
+      const pillW = txt.length * fs * 0.62 + 12;
+      const pillH = fs + 8;
+      html += `<rect x="${cx - pillW / 2}" y="${cy - pillH / 2}" width="${pillW}" height="${pillH}" ` +
+              `rx="${pillH / 2}" fill="${editing ? 'rgba(255,140,0,0.92)' : 'rgba(0,40,80,0.82)'}"/>`;
+      html += `<text x="${cx}" y="${cy}" fill="#fff" font-size="${fs}" font-weight="bold" ` +
+              `font-family="monospace" text-anchor="middle" dominant-baseline="central">${txt}</text>`;
       // Draggable vertex handles for the area being edited (white fill +
       // orange ring so they stand out on any map background)
       if (editing) {
@@ -3081,6 +3131,7 @@
 
     initMap();
     enableDoubleTapHoldZoom();
+    enableRotationVertexDrag();
 
     // Apply URL position if present
     if (urlBbox) {
