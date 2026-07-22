@@ -1659,6 +1659,9 @@
     rotationAnimId = null;
     if (currentParkId !== 'tdr' || !map || rotationManualPreview || rotationHold) return;
     if (!activeTdrRotationAreas().length) return;
+    // Don't fight a running view animation (e.g. flying to a location) —
+    // setRotation would cancel it; moveend re-triggers us when it finishes
+    if (map.getView().getAnimating()) return;
     const targetRad = rotationTargetRad();
     const cur = map.getView().getRotation() || 0;
     const diff = Math.atan2(Math.sin(targetRad - cur), Math.cos(targetRad - cur));
