@@ -962,21 +962,20 @@ html, body {
   bottom: 70px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(180, 0, 0, 0.9);
-  color: #fff;
-  font-size: 12px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  line-height: 1.4;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  background: rgba(150, 0, 0, 0.4);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  line-height: 1.3;
   text-align: center;
-  white-space: pre-line;
+  white-space: nowrap;
 }
 
 #service-mode-center {
   font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
-  font-size: 12px;
-  font-weight: bold;
+  font-size: 10.5px;
+  font-weight: normal;
 }
 
 #service-mode-close {
@@ -1425,8 +1424,36 @@ html, body {
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  padding: 3px 0;
+  padding: 3px 4px;
   border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+
+#service-mode-rotation-list .rot-item.editing {
+  background: rgba(255, 140, 0, 0.28);
+  border-radius: 4px;
+}
+
+#service-mode-rotation-tool .rot-edit-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+#service-mode-rotation-tool .rot-edit-row button {
+  flex: 1 1 auto;
+  padding: 4px 8px;
+  background: #fff;
+  color: #036;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#service-mode-rotation-tool .rot-edit-row button:hover {
+  background: #cdf;
 }
 
 #service-mode-rotation-list .rot-item button {

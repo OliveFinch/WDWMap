@@ -1937,10 +1937,11 @@
     const zoom = view.getZoom();
     const viewWidth = widthFromCurrentView();
     const coordText = `"coords": [${center[0].toFixed(6)}, ${center[1].toFixed(6)}], "width": ${viewWidth}`;
-    let display = `[${center[0].toFixed(6)}, ${center[1].toFixed(6)}], zoom: ${zoom.toFixed(1)}\nview square: ${viewWidth}`;
+    // Single compact line: coords · zoom · width
+    let display = `${center[0].toFixed(6)}, ${center[1].toFixed(6)} · z${zoom.toFixed(1)} · w${viewWidth}`;
     // Shanghai uses Baidu coordinate system - coordinates are not real-world lat/lon
     if (currentParkId === 'shdr') {
-      display += '\n[Baidu coords - not WGS84]';
+      display += ' · Baidu';
     }
     serviceModeCenter.textContent = display;
     // Store for clipboard: ready to paste into a park config location entry
@@ -1964,6 +1965,10 @@
     }
     if (rotationConfigActive && rotAreaDrawing && evt && evt.coordinate) {
       addRotAreaVertex(evt.coordinate);
+      return;
+    }
+    if (rotationConfigActive && rotAreaEditIndex >= 0 && evt && evt.coordinate) {
+      editRotAreaClick(evt.coordinate);
       return;
     }
   }
@@ -2279,12 +2284,17 @@
   const rotationClearBtn = document.getElementById('service-mode-rotation-clear');
   const rotationAddBtn = document.getElementById('service-mode-rotation-add');
   const rotationStatusEl = document.getElementById('service-mode-rotation-status');
+  const rotationEditRow = document.getElementById('service-mode-rotation-edit-row');
+  const rotationDelPtBtn = document.getElementById('service-mode-rotation-delpt');
+  const rotationDoneBtn = document.getElementById('service-mode-rotation-done');
   const rotationListEl = document.getElementById('service-mode-rotation-list');
   const rotationCopyBtn = document.getElementById('service-mode-rotation-copy');
   const rotationSvg = document.getElementById('service-mode-rotation-svg');
 
   let rotAreaDrawing = false;      // tap-to-add-vertex mode for a new area
   let rotAreaDraftPoints = [];     // in-progress polygon vertices [lon,lat]
+  let rotAreaEditIndex = -1;       // committed area being edited in place (-1 = none)
+  let rotAreaSelectedVertex = -1;  // picked-up vertex within that area (-1 = none)
 
   function loadRotationDraft() {
     const park = getCurrentPark() || {};
@@ -2303,6 +2313,7 @@
 
   function setRotAreaDrawing(on) {
     rotAreaDrawing = on;
+    if (on) stopEditRotationArea();  // drawing a new area exits edit mode
     if (rotationDrawBtn) {
       rotationDrawBtn.classList.toggle('active', on);
       rotationDrawBtn.textContent = on ? 'Drawing… (tap map)' : 'Draw area';
@@ -2311,6 +2322,12 @@
 
   function updateRotStatus() {
     if (!rotationStatusEl) return;
+    if (rotAreaEditIndex >= 0) {
+      rotationStatusEl.textContent = rotAreaSelectedVertex >= 0
+        ? `Editing #${rotAreaEditIndex + 1} — tap to move point ${rotAreaSelectedVertex + 1}`
+        : `Editing #${rotAreaEditIndex + 1} — tap a point to pick it up`;
+      return;
+    }
     const n = rotAreaDraftPoints.length;
     rotationStatusEl.textContent = !n
       ? 'No area drawn'
@@ -2324,23 +2341,73 @@
     drawRotationOverlay();
   }
 
-  // Pull an existing area out of the list back into the editable polygon so
-  // its points and rotation can be amended, then re-committed with Add area
-  function editRotationArea(i) {
+  // Enter in-place edit for a committed area: hold its rotation and let its
+  // vertices be picked up and moved (it stays in the list, not removed)
+  function startEditRotationArea(i) {
+    if (rotAreaEditIndex === i) { stopEditRotationArea(); return; }
     const a = rotationAreasDraft[i];
     if (!a) return;
-    rotationAreasDraft.splice(i, 1);
-    rotAreaDraftPoints = a.area.map((p) => p.slice());
+    setRotAreaDrawing(false);
+    rotAreaDraftPoints = [];
+    rotAreaEditIndex = i;
+    rotAreaSelectedVertex = -1;
     if (rotationDegInput) rotationDegInput.value = a.rotation;
-    // Show and hold this area's rotation while its points are amended
+    if (rotationEditRow) rotationEditRow.style.display = 'flex';
     setRotationHold(true);
     if (map) map.getView().setRotation((a.rotation || 0) * (Math.PI / 180));
-    setRotAreaDrawing(true);
     updateRotStatus();
     renderRotationList();
     drawRotationOverlay();
     updateRotationLive();
-    showToast('Editing area — Add area to save');
+    showToast(`Editing #${i + 1} — tap a point, then tap to move it`);
+  }
+
+  function stopEditRotationArea() {
+    if (rotAreaEditIndex < 0) return;
+    rotAreaEditIndex = -1;
+    rotAreaSelectedVertex = -1;
+    if (rotationEditRow) rotationEditRow.style.display = 'none';
+    updateRotStatus();
+    renderRotationList();
+    drawRotationOverlay();
+  }
+
+  // A tap while editing: pick up the nearest vertex, or drop the held one
+  function editRotAreaClick(coord3857) {
+    const a = rotationAreasDraft[rotAreaEditIndex];
+    if (!a || !Array.isArray(a.area)) return;
+    const clickPx = map.getPixelFromCoordinate(coord3857);
+    let nearest = -1, nd = Infinity;
+    a.area.forEach((p, vi) => {
+      const vpx = map.getPixelFromCoordinate(ol.proj.fromLonLat(p));
+      if (!vpx) return;
+      const dx = vpx[0] - clickPx[0], dy = vpx[1] - clickPx[1];
+      const d = dx * dx + dy * dy;
+      if (d < nd) { nd = d; nearest = vi; }
+    });
+    const THRESH = 24 * 24; // px² snap radius for picking a vertex
+    if (nearest >= 0 && nd <= THRESH) {
+      rotAreaSelectedVertex = nearest;          // pick up
+    } else if (rotAreaSelectedVertex >= 0) {
+      const ll = ol.proj.toLonLat(coord3857);   // drop the held vertex here
+      a.area[rotAreaSelectedVertex] = [parseFloat(ll[0].toFixed(6)), parseFloat(ll[1].toFixed(6))];
+    }
+    updateRotStatus();
+    if (rotationEditRow) rotationEditRow.style.display = 'flex';
+    drawRotationOverlay();
+    updateRotationLive();
+  }
+
+  function deleteSelectedRotVertex() {
+    const a = rotationAreasDraft[rotAreaEditIndex];
+    if (!a || rotAreaSelectedVertex < 0) return;
+    if (a.area.length <= 3) { showToast('An area needs at least 3 points'); return; }
+    a.area.splice(rotAreaSelectedVertex, 1);
+    rotAreaSelectedVertex = -1;
+    updateRotStatus();
+    renderRotationList();
+    drawRotationOverlay();
+    updateRotationLive();
   }
 
   function renderRotationList() {
@@ -2352,12 +2419,12 @@
     }
     rotationAreasDraft.forEach((a, i) => {
       const row = document.createElement('div');
-      row.className = 'rot-item';
+      row.className = 'rot-item' + (i === rotAreaEditIndex ? ' editing' : '');
       const label = document.createElement('span');
       label.textContent = `#${i + 1} · ${a.rotation}° (${a.area.length} pts)`;
       label.title = 'Edit this area';
       label.style.cursor = 'pointer';
-      label.addEventListener('click', () => editRotationArea(i));
+      label.addEventListener('click', () => startEditRotationArea(i));
       row.appendChild(label);
       const del = document.createElement('button');
       del.type = 'button';
@@ -2365,6 +2432,8 @@
       del.title = 'Remove area';
       del.addEventListener('click', () => {
         rotationAreasDraft.splice(i, 1);
+        if (rotAreaEditIndex === i) stopEditRotationArea();
+        else if (rotAreaEditIndex > i) rotAreaEditIndex--;
         renderRotationList();
         drawRotationOverlay();
         updateRotationLive();
@@ -2399,16 +2468,26 @@
       if (!Array.isArray(a.area) || a.area.length < 3) return;
       const px = a.area.map((p) => map.getPixelFromCoordinate(ol.proj.fromLonLat(p)));
       if (px.some((p) => !p)) return;
+      const editing = (i === rotAreaEditIndex);
       const hit = pointInPoly(center, a.area);
       html += polygonSvg(px,
-        hit ? 'rgba(18,189,240,0.24)' : 'rgba(18,189,240,0.08)',
-        hit ? '#12bdf0' : 'rgba(18,189,240,0.6)', false);
+        editing ? 'rgba(255,140,0,0.18)' : (hit ? 'rgba(18,189,240,0.24)' : 'rgba(18,189,240,0.08)'),
+        editing ? 'rgba(255,140,0,0.95)' : (hit ? '#12bdf0' : 'rgba(18,189,240,0.6)'), false);
       const cx = px.reduce((s, p) => s + p[0], 0) / px.length;
       const cy = px.reduce((s, p) => s + p[1], 0) / px.length;
       // #index matches the list so each polygon is identifiable
-      html += `<text x="${cx}" y="${cy}" fill="#12bdf0" font-size="13" ` +
+      html += `<text x="${cx}" y="${cy}" fill="${editing ? '#f80' : '#12bdf0'}" font-size="13" ` +
               `font-family="monospace" text-anchor="middle" ` +
               `stroke="#003" stroke-width="0.5" paint-order="stroke">#${i + 1} · ${a.rotation}°</text>`;
+      // Draggable vertex handles for the area being edited
+      if (editing) {
+        px.forEach((p, vi) => {
+          const sel = (vi === rotAreaSelectedVertex);
+          html += `<circle cx="${p[0]}" cy="${p[1]}" r="${sel ? 7 : 5}" ` +
+                  `fill="${sel ? '#fff' : 'rgba(255,140,0,0.95)'}" ` +
+                  `stroke="#f80" stroke-width="${sel ? 3 : 2}"/>`;
+        });
+      }
     });
 
     // In-progress polygon (orange dashed, like the location lasso)
@@ -2442,6 +2521,7 @@
       if (rotationConfigActive) {
         loadRotationDraft();
         rotAreaDraftPoints = [];
+        stopEditRotationArea();
         setRotAreaDrawing(false);
         setRotationHold(false);
         // Start the Set° value from the current live rotation
@@ -2454,6 +2534,7 @@
         drawRotationOverlay();
         updateRotationLive();
       } else {
+        stopEditRotationArea();
         setRotAreaDrawing(false);
         setRotationHold(false);
         rotAreaDraftPoints = [];
@@ -2471,7 +2552,20 @@
       // Hold this angle (suppress auto-rotation) until the map is dragged
       rotationManualPreview = true;
       map.getView().setRotation(deg * (Math.PI / 180));
+      // If an area is being edited, this also sets that area's rotation
+      if (rotAreaEditIndex >= 0 && rotationAreasDraft[rotAreaEditIndex]) {
+        rotationAreasDraft[rotAreaEditIndex].rotation = ((Math.round(deg) % 360) + 360) % 360;
+        renderRotationList();
+        drawRotationOverlay();
+      }
     });
+  }
+
+  if (rotationDelPtBtn) {
+    rotationDelPtBtn.addEventListener('click', deleteSelectedRotVertex);
+  }
+  if (rotationDoneBtn) {
+    rotationDoneBtn.addEventListener('click', stopEditRotationArea);
   }
 
   function setRotationHold(on) {
@@ -2851,6 +2945,9 @@
     rotationConfigActive = false;
     rotationManualPreview = false;
     rotationHold = false;
+    rotAreaEditIndex = -1;
+    rotAreaSelectedVertex = -1;
+    if (rotationEditRow) rotationEditRow.style.display = 'none';
     if (rotationHoldBtn) { rotationHoldBtn.classList.remove('active'); rotationHoldBtn.textContent = 'Hold rotation'; }
     setRotAreaDrawing(false);
     rotAreaDraftPoints = [];
