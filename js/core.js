@@ -2354,7 +2354,7 @@
       const row = document.createElement('div');
       row.className = 'rot-item';
       const label = document.createElement('span');
-      label.textContent = `${a.rotation}° (${a.area.length} pts)`;
+      label.textContent = `#${i + 1} · ${a.rotation}° (${a.area.length} pts)`;
       label.title = 'Edit this area';
       label.style.cursor = 'pointer';
       label.addEventListener('click', () => editRotationArea(i));
@@ -2395,7 +2395,7 @@
     let html = '';
 
     // Committed areas: filled polygons, highlighted when they contain center
-    rotationAreasDraft.forEach((a) => {
+    rotationAreasDraft.forEach((a, i) => {
       if (!Array.isArray(a.area) || a.area.length < 3) return;
       const px = a.area.map((p) => map.getPixelFromCoordinate(ol.proj.fromLonLat(p)));
       if (px.some((p) => !p)) return;
@@ -2405,9 +2405,10 @@
         hit ? '#12bdf0' : 'rgba(18,189,240,0.6)', false);
       const cx = px.reduce((s, p) => s + p[0], 0) / px.length;
       const cy = px.reduce((s, p) => s + p[1], 0) / px.length;
+      // #index matches the list so each polygon is identifiable
       html += `<text x="${cx}" y="${cy}" fill="#12bdf0" font-size="13" ` +
               `font-family="monospace" text-anchor="middle" ` +
-              `stroke="#003" stroke-width="0.5" paint-order="stroke">${a.rotation}°</text>`;
+              `stroke="#003" stroke-width="0.5" paint-order="stroke">#${i + 1} · ${a.rotation}°</text>`;
     });
 
     // In-progress polygon (orange dashed, like the location lasso)
