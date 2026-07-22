@@ -1967,8 +1967,12 @@
       addRotAreaVertex(evt.coordinate);
       return;
     }
-    // While editing an area, vertices are dragged (see the pointer handlers),
-    // so plain map clicks do nothing here
+    // While editing: vertices are dragged (pointer handlers); a click on an
+    // edge selects it, a second click on it inserts a midpoint vertex
+    if (rotationConfigActive && rotAreaEditIndex >= 0 && evt && evt.coordinate) {
+      editRotAreaEdgeClick(evt.coordinate);
+      return;
+    }
   }
 
   function copyCenterToClipboard() {
@@ -2293,6 +2297,7 @@
   let rotAreaDraftPoints = [];     // in-progress polygon vertices [lon,lat]
   let rotAreaEditIndex = -1;       // committed area being edited in place (-1 = none)
   let rotAreaSelectedVertex = -1;  // picked-up vertex within that area (-1 = none)
+  let rotAreaSelectedEdge = -1;    // highlighted edge (start-vertex index) for inserting a point
 
   function loadRotationDraft() {
     const park = getCurrentPark() || {};
@@ -2321,7 +2326,9 @@
   function updateRotStatus() {
     if (!rotationStatusEl) return;
     if (rotAreaEditIndex >= 0) {
-      rotationStatusEl.textContent = `Editing #${rotAreaEditIndex + 1} — drag a point to move it`;
+      rotationStatusEl.textContent = rotAreaSelectedEdge >= 0
+        ? `Editing #${rotAreaEditIndex + 1} — tap the highlighted line again to add a point`
+        : `Editing #${rotAreaEditIndex + 1} — drag a point, or tap a line to add one`;
       return;
     }
     const n = rotAreaDraftPoints.length;
@@ -2347,6 +2354,7 @@
     rotAreaDraftPoints = [];
     rotAreaEditIndex = i;
     rotAreaSelectedVertex = -1;
+    rotAreaSelectedEdge = -1;
     if (rotationDegInput) rotationDegInput.value = a.rotation;
     if (rotationEditRow) rotationEditRow.style.display = 'flex';
     setRotationHold(true);
@@ -2373,6 +2381,7 @@
     if (rotAreaEditIndex < 0) return;
     rotAreaEditIndex = -1;
     rotAreaSelectedVertex = -1;
+    rotAreaSelectedEdge = -1;
     if (rotationEditRow) rotationEditRow.style.display = 'none';
     updateRotStatus();
     renderRotationList();
@@ -2395,6 +2404,58 @@
     return (nearest >= 0 && nd <= 26 * 26) ? nearest : -1;  // 26px snap radius
   }
 
+  // Index of the edge (start-vertex index) under a map pixel, or -1. Edge i
+  // is the segment from vertex i to vertex (i+1).
+  function editEdgeAtPixel(pixel) {
+    if (rotAreaEditIndex < 0) return -1;
+    const a = rotationAreasDraft[rotAreaEditIndex];
+    if (!a || !Array.isArray(a.area) || a.area.length < 2) return -1;
+    const n = a.area.length;
+    let nearest = -1, nd = Infinity;
+    for (let i = 0; i < n; i++) {
+      const p1 = map.getPixelFromCoordinate(ol.proj.fromLonLat(a.area[i]));
+      const p2 = map.getPixelFromCoordinate(ol.proj.fromLonLat(a.area[(i + 1) % n]));
+      if (!p1 || !p2) continue;
+      const d = distToSegSq(pixel[0], pixel[1], p1[0], p1[1], p2[0], p2[1]);
+      if (d < nd) { nd = d; nearest = i; }
+    }
+    return (nearest >= 0 && nd <= 18 * 18) ? nearest : -1;  // 18px snap radius
+  }
+
+  // Click while editing (not on a vertex): first tap selects an edge, a
+  // second tap on the same edge inserts a midpoint vertex between its two ends
+  function editRotAreaEdgeClick(coord3857) {
+    const a = rotationAreasDraft[rotAreaEditIndex];
+    if (!a) return;
+    const pixel = map.getPixelFromCoordinate(coord3857);
+    if (editVertexAtPixel(pixel) >= 0) return;  // vertex clicks handled by drag
+    const edge = editEdgeAtPixel(pixel);
+    if (edge < 0) {
+      if (rotAreaSelectedEdge >= 0) { rotAreaSelectedEdge = -1; updateRotStatus(); drawRotationOverlay(); }
+      return;
+    }
+    if (rotAreaSelectedEdge === edge) {
+      const n = a.area.length;
+      const v1 = a.area[edge], v2 = a.area[(edge + 1) % n];
+      const mid = [
+        parseFloat(((v1[0] + v2[0]) / 2).toFixed(6)),
+        parseFloat(((v1[1] + v2[1]) / 2).toFixed(6))
+      ];
+      a.area.splice(edge + 1, 0, mid);        // new vertex between the two
+      rotAreaSelectedEdge = -1;
+      rotAreaSelectedVertex = edge + 1;       // ready to drag the new point
+      updateRotStatus();
+      renderRotationList();
+      drawRotationOverlay();
+      updateRotationLive();
+      showToast('Point added — drag it to position');
+    } else {
+      rotAreaSelectedEdge = edge;
+      updateRotStatus();
+      drawRotationOverlay();
+    }
+  }
+
   // Drag a vertex directly: grab on pointerdown, follow pointermove, drop on
   // pointerup. DragPan is suspended for the duration so the map won't pan.
   let draggingVertex = -1;
@@ -2415,6 +2476,7 @@
       if (vi < 0) return;
       draggingVertex = vi;
       rotAreaSelectedVertex = vi;
+      rotAreaSelectedEdge = -1;
       if (!dragPanInteraction) {
         map.getInteractions().forEach((it) => {
           if (it instanceof ol.interaction.DragPan) dragPanInteraction = it;
@@ -2540,6 +2602,16 @@
               `rx="${pillH / 2}" fill="${editing ? 'rgba(255,140,0,0.92)' : 'rgba(0,40,80,0.82)'}"/>`;
       html += `<text x="${cx}" y="${cy}" fill="#fff" font-size="${fs}" font-weight="bold" ` +
               `font-family="monospace" text-anchor="middle" dominant-baseline="central">${txt}</text>`;
+      // Selected edge highlight (tap again to insert a midpoint here)
+      if (editing && rotAreaSelectedEdge >= 0 && rotAreaSelectedEdge < px.length) {
+        const p1 = px[rotAreaSelectedEdge];
+        const p2 = px[(rotAreaSelectedEdge + 1) % px.length];
+        html += `<line x1="${p1[0]}" y1="${p1[1]}" x2="${p2[0]}" y2="${p2[1]}" ` +
+                `stroke="#fff" stroke-width="6" stroke-linecap="round"/>`;
+        html += `<line x1="${p1[0]}" y1="${p1[1]}" x2="${p2[0]}" y2="${p2[1]}" ` +
+                `stroke="#f80" stroke-width="3.5" stroke-linecap="round"/>`;
+      }
+
       // Draggable vertex handles for the area being edited (white fill +
       // orange ring so they stand out on any map background)
       if (editing) {
