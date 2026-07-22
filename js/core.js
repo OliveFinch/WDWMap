@@ -1955,6 +1955,8 @@
 
   // Map clicks in service mode: add a lasso vertex while drawing an area,
   // otherwise copy the center coords + width
+  // Map taps only add polygon vertices while a lasso is being drawn; copying
+  // coords is now an explicit button in the Locations tool
   function serviceModeMapClick(evt) {
     if (locationToolActive && areaDrawing && evt && evt.coordinate) {
       addAreaVertex(evt.coordinate);
@@ -1964,7 +1966,6 @@
       addRotAreaVertex(evt.coordinate);
       return;
     }
-    copyCenterToClipboard();
   }
 
   function copyCenterToClipboard() {
@@ -1990,6 +1991,7 @@
   const locationWidthInput = document.getElementById('service-mode-width-input');
   const locationJsonEl = document.getElementById('service-mode-location-json');
   const locationCopyBtn = document.getElementById('service-mode-copy-location');
+  const coordsCopyBtn = document.getElementById('service-mode-copy-coords');
   const locationFitBtn = document.getElementById('service-mode-width-from-view');
   const locationSelect = document.getElementById('service-mode-location-select');
   const locationBaselineEl = document.getElementById('service-mode-location-baseline');
@@ -2257,6 +2259,10 @@
     });
   }
 
+  if (coordsCopyBtn) {
+    coordsCopyBtn.addEventListener('click', copyCenterToClipboard);
+  }
+
   // =====================
   // Service Mode: TDR rotation-area configuration tool
   // Draw a polygon (lasso) and assign it a rotation; builds the
@@ -2318,6 +2324,25 @@
     drawRotationOverlay();
   }
 
+  // Pull an existing area out of the list back into the editable polygon so
+  // its points and rotation can be amended, then re-committed with Add area
+  function editRotationArea(i) {
+    const a = rotationAreasDraft[i];
+    if (!a) return;
+    rotationAreasDraft.splice(i, 1);
+    rotAreaDraftPoints = a.area.map((p) => p.slice());
+    if (rotationDegInput) rotationDegInput.value = a.rotation;
+    // Show and hold this area's rotation while its points are amended
+    setRotationHold(true);
+    if (map) map.getView().setRotation((a.rotation || 0) * (Math.PI / 180));
+    setRotAreaDrawing(true);
+    updateRotStatus();
+    renderRotationList();
+    drawRotationOverlay();
+    updateRotationLive();
+    showToast('Editing area — Add area to save');
+  }
+
   function renderRotationList() {
     if (!rotationListEl) return;
     rotationListEl.innerHTML = '';
@@ -2330,6 +2355,9 @@
       row.className = 'rot-item';
       const label = document.createElement('span');
       label.textContent = `${a.rotation}° (${a.area.length} pts)`;
+      label.title = 'Edit this area';
+      label.style.cursor = 'pointer';
+      label.addEventListener('click', () => editRotationArea(i));
       row.appendChild(label);
       const del = document.createElement('button');
       del.type = 'button';
