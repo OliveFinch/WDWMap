@@ -3,5 +3,42 @@
     { "coords": [139.88079, 35.632283], "width": 0.004, "icon": "icons/locations/tdr/tdr-castle.svg", "alt": "Tokyo Disneyland", "hidden": false },
     { "coords": [139.885709, 35.625239], "width": 0.008, "icon": "icons/locations/tdr/disneysea.svg", "alt": "Tokyo DisneySea", "hidden": false },
     { "coords": [139.887318, 35.633259], "width": 0.005, "icon": "icons/locations/tdr/ikspiari.svg", "alt": "Ikspiari", "hidden": false }
+  ],
+  "locationGroups": [
+    {
+      "name": "Theme Parks",
+      "expanded": true,
+      "locations": [
+        { "coords": [139.88079, 35.632283], "width": 0.004, "icon": "icons/locations/tdr/tdr-castle.svg", "alt": "Tokyo Disneyland", "hidden": false },
+        { "coords": [139.885709, 35.625239], "width": 0.008, "icon": "icons/locations/tdr/disneysea.svg", "alt": "Tokyo DisneySea", "hidden": false }
+      ]
+    },
+    {
+      "name": "Shopping & Dining",
+      "locations": [
+        { "coords": [139.887318, 35.633259], "width": 0.005, "icon": "icons/locations/tdr/ikspiari.svg", "alt": "Ikspiari", "hidden": false }
+      ]
+    },
+    {
+      "name": "Disney Hotels",
+      "locations": [
+        { "coords": [139.8785, 35.633], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Tokyo Disneyland Hotel", "hidden": false },
+        { "coords": [139.8838, 35.627], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Tokyo DisneySea Hotel MiraCosta", "hidden": false },
+        { "coords": [139.8845, 35.6295], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Disney Ambassador Hotel", "hidden": false },
+        { "coords": [139.8912, 35.6315], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Tokyo Disney Resort Toy Story Hotel", "hidden": false },
+        { "coords": [139.8905, 35.628], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Tokyo DisneySea Fantasy Springs Hotel", "hidden": false }
+      ]
+    },
+    {
+      "name": "Official Hotels",
+      "locations": [
+        { "coords": [139.894, 35.627], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Hilton Tokyo Bay", "hidden": false },
+        { "coords": [139.8958, 35.6265], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Sheraton Grande Tokyo Bay Hotel", "hidden": false },
+        { "coords": [139.8925, 35.6298], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Tokyo Bay Maihama Hotel", "hidden": false },
+        { "coords": [139.8935, 35.6305], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Maihama View Hotel", "hidden": false },
+        { "coords": [139.8952, 35.6248], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Grand Nikko Tokyo Bay Maihama", "hidden": false },
+        { "coords": [139.8975, 35.6255], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Hotel Okura Tokyo Bay", "hidden": false }
+      ]
+    }
   ]
 }
