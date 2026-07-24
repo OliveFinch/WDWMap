@@ -20,6 +20,12 @@
       ]
     },
     {
+      "name": "Entertainment",
+      "locations": [
+        { "coords": [139.8795, 35.636], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Maihama Amphitheater", "hidden": false }
+      ]
+    },
+    {
       "name": "Disney Hotels",
       "locations": [
         { "coords": [139.8785, 35.633], "width": 0.004, "icon": "icons/locations/marker.svg", "alt": "Tokyo Disneyland Hotel", "hidden": false },
