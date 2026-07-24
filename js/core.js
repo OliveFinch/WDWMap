@@ -1920,6 +1920,66 @@
     v.animate({ zoom: v.getZoom() - 1, duration: 160 });
   });
 
+  // =====================
+  // Arrow-key panning
+  // =====================
+  // True while a panel/dialog is up: those use the arrows themselves (or
+  // cover the map), so panning must stay out of the way
+  function anyPanelOpen() {
+    if (document.body.classList.contains('locbrowser-open') ||
+        document.body.classList.contains('datebrowser-open')) return true;
+    for (const id of ['info-overlay', 'parks-modal']) {
+      const el = document.getElementById(id);
+      if (el && el.classList.contains('open')) return true;
+    }
+    for (const id of ['report-modal', 'changes-board', 'date-popup', 'left-date-popup']) {
+      const el = document.getElementById(id);
+      if (el && el.style.display && el.style.display !== 'none') return true;
+    }
+    return false;
+  }
+
+  const PAN_KEYS = {
+    ArrowUp:    [0, 1],
+    ArrowDown:  [0, -1],
+    ArrowLeft:  [-1, 0],
+    ArrowRight: [1, 0]
+  };
+
+  document.addEventListener('keydown', (e) => {
+    const dir = PAN_KEYS[e.key];
+    if (!dir || !map) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+    // Don't hijack the arrows while typing in a field
+    const t = e.target;
+    if (t && (t.isContentEditable ||
+              t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return;
+    if (anyPanelOpen()) return;
+
+    const view = map.getView();
+    const size = map.getSize();
+    const res = view.getResolution();
+    const center = view.getCenter();
+    if (!size || !Number.isFinite(res) || !center) return;
+
+    e.preventDefault();
+
+    // Step a fraction of the smaller viewport dimension (Shift = bigger jump)
+    const step = res * Math.min(size[0], size[1]) * (e.shiftKey ? 0.5 : 0.2);
+    let dx = dir[0] * step;
+    let dy = dir[1] * step;
+
+    // Rotate the delta into map space so arrows always move relative to
+    // the screen, even when the view is rotated (e.g. TDR)
+    const rot = view.getRotation() || 0;
+    const cos = Math.cos(rot), sin = Math.sin(rot);
+    const rx = dx * cos - dy * sin;
+    const ry = dy * cos + dx * sin;
+
+    view.animate({ center: [center[0] + rx, center[1] + ry], duration: 150 });
+  });
+
   // Info overlay
   infoClose.addEventListener('click', () => { infoOverlay.classList.remove('open'); });
   infoOverlay.addEventListener('click', (e) => { if (e.target === infoOverlay) infoOverlay.classList.remove('open'); });
