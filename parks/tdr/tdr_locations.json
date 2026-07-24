@@ -22,7 +22,7 @@
     {
       "name": "Entertainment",
       "locations": [
-        { "coords": [139.8795, 35.636], "width": 0.003, "icon": "icons/locations/marker.svg", "alt": "Maihama Amphitheater", "hidden": false }
+        { "coords": [139.889157, 35.632507], "width": 0.00255, "icon": "icons/locations/marker.svg", "alt": "Maihama Amphitheater", "hidden": false, "area": [[139.889302, 35.633241], [139.890183, 35.6326], [139.88919, 35.631549], [139.888288, 35.632275]] }
       ]
     },
     {
