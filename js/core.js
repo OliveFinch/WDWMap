@@ -1946,12 +1946,16 @@
     ArrowRight: [1, 0]
   };
 
+  // '=' is the unshifted '+' key; '_' is the shifted '-' key
+  const ZOOM_KEYS = { '+': 1, '=': 1, '-': -1, '_': -1 };
+
   document.addEventListener('keydown', (e) => {
     const dir = PAN_KEYS[e.key];
-    if (!dir || !map) return;
+    const zoomDir = ZOOM_KEYS[e.key];
+    if ((!dir && !zoomDir) || !map) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
 
-    // Don't hijack the arrows while typing in a field
+    // Don't hijack the keys while typing in a field
     const t = e.target;
     if (t && (t.isContentEditable ||
               t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return;
@@ -1964,6 +1968,11 @@
     if (!size || !Number.isFinite(res) || !center) return;
 
     e.preventDefault();
+
+    if (zoomDir) {
+      view.animate({ zoom: (view.getZoom() || 0) + zoomDir, duration: 160 });
+      return;
+    }
 
     // Step a fraction of the smaller viewport dimension (Shift = bigger jump)
     const step = res * Math.min(size[0], size[1]) * (e.shiftKey ? 0.5 : 0.2);
