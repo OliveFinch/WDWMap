@@ -1921,10 +1921,10 @@
   });
 
   // =====================
-  // Arrow-key panning
+  // Keyboard shortcuts (pan / zoom / view toggles)
   // =====================
-  // True while a panel/dialog is up: those use the arrows themselves (or
-  // cover the map), so panning must stay out of the way
+  // True while a panel/dialog is up: those use the keys themselves (or
+  // cover the map), so shortcuts must stay out of the way
   function anyPanelOpen() {
     if (document.body.classList.contains('locbrowser-open') ||
         document.body.classList.contains('datebrowser-open')) return true;
@@ -1937,6 +1937,15 @@
       if (el && el.style.display && el.style.display !== 'none') return true;
     }
     return false;
+  }
+
+  // Shared guard: modifier held, typing in a field, or a panel is open
+  function shortcutsBlocked(e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return true;
+    const t = e.target;
+    if (t && (t.isContentEditable ||
+              t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return true;
+    return anyPanelOpen();
   }
 
   const PAN_KEYS = {
@@ -1953,13 +1962,7 @@
     const dir = PAN_KEYS[e.key];
     const zoomDir = ZOOM_KEYS[e.key];
     if ((!dir && !zoomDir) || !map) return;
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-
-    // Don't hijack the keys while typing in a field
-    const t = e.target;
-    if (t && (t.isContentEditable ||
-              t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return;
-    if (anyPanelOpen()) return;
+    if (shortcutsBlocked(e)) return;
 
     const view = map.getView();
     const size = map.getSize();
@@ -1987,6 +1990,26 @@
     const ry = dy * cos + dx * sin;
 
     view.animate({ center: [center[0] + rx, center[1] + ry], duration: 150 });
+  });
+
+  // Letter shortcuts: S = satellite, D = Disney map, C = compare, R = roads.
+  // These click the real buttons so all their logic stays in one place.
+  document.addEventListener('keydown', (e) => {
+    if (!map || e.key.length !== 1) return;
+    const k = e.key.toLowerCase();
+    if (k !== 's' && k !== 'd' && k !== 'c' && k !== 'r') return;
+    if (shortcutsBlocked(e)) return;
+
+    if (k === 's' || k === 'd') {
+      // These select a view rather than toggling: only act if it's a change
+      const wantDisney = (k === 'd');
+      if (showingDisney !== wantDisney && toggleBtn) toggleBtn.click();
+    } else if (k === 'c') {
+      if (compareBtn) compareBtn.click();
+    } else if (k === 'r') {
+      if (roadsBtn) roadsBtn.click();
+    }
+    e.preventDefault();
   });
 
   // Info overlay
