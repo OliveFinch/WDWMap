@@ -1992,12 +1992,15 @@
     view.animate({ center: [center[0] + rx, center[1] + ry], duration: 150 });
   });
 
-  // Letter shortcuts: S = satellite, D = Disney map, C = compare, R = roads.
-  // These click the real buttons so all their logic stays in one place.
+  // Action shortcuts: S = satellite, D = Disney map, C = compare, R = roads,
+  // , / . (and < / >) step through dates. These click the real buttons so all
+  // their logic - including the nav arrows' disabled state - stays in one place.
+  const ACTION_KEYS = ['s', 'd', 'c', 'r', ',', '.', '<', '>'];
+
   document.addEventListener('keydown', (e) => {
     if (!map || e.key.length !== 1) return;
     const k = e.key.toLowerCase();
-    if (k !== 's' && k !== 'd' && k !== 'c' && k !== 'r') return;
+    if (ACTION_KEYS.indexOf(k) === -1) return;
     if (shortcutsBlocked(e)) return;
 
     if (k === 's' || k === 'd') {
@@ -2008,6 +2011,10 @@
       if (compareBtn) compareBtn.click();
     } else if (k === 'r') {
       if (roadsBtn) roadsBtn.click();
+    } else if (k === ',' || k === '<') {
+      if (datePrevBtn) datePrevBtn.click();
+    } else if (k === '.' || k === '>') {
+      if (dateNextBtn) dateNextBtn.click();
     }
     e.preventDefault();
   });
