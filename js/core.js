@@ -330,9 +330,14 @@
     if (!ext) return;
 
     // Keep the whole viewport inside the coverage; if the viewport is larger
-    // than the coverage at this zoom, centre on it instead
-    const halfW = size[0] * res / 2;
-    const halfH = size[1] * res / 2;
+    // than the coverage at this zoom, centre on it instead. A rotated view
+    // (TDR) covers a larger axis-aligned box than its width/height suggest,
+    // so use the rotated bounding box.
+    const rot = view.getRotation() || 0;
+    const aCos = Math.abs(Math.cos(rot));
+    const aSin = Math.abs(Math.sin(rot));
+    const halfW = (size[0] * aCos + size[1] * aSin) * res / 2;
+    const halfH = (size[0] * aSin + size[1] * aCos) * res / 2;
     let cx = center[0];
     let cy = center[1];
 
