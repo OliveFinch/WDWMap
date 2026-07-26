@@ -208,22 +208,39 @@
     return { z: zoomKeys[0], minX: b.minX, maxX: b.maxX, minY: b.minY, maxY: b.maxY };
   }
 
-  function extentFromTileBounds(park) {
-    const b = coverageForExtent(park);
-    if (!b) return null;
+  // Lon/lat -> tile indices at zoom z (inverse of tileXYZToLonLat)
+  function lonLatToTileXY(lon, lat, z) {
+    const n = Math.pow(2, z);
+    const latRad = lat * Math.PI / 180;
+    const x = Math.floor((lon + 180) / 360 * n);
+    const y = Math.floor(
+      (1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n
+    );
+    return [x, y];
+  }
 
-    const z = b.z;
+  // Deepest zoom that actually serves a tile at this map coordinate
+  function deepestServedZoomAt(park, coord3857) {
+    if (!park || !park.tileBounds) return park ? park.maxZoom : 20;
+    const lonLat = ol.proj.toLonLat(coord3857);
+    for (let z = park.maxZoom; z >= park.minZoom; z--) {
+      const xy = lonLatToTileXY(lonLat[0], lonLat[1], z);
+      const yy = (park.yScheme === 'tms') ? ((Math.pow(2, z) - 1) - xy[1]) : xy[1];
+      if (isTileServed(park, z, xy[0], yy)) return z;
+    }
+    return park.minZoom;
+  }
+
+  // Geographic extent (EPSG:3857) of one zoom's tile rectangle
+  function extentFromTileRect(park, z, minX, maxX, minY, maxY) {
     const n = Math.pow(2, z);
 
-    const minX = b.minX;
-    const maxX = b.maxX;
-
-    let minYxyz = b.minY;
-    let maxYxyz = b.maxY;
+    let minYxyz = minY;
+    let maxYxyz = maxY;
 
     if (park.yScheme === 'tms') {
-      minYxyz = (n - 1) - b.maxY;
-      maxYxyz = (n - 1) - b.minY;
+      minYxyz = (n - 1) - maxY;
+      maxYxyz = (n - 1) - minY;
     }
 
     const nw = tileXYZToLonLat(minX, minYxyz, z);
@@ -247,6 +264,97 @@
     const padY = (maxE[1] - minE[1]) * 0.02;
 
     return [minE[0] - padX, minE[1] - padY, maxE[0] + padX, maxE[1] + padY];
+  }
+
+  function extentFromTileBounds(park) {
+    const b = coverageForExtent(park);
+    if (!b) return null;
+    return extentFromTileRect(park, b.z, b.minX, b.maxX, b.minY, b.maxY);
+  }
+
+  // Coverage differs a lot between zooms - Disney maps a wide area at low zoom
+  // but only the developed core at high zoom (WDW z18 spans 64km, z19/z20 only
+  // a 13km strip). So the pannable area has to change with the zoom level.
+  // { byZoom: { z: extent }, union: extent }
+  let coverageExtents = null;
+
+  function buildCoverageExtents(park) {
+    const out = { byZoom: {}, union: null };
+    const tb = park && park.tileBounds;
+    if (!tb || !tb.zooms) return out;   // no measurements (TDR) - no constraint
+
+    Object.keys(tb.zooms).forEach((k) => {
+      const z = parseInt(k, 10);
+      const zb = tb.zooms[k];
+      if (!Number.isFinite(z) || !zb.x || !zb.y) return;   // skip zero-coverage zooms
+      const e = extentFromTileRect(park, z, zb.x[0], zb.x[1], zb.y[0], zb.y[1]);
+      if (!e) return;
+      out.byZoom[z] = e;
+      out.union = out.union ? ol.extent.extend(out.union, e.slice()) : e.slice();
+    });
+    return out;
+  }
+
+  // Extent for the zoom whose tiles are actually on screen
+  function coverageExtentForZoom(z) {
+    if (!coverageExtents) return null;
+    const zs = Object.keys(coverageExtents.byZoom)
+      .map(Number).filter(Number.isFinite).sort((a, b) => a - b);
+    if (!zs.length) return null;
+    let target = Math.round(z);
+    if (target < zs[0]) target = zs[0];
+    if (target > zs[zs.length - 1]) target = zs[zs.length - 1];
+    // Walk down to the nearest zoom we have an extent for
+    while (target >= zs[0] && !coverageExtents.byZoom[target]) target--;
+    return coverageExtents.byZoom[target] || null;
+  }
+
+  // Keep the view inside the coverage for the current zoom, and stop the user
+  // zooming deeper than the imagery goes at wherever they are.
+  let constrainingView = false;
+
+  function constrainViewToCoverage() {
+    if (constrainingView || !map) return;
+    if (!coverageExtents || !coverageExtents.union) return;   // no data - leave alone
+
+    const view = map.getView();
+    if (view.getAnimating()) return;   // don't cancel a fly-to; moveend re-runs us
+
+    const size = map.getSize();
+    const res = view.getResolution();
+    const center = view.getCenter();
+    const zoom = view.getZoom();
+    if (!size || !Number.isFinite(res) || !center || !Number.isFinite(zoom)) return;
+
+    const ext = coverageExtentForZoom(zoom);
+    if (!ext) return;
+
+    // Keep the whole viewport inside the coverage; if the viewport is larger
+    // than the coverage at this zoom, centre on it instead
+    const halfW = size[0] * res / 2;
+    const halfH = size[1] * res / 2;
+    let cx = center[0];
+    let cy = center[1];
+
+    cx = (ext[2] - ext[0] <= halfW * 2)
+      ? (ext[0] + ext[2]) / 2
+      : Math.min(Math.max(cx, ext[0] + halfW), ext[2] - halfW);
+    cy = (ext[3] - ext[1] <= halfH * 2)
+      ? (ext[1] + ext[3]) / 2
+      : Math.min(Math.max(cy, ext[1] + halfH), ext[3] - halfH);
+
+    constrainingView = true;
+    if (Math.abs(cx - center[0]) > 0.5 || Math.abs(cy - center[1]) > 0.5) {
+      view.setCenter([cx, cy]);
+    }
+
+    // Cap zoom to what's served here. Never below the current zoom, so this
+    // only blocks zooming further in - it never yanks the user back out.
+    const park = getCurrentPark();
+    const deepest = deepestServedZoomAt(park, [cx, cy]);
+    const newMax = Math.max(deepest, Math.floor(zoom));
+    if (view.getMaxZoom() !== newMax) view.setMaxZoom(newMax);
+    constrainingView = false;
   }
 
 
@@ -796,7 +904,10 @@
     roadsLayer = makeRoadsLayer();
 
     const park = getCurrentPark();
-    parkExtent = extentFromTileBounds(park);
+    // Per-zoom coverage drives the pan/zoom constraints; the union is the
+    // coarse outer bound handed to the View (and used by Find Me)
+    coverageExtents = buildCoverageExtents(park);
+    parkExtent = (coverageExtents && coverageExtents.union) || extentFromTileBounds(park);
 
     if (parkExtent) {
       disneyLayer.getSource().set('extent', parkExtent);
@@ -852,6 +963,12 @@
       const extent3857 = squareExtent3857(park.defaultCenter[0], park.defaultCenter[1], park.defaultWidth);
       map.getView().fit(extent3857, { duration: 0 });
     }
+
+    // Keep the view within the coverage for whatever zoom is on screen
+    map.getView().on('change:center', constrainViewToCoverage);
+    map.getView().on('change:resolution', constrainViewToCoverage);
+    map.on('moveend', constrainViewToCoverage);
+    constrainViewToCoverage();
 
     map.on('rendercomplete', updateSwipeUI);
     const ro = new ResizeObserver(updateSwipeUI);
