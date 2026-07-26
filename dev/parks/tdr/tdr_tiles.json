@@ -1,0 +1,12 @@
+{
+  "measured": "2026-07-26",
+  "note": "Tile ranges measured against the live CDN. Values are server tile space - the numbers that go into the URL's {x}/{y}. Ranges inclusive. 'rows' present only where the box is not fully served. tiles:0 with no x/y means the zoom serves nothing. Footprints are for the current version of each map; archived versions may cover different ground.",
+  "zooms": {
+    "15": { "x": [29115, 29117], "y": [12907, 12910], "tiles": 12 },
+    "16": { "x": [58230, 58235], "y": [25814, 25821], "tiles": 48 },
+    "17": { "x": [116460, 116471], "y": [51628, 51643], "tiles": 192 },
+    "18": { "x": [232920, 232943], "y": [103256, 103287], "tiles": 768 },
+    "19": { "x": [465840, 465887], "y": [206512, 206575], "tiles": 3072 },
+    "20": { "x": [931680, 931775], "y": [413024, 413151], "tiles": 12288 }
+  }
+}
