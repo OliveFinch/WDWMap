@@ -27,9 +27,10 @@
     const configs = await Promise.all(
       PARK_IDS.map(async (parkId) => {
         try {
-          const [cfgRes, locRes] = await Promise.all([
+          const [cfgRes, locRes, tileRes] = await Promise.all([
             fetch(`parks/${parkId}/${parkId}_config.json`),
-            fetch(`parks/${parkId}/${parkId}_locations.json`)
+            fetch(`parks/${parkId}/${parkId}_locations.json`),
+            fetch(`parks/${parkId}/${parkId}_tiles.json`)
           ]);
           if (!cfgRes.ok) return null;
           const config = await cfgRes.json();
@@ -43,6 +44,18 @@
               if (Array.isArray(locData.locationGroups)) config.locationGroups = locData.locationGroups;
             } catch (e) {
               console.warn(`Failed to parse ${parkId} locations:`, e);
+            }
+          }
+
+          // Measured tile footprints (which tiles the CDN actually serves).
+          // Optional: without it the park just falls back to boundsByZoom and
+          // no tiles are filtered.
+          if (tileRes.ok) {
+            try {
+              const tileData = await tileRes.json();
+              if (tileData && tileData.zooms) config.tileBounds = tileData;
+            } catch (e) {
+              console.warn(`Failed to parse ${parkId} tile bounds:`, e);
             }
           }
           return config;
@@ -145,20 +158,61 @@
 
   // Build a tight EPSG:3857 extent from tile bounds (using highest available zoom).
   // For TMS servers, bounds are in server Y, so we convert them to XYZ for calculations.
-  function extentFromTileBounds(park) {
-    if (!park || !park.boundsByZoom) return null;
+  // Is this tile one the CDN actually serves? x/y are in SERVER tile space
+  // (i.e. post-TMS-flip - the values that go into the URL). Measured footprints
+  // live in parks/{id}/{id}_tiles.json; parks without one (TDR) allow everything.
+  function isTileServed(park, z, x, y) {
+    const tb = park && park.tileBounds;
+    if (!tb || !tb.zooms) return true;          // no measurements - allow
 
+    const zb = tb.zooms[String(z)];
+    if (zb === undefined) return true;          // unmeasured zoom - allow
+    if (!zb.x || !zb.y) return false;           // zoom serves nothing at all
+
+    if (x < zb.x[0] || x > zb.x[1] || y < zb.y[0] || y > zb.y[1]) return false;
+    if (!zb.rows) return true;                  // plain rectangle
+
+    // Irregular zoom: find the row run covering y, then test x against it
+    for (let i = 0; i < zb.rows.length; i++) {
+      const r = zb.rows[i];
+      if (y >= r.y[0] && y <= r.y[1]) return x >= r.x[0] && x <= r.x[1];
+    }
+    return false;
+  }
+
+  // Highest zoom that actually serves tiles, as { z, minX, maxX, minY, maxY },
+  // preferring measured footprints and falling back to the config's boundsByZoom
+  function coverageForExtent(park) {
+    if (!park) return null;
+
+    const tb = park.tileBounds;
+    if (tb && tb.zooms) {
+      const zs = Object.keys(tb.zooms)
+        .map((k) => parseInt(k, 10))
+        .filter((n) => Number.isFinite(n) && tb.zooms[String(n)].x)
+        .sort((a, b) => b - a);
+      if (zs.length) {
+        const zb = tb.zooms[String(zs[0])];
+        return { z: zs[0], minX: zb.x[0], maxX: zb.x[1], minY: zb.y[0], maxY: zb.y[1] };
+      }
+    }
+
+    if (!park.boundsByZoom) return null;
     const zoomKeys = Object.keys(park.boundsByZoom)
       .map((k) => parseInt(k, 10))
       .filter((n) => Number.isFinite(n))
       .sort((a, b) => b - a);
-
     if (!zoomKeys.length) return null;
+    const b = park.boundsByZoom[String(zoomKeys[0])];
+    if (!b) return null;
+    return { z: zoomKeys[0], minX: b.minX, maxX: b.maxX, minY: b.minY, maxY: b.maxY };
+  }
 
-    const z = zoomKeys[0];
-    const b = park.boundsByZoom[String(z)];
+  function extentFromTileBounds(park) {
+    const b = coverageForExtent(park);
     if (!b) return null;
 
+    const z = b.z;
     const n = Math.pow(2, z);
 
     const minX = b.minX;
@@ -453,13 +507,20 @@
       minZoom: park.minZoom,
       maxZoom: park.maxZoom,
       tileUrlFunction: function (tileCoord) {
-        if (!tileCoord) return '';
+        // undefined (not '') tells OpenLayers there is no tile here: the tile
+        // is marked EMPTY and never requested. Returning '' would resolve
+        // against the document URL and fetch the page as an image.
+        if (!tileCoord) return undefined;
         const z = tileCoord[0];
         const x = tileCoord[1];
         const y = tileCoord[2];
 
         const n = Math.pow(2, z);
         const yy = (park.yScheme === 'tms') ? ((n - 1) - y) : y;
+
+        // Skip tiles the CDN is known not to serve (no-op for parks with no
+        // measured footprint, e.g. TDR)
+        if (!isTileServed(park, z, x, yy)) return undefined;
 
         if (isTdr) {
           // Pass the active TDR server ID (from tdr_dis_servers.json) so the
@@ -619,7 +680,16 @@
       source: new ol.source.XYZ({
         maxZoom: 20,
         tileUrlFunction: function(tileCoord) {
-          // Return a dummy URL - actual loading is done in tileLoadFunction
+          // Skip tiles the CDN doesn't serve: returning undefined marks the
+          // tile EMPTY so tileLoadFunction never runs and no image is fetched
+          if (tileCoord) {
+            const hz = tileCoord[0];
+            const hy = (park.yScheme === 'tms')
+              ? ((Math.pow(2, hz) - 1) - tileCoord[2])
+              : tileCoord[2];
+            if (!isTileServed(park, hz, tileCoord[1], hy)) return undefined;
+          }
+          // Dummy URL - actual loading is done in tileLoadFunction
           return 'data:,';
         },
         tileLoadFunction: function (tile, src) {

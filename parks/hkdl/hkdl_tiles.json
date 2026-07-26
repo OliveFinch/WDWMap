@@ -1,0 +1,25 @@
+{
+  "measured": "2026-07-26",
+  "note": "Tile ranges measured against the live CDN. Values are server tile space - the numbers that go into the URL's {x}/{y} (shdr y values are already TMS rows). Ranges inclusive. 'rows' present only where the box is not fully served. tiles:0 with no x/y means the zoom serves nothing. Footprints are for the current version of each map; archived versions may cover different ground.",
+  "zooms": {
+    "14": { "x": [13380, 13383], "y": [7148, 7150], "tiles": 12 },
+    "15": { "x": [26762, 26765], "y": [14297, 14300], "tiles": 16 },
+    "16": { "x": [53524, 53531], "y": [28594, 28601], "tiles": 64 },
+    "17": { "x": [107048, 107063], "y": [57188, 57203], "tiles": 256 },
+    "18": { "x": [214096, 214127], "y": [114376, 114407], "tiles": 1024 },
+    "19": {
+      "x": [428207, 428242], "y": [228756, 228807], "tiles": 1592,
+      "rows": [
+        { "y": [228756, 228769], "x": [428207, 428222] },
+        { "y": [228770, 228807], "x": [428207, 428242] }
+      ]
+    },
+    "20": {
+      "x": [856414, 856485], "y": [457512, 457615], "tiles": 6368,
+      "rows": [
+        { "y": [457512, 457539], "x": [856414, 856445] },
+        { "y": [457540, 457615], "x": [856414, 856485] }
+      ]
+    }
+  }
+}
